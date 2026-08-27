@@ -258,3 +258,140 @@ export const publicarPlataforma = createServerFn({ method: "POST" })
 function soDigitos(v: string): string {
   return String(v ?? "").replace(/\D/g, "");
 }
+
+
+// ---------------------------------------------------------------------------
+// O que faltava para o console substituir o painel embutido
+// ---------------------------------------------------------------------------
+
+/**
+ * Certificado A1 do cliente.
+ *
+ * E o que separa um cliente cadastrado de um cliente que EMITE. Sem esta acao o
+ * console conseguia criar cliente, gerar chave e publicar a plataforma dele — e
+ * parar exatamente antes da primeira nota, obrigando a voltar ao painel
+ * embutido para o passo final.
+ *
+ * O arquivo vai em base64 porque e binario, e a senha do `.pfx` viaja junto com
+ * ele: a ponte cifra os dois com a `WEBAPP_MASTER_KEY` antes de guardar. Nada
+ * disso passa pelo navegador de quem opera — e uma funcao de servidor.
+ */
+export const enviarCertificado = createServerFn({ method: "POST" })
+  .inputValidator((data: { cnpj: string; pfxBase64: string; senha: string }) => data)
+  .handler(async ({ data }): Promise<ApiResult<{ vencimento?: string }>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/certificado`, {
+      method: "POST",
+      body: { pfxBase64: data.pfxBase64, senha: data.senha },
+    });
+  });
+
+/** Validade e titular do certificado guardado, sem baixar o arquivo. */
+export const verCertificado = createServerFn({ method: "GET" })
+  .inputValidator((data: { cnpj: string }) => data)
+  .handler(async ({ data }): Promise<ApiResult<Record<string, unknown>>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/certificado`);
+  });
+
+/**
+ * Dados fiscais: IE, regime, endereco.
+ *
+ * Sem eles a nota sai errada ou nem sai — o CRT decide se o ICMS usa CST ou
+ * CSOSN, e o endereco decide se a operacao e interna ou interestadual.
+ */
+export const obterFiscal = createServerFn({ method: "GET" })
+  .inputValidator((data: { cnpj: string }) => data)
+  .handler(async ({ data }): Promise<ApiResult<Record<string, unknown>>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/fiscal`);
+  });
+
+export const salvarFiscal = createServerFn({ method: "POST" })
+  .inputValidator((data: { cnpj: string; fiscal: Record<string, unknown> }) => data)
+  .handler(async ({ data }): Promise<ApiResult<Record<string, unknown>>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/fiscal`, {
+      method: "PUT",
+      body: data.fiscal,
+    });
+  });
+
+/** Marca da plataforma do cliente: logo, cores, textos, contatos. */
+export const obterWhiteLabel = createServerFn({ method: "GET" })
+  .inputValidator((data: { cnpj: string }) => data)
+  .handler(async ({ data }): Promise<ApiResult<Record<string, unknown>>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/whitelabel`);
+  });
+
+export const salvarWhiteLabel = createServerFn({ method: "POST" })
+  .inputValidator((data: { cnpj: string; marca: Record<string, unknown> }) => data)
+  .handler(async ({ data }): Promise<ApiResult<Record<string, unknown>>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/whitelabel`, {
+      method: "POST",
+      body: data.marca,
+    });
+  });
+
+/** Os endpoints que o cliente cadastrou para receber eventos. */
+export const listarWebhooks = createServerFn({ method: "GET" })
+  .inputValidator((data: { cnpj: string }) => data)
+  .handler(async ({ data }): Promise<ApiResult<{ endpoints?: unknown[] }>> => {
+    await requireAuth();
+    return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/webhooks`);
+  });
+
+/**
+ * As entregas de um endpoint.
+ *
+ * Sem isto o relato do cliente — "nao recebi" — nao vira acao nenhuma: nao se
+ * sabe se saiu, com que resposta, nem quantas vezes ja tentou.
+ */
+export const listarEntregas = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: number; limite?: number }) => data)
+  .handler(async ({ data }): Promise<ApiResult<{ deliveries?: unknown[] }>> => {
+    await requireAuth();
+    return pedir(`/api/admin/webhooks/${data.id}/deliveries?limite=${data.limite ?? 20}`);
+  });
+
+/** Liga ou desliga um endpoint sem apagar e recriar. */
+export const alternarWebhook = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: number; ativo: boolean }) => data)
+  .handler(async ({ data }): Promise<ApiResult<{ sucesso?: boolean }>> => {
+    await requireAuth();
+    return pedir(`/api/admin/webhooks/${data.id}`, {
+      method: "PATCH",
+      body: { active: data.ativo },
+    });
+  });
+
+/**
+ * Reenvia as entregas pendentes agora.
+ *
+ * O cron da ponte roda 1x/dia — teto da conta gratuita, nao escolha. Quando o
+ * endpoint do cliente volta do ar, esperar ate amanha nao serve.
+ */
+export const reprocessarWebhooks = createServerFn({ method: "POST" })
+  .handler(async (): Promise<ApiResult<{ reenviadas?: number }>> => {
+    await requireAuth();
+    return pedir("/api/admin/webhooks/reprocessar", { method: "POST" });
+  });
+
+/**
+ * O log de auditoria da ponte.
+ *
+ * Quem gerou chave, quem revogou, quem trocou status. Numa operacao com mais de
+ * uma pessoa e a unica forma de responder "quem fez isso" — e a chave revogada
+ * por engano derruba a integracao de um cliente em producao.
+ */
+export const listarAuditoria = createServerFn({ method: "GET" })
+  .inputValidator((data: { limite?: number; cnpj?: string }) => data)
+  .handler(async ({ data }): Promise<ApiResult<{ eventos?: unknown[] }>> => {
+    await requireAuth();
+    const busca = new URLSearchParams();
+    busca.set("limite", String(data.limite ?? 50));
+    if (data.cnpj) busca.set("cnpj", soDigitos(data.cnpj));
+    return pedir(`/api/admin/audit?${busca.toString()}`);
+  });

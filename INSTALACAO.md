@@ -54,6 +54,7 @@ Copie `.env.example` para `.env` e preencha. As obrigatorias:
 | `NFE_DB_PASSWORD` | ALTERNATIVA a NFE_DB_URL: so a senha do banco, sozinha. O codigo codifica os simbolos. |
 | `NFE_DB_REF` | ALTERNATIVA a NFE_DB_URL: a referencia do projeto Supabase (o pedaco do meio da URL do painel). |
 | `NFE_DB_HOST` | ALTERNATIVA a NFE_DB_URL: o host do pooler, ex. aws-0-us-west-2.pooler.supabase.com. |
+| `WEBAPP_MODO` | OPCIONAL. `revenda` mostra so Painel e Clientes API; `completo` mostra tudo. Sem ela, deduz-se: sem emitente proprio configurado, nasce em revenda. |
 | `WEBAPP_SENHA` | Senha do painel administrativo desta instancia. |
 | `WEBAPP_MASTER_KEY` | Cifra os certificados A1 guardados no banco. Trocar depois torna ilegiveis os ja enviados. |
 

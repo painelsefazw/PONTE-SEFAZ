@@ -107,6 +107,18 @@ const EXEMPLO_PERMITIDO = '.env.example';
 const EXTENSOES_DE_CODIGO = /\.(ts|tsx|html|sql|json)$/i;
 const PASTAS_SO_DE_CODIGO = ['src/', 'api/'];
 
+/**
+ * Os lugares onde o codigo da ponte pode estar, na ordem em que se procura.
+ *
+ * Exportado para o diagnostico poder dizer QUAL deles venceu. O pacote e
+ * montado a partir do disco, e ja aconteceu de o servidor rodar codigo novo e
+ * empacotar arquivos velhos — a instancia gerada nascia com semanas de atraso
+ * e nada na resposta dizia isso.
+ */
+export function candidatosDeRaiz(): string[] {
+  return [process.cwd(), path.resolve(__dirname, '..', '..'), '/var/task'];
+}
+
 function raizDoProjeto(): string {
   const candidatos = [
     process.cwd(),
@@ -219,6 +231,7 @@ export const VARIAVEIS = {
     ['NFE_DB_PASSWORD', 'ALTERNATIVA a NFE_DB_URL: so a senha do banco, sozinha. O codigo codifica os simbolos.'],
     ['NFE_DB_REF', 'ALTERNATIVA a NFE_DB_URL: a referencia do projeto Supabase (o pedaco do meio da URL do painel).'],
     ['NFE_DB_HOST', 'ALTERNATIVA a NFE_DB_URL: o host do pooler, ex. aws-0-us-west-2.pooler.supabase.com.'],
+    ['WEBAPP_MODO', 'OPCIONAL. `revenda` mostra so Painel e Clientes API; `completo` mostra tudo. Sem ela, deduz-se: sem emitente proprio configurado, nasce em revenda.'],
     ['WEBAPP_SENHA', 'Senha do painel administrativo desta instancia.'],
     ['WEBAPP_MASTER_KEY', 'Cifra os certificados A1 guardados no banco. Trocar depois torna ilegiveis os ja enviados.'],
   ],
@@ -694,4 +707,70 @@ export function urlDeDeployNaVercel(opts: { repositorio: string; nome?: string }
   });
 
   return `https://vercel.com/new/clone?${parametros.toString()}`;
+}
+
+
+// ---------------------------------------------------------------------------
+// O console sai sabendo de qual ponte ele e
+// ---------------------------------------------------------------------------
+
+/**
+ * Preenche `EMISSOR_API_URL` no `.env.example` do console com o endereco da
+ * ponte que o gerou.
+ *
+ * Sem isso o console nasce generico e quem instala tem que digitar o endereco
+ * a mao — e digitar endereco a mao foi, nesta semana, a etapa que mais quebrou
+ * instalacao. Aqui nao ha desculpa para pedir: a ponte SABE o proprio endereco,
+ * porque ele chega em cada requisicao.
+ *
+ * So esta variavel: `EMISSOR_ADMIN_KEY` e `APP_ACCESS_PASSWORD` sao segredos e
+ * continuam vazias. Endereco nao e segredo — e publico por definicao, ja que e
+ * para onde os clientes apontam.
+ */
+export function amarrarConsoleNaPonte(
+  arquivos: Map<string, Buffer>,
+  enderecoDaPonte: string,
+): Map<string, Buffer> {
+  const endereco = String(enderecoDaPonte ?? '').trim().replace(/\/+$/, '');
+  const exemplo = arquivos.get('.env.example');
+  if (!endereco || !exemplo) return arquivos;
+
+  const quebra = /\r?\n/;
+  const linhas = exemplo.toString('utf8').split(quebra);
+  const preenchidas = linhas.map((linha) => (
+    linha.trim() === 'EMISSOR_API_URL=' ? `EMISSOR_API_URL=${endereco}` : linha
+  ));
+
+  arquivos.set('.env.example', Buffer.from(preenchidas.join('\n'), 'utf8'));
+  return arquivos;
+}
+
+
+/**
+ * O disco de onde o pacote sai esta atrasado em relacao ao processo?
+ *
+ * O servidor RODA a partir de um bundle compilado e EMPACOTA a partir do disco.
+ * Numa plataforma que reaproveita cache de build os dois divergem: a funcao e
+ * recompilada do codigo novo, e as copias de arquivo continuam as antigas.
+ *
+ * O estrago e silencioso e convincente: o commit sai novo, a contagem de
+ * arquivos bate, a publicacao responde sucesso — e a instancia gerada nasce com
+ * o codigo de dias atras. Custou quatro publicacoes seguidas antes de alguem
+ * comparar byte a byte o que tinha ido parar no repositorio.
+ *
+ * A prova e auto-referente: procura-se no arquivo do disco uma marca que existe
+ * no codigo que esta EXECUTANDO agora. Marca escolhida a dedo envelhece — a
+ * primeira versao disto procurava um nome de funcao e passou a aprovar disco
+ * velho tres commits depois.
+ */
+export function discoEstaAtrasado(marcaDoProcesso: string): boolean {
+  try {
+    const raiz = raizDoProjeto();
+    const conteudo = fs.readFileSync(path.join(raiz, 'src', 'webapp', 'app.ts'), 'utf8');
+    return !conteudo.includes(marcaDoProcesso);
+  } catch {
+    // Sem conseguir ler, nao ha o que afirmar. `montarKitDaInstancia` falha
+    // logo em seguida com uma mensagem melhor do que um palpite daqui.
+    return false;
+  }
 }

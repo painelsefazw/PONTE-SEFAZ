@@ -54,7 +54,7 @@ import {
   baixarModelo, lerModeloDaPasta, montarZip, publicarNoGitHub, verificarAcessoAoRepositorio,
   escolherToken, SEM_TOKEN, CAMINHO_MANIFEST,
 } from './kit-plataforma';
-import { montarKitDaInstancia, urlDeDeployNaVercel } from './kit-instancia';
+import { montarKitDaInstancia, urlDeDeployNaVercel, amarrarConsoleNaPonte, candidatosDeRaiz, discoEstaAtrasado } from './kit-instancia';
 
 // DANFE oficial (sped-da) via serviço PHP separado: quando DANFE_SERVICE_URL está
 // definido, o PDF vem do layout homologado; senão, usa o gerador simplificado.
@@ -481,6 +481,29 @@ for (const dir of staticCandidates) {
 // ---------------------------------------------------------------------------
 // GET /api/ping — estado do deploy (sem autenticação)
 // ---------------------------------------------------------------------------
+/**
+ * O painel completo mostra emissao, empresas, cadastros e configuracoes. Numa
+ * ponte que so REVENDE, nada disso e operado por quem administra: os clientes
+ * emitem pela API, cada um com o seu certificado guardado no banco. As telas
+ * viram ruido — e pior, sugerem que ha algo a preencher ali.
+ *
+ * O padrao se decide sozinho pelo unico fato que ja distingue os dois casos:
+ * ter ou nao um emitente proprio configurado. Instalacao nova nao tem, entao
+ * nasce em `revenda` sem precisar de variavel nenhuma — e uma variavel a menos
+ * na tela de deploy e uma a menos para errar.
+ *
+ * `WEBAPP_MODO` existe para os dois casos que a deducao nao cobre: quem revende
+ * mas tambem emite em nome proprio, e quem quer o painel inteiro antes de
+ * cadastrar o certificado.
+ */
+export function modoDoPainel(
+  opts: { explicito?: string | undefined; configurado: boolean },
+): 'revenda' | 'completo' {
+  const escolhido = String(opts.explicito ?? '').trim().toLowerCase();
+  if (escolhido === 'revenda' || escolhido === 'completo') return escolhido;
+  return opts.configurado ? 'completo' : 'revenda';
+}
+
 app.get('/api/ping', (_req, res) => {
   let configurado = true;
   let erro: string | undefined;
@@ -494,6 +517,11 @@ app.get('/api/ping', (_req, res) => {
     ok: true,
     configurado,
     erro,
+    modo: modoDoPainel({ explicito: process.env['WEBAPP_MODO'], configurado }),
+    // O titulo era fixo em "NF-e Engine". Numa instalacao que o cliente opera
+    // — ou que voce revende com marca propria — o nome do fornecedor no topo
+    // e, no minimo, estranho.
+    marca: String(process.env['WEBAPP_MARCA'] ?? '').trim() || 'NF-e Engine',
     autenticacao: Boolean(process.env['WEBAPP_SENHA']),
   });
 });
@@ -678,6 +706,71 @@ app.get('/api/diagnostico/pooler', async (req, res) => {
   } catch (erro: any) {
     res.status(400).json({ ok: false, erro: erro.message, regioes: REGIOES });
   }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/diagnostico/pacote — de onde sai o codigo que vira instancia nova.
+//
+// O pacote e montado a partir do DISCO, e o servidor roda a partir de um bundle
+// compilado. Os dois podem divergir: ja aconteceu de a instancia publicada
+// nascer com o codigo de dias antes, enquanto a ponte que a gerou respondia com
+// o codigo novo. Nada na resposta dizia isso — o commit era novo, a contagem de
+// arquivos batia, e so comparando arquivo por arquivo se descobria.
+//
+// Esta rota compara as duas coisas: o que ESTA RODANDO e o que esta no disco. A
+// prova e uma marca que so existe no codigo desta versao; se o arquivo lido nao
+// a contiver, o disco esta atrasado em relacao ao processo.
+//
+// Sem auth, como as outras de diagnostico: quem precisa dela e justamente quem
+// publicou e recebeu um pacote errado. Nao devolve conteudo de arquivo nenhum,
+// so caminhos, tamanhos e datas.
+// ---------------------------------------------------------------------------
+app.get('/api/diagnostico/pacote', (_req, res) => {
+  const alvo = path.join('src', 'webapp', 'app.ts');
+
+  const candidatos = candidatosDeRaiz().map((raiz) => {
+    const completo = path.join(raiz, alvo);
+    try {
+      const info = fs.statSync(completo);
+      const conteudo = fs.readFileSync(completo, 'utf8');
+      return {
+        raiz,
+        existe: true,
+        bytes: info.size,
+        modificadoEm: info.mtime.toISOString(),
+        /**
+         * A marca e ESTA PROPRIA ROTA.
+         *
+         * A primeira versao procurava `modoDoPainel`, e isso envelheceu na
+         * mesma tarde: o disco tinha aquele commit e nao os quatro seguintes,
+         * entao a conferencia passava e o pacote saia velho do mesmo jeito.
+         * Qualquer marca escolhida a dedo tem esse destino.
+         *
+         * Procurar o caminho desta rota resolve por construcao: se o processo
+         * esta respondendo aqui, o codigo dele tem esta linha — e um disco que
+         * nao a tenha e, por definicao, anterior ao que esta rodando.
+         */
+        temCodigoDesteProcesso: conteudo.includes('/api/diagnostico/pacote'),
+      };
+    } catch {
+      return { raiz, existe: false };
+    }
+  });
+
+  const escolhida = candidatos.find((c) => c.existe);
+  const atrasado = Boolean(escolhida && escolhida.temCodigoDesteProcesso === false);
+
+  res.status(atrasado ? 503 : 200).json({
+    ok: !atrasado,
+    raizEscolhida: escolhida?.raiz ?? null,
+    candidatos,
+    ...(atrasado ? {
+      alerta: 'O DISCO ESTA ATRASADO em relacao ao processo. Publicar agora geraria uma '
+        + 'instancia com codigo antigo — o commit sai novo e o conteudo, nao.',
+      comoResolver: 'Refaca o deploy desta ponte SEM cache de build (na Vercel: Redeploy '
+        + 'com "Use existing Build Cache" desmarcado) e publique de novo.',
+    } : {}),
+  });
 });
 
 app.get('/api/diagnostico/banco', async (_req, res) => {
@@ -8480,7 +8573,8 @@ const MARCADOR_CONSOLE = 'src/lib/admin.functions.ts';
 app.get('/api/admin/console/kit.zip', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
-    const arquivos = await lerModeloDaPasta(PASTA_CONSOLE, MARCADOR_CONSOLE);
+    const arquivos = amarrarConsoleNaPonte(
+      await lerModeloDaPasta(PASTA_CONSOLE, MARCADOR_CONSOLE), baseUrl(req));
     const zip = montarZip(arquivos);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', 'attachment; filename="console-clientes.zip"');
@@ -8504,7 +8598,8 @@ app.post('/api/admin/console/publicar', async (req, res) => {
       return;
     }
 
-    const arquivos = await lerModeloDaPasta(PASTA_CONSOLE, MARCADOR_CONSOLE);
+    const arquivos = amarrarConsoleNaPonte(
+      await lerModeloDaPasta(PASTA_CONSOLE, MARCADOR_CONSOLE), baseUrl(req));
     const resultado = await publicarNoGitHub({
       arquivos,
       urlRepositorio,
@@ -8578,6 +8673,22 @@ app.post('/api/admin/instancia/publicar', async (req, res) => {
     const urlRepositorio = String(req.body?.repositoryUrl || '').trim();
     if (!urlRepositorio) {
       res.status(400).json({ erro: 'Informe a URL do repositorio (repositoryUrl).' });
+      return;
+    }
+
+    /**
+     * Publicar com o disco atrasado produz um pacote errado que se parece com
+     * um certo: commit novo, contagem certa, conteudo velho. Melhor recusar.
+     */
+    if (discoEstaAtrasado('/api/diagnostico/pacote')) {
+      res.status(503).json({
+        erro: 'O codigo no disco desta ponte esta ATRASADO em relacao ao que ela executa. '
+          + 'Publicar agora geraria uma instancia com codigo antigo.',
+        comoResolver: 'Refaca o deploy DESTA ponte sem cache de build (na Vercel: Redeploy '
+          + 'com "Use existing Build Cache" desmarcado, ou defina VERCEL_FORCE_NO_BUILD_CACHE=1) '
+          + 'e publique de novo.',
+        veja: '/api/diagnostico/pacote',
+      });
       return;
     }
 

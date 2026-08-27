@@ -10,7 +10,14 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; colo
 
 /* Top bar */
 .topbar { background: #1a1a2e; color: #fff; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
-.topbar h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+.topbar h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; white-space: nowrap; }
+/* O topo empilhava numa janela estreita: o titulo quebrava em duas linhas e o
+   selo de modo montava em cima do seletor de empresa. `gap` separa, `nowrap`
+   segura o titulo inteiro, e o que sobra encolhe em vez de empurrar. */
+.topbar { gap: 16px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topbar-empresa { min-width: 0; }
+.topbar-empresa select { max-width: 320px; }
 .topbar .status-pill { font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 600; }
 .topbar .status-pill.hom { background: #f59e0b; color: #000; }
 .topbar .status-pill.prod { background: #16a34a; color: #fff; }
@@ -151,6 +158,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f2f5; colo
   font-size: 12px; font-weight: 400; line-height: 1.45; text-transform: none;
   letter-spacing: 0; box-shadow: 0 6px 18px rgba(0,0,0,0.28); pointer-events: none;
 }
+
+/* Modo revenda: a instancia so revende, entao as telas de emissao sao ruido.
+   A API continua inteira — o que sai e a tela do operador, nao o produto. */
+body.modo-revenda .escondido-na-revenda { display: none !important; }
 
 /* Modo operador: esconde campos avancados */
 body.modo-operador .somente-contador { display: none !important; }
@@ -345,16 +356,16 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 
 <!-- Top Bar -->
 <div class="topbar">
-  <h1>NF-e Engine</h1>
+  <h1 id="marcaDaInstancia">NF-e Engine</h1>
   <!-- Seletor de empresa no cabecalho: a empresa vale para o sistema inteiro,
        nao so para a aba de emissao. Ficando dentro da aba, dava para trocar de
        aba e esquecer em nome de quem se estava operando. -->
-  <div id="empresaSelWrap" class="topbar-empresa" style="display:none">
+  <div id="empresaSelWrap" class="topbar-empresa escondido-na-revenda" style="display:none">
     <span class="topbar-empresa-label">Empresa</span>
     <select id="empresaSel" onchange="onEmpresaChange()"></select>
   </div>
   <div class="topbar-right">
-    <span id="modoBadge" class="modo-badge contador">CONTADOR</span>
+    <span id="modoBadge" class="modo-badge contador escondido-na-revenda">CONTADOR</span>
     <span id="sefazStatus" class="sefaz-status" onclick="checkSefaz()" style="cursor:pointer" title="Clique para atualizar">Verificando SEFAZ...</span>
     <span id="ambientePill" class="status-pill hom" onclick="toggleAmbiente()" title="Clique para alternar ambiente">HOMOLOGACAO</span>
     <button class="btn-logout" onclick="logout()" title="Sair">Sair</button>
@@ -376,12 +387,12 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 <!-- Tabs -->
 <div class="tab-bar" id="mainTabBar">
   <button class="somente-contador" onclick="showGroup('painel')">Painel</button>
-  <button class="active" onclick="showGroup('emissao')">Emissao</button>
-  <button onclick="showGroup('consultas')">Consultas</button>
-  <button class="somente-contador" onclick="showGroup('empresas')">Empresas</button>
-  <button onclick="showGroup('cadastros')">Cadastros</button>
-  <button class="somente-contador" onclick="showGroup('operacoes')">Operacoes</button>
-  <button class="somente-contador" onclick="showGroup('config')">Configuracoes</button>
+  <button class="active escondido-na-revenda" onclick="showGroup('emissao')">Emissao</button>
+  <button class="escondido-na-revenda" onclick="showGroup('consultas')">Consultas</button>
+  <button class="somente-contador escondido-na-revenda" onclick="showGroup('empresas')">Empresas</button>
+  <button class="escondido-na-revenda" onclick="showGroup('cadastros')">Cadastros</button>
+  <button class="somente-contador escondido-na-revenda" onclick="showGroup('operacoes')">Operacoes</button>
+  <button class="somente-contador escondido-na-revenda" onclick="showGroup('config')">Configuracoes</button>
   <button class="somente-contador" onclick="showGroup('clientesapi')">Clientes API</button>
 </div>
 <div class="sub-tab-bar" id="subTabBar" style="display:none">
@@ -2038,7 +2049,7 @@ var TAB_GROUPS = {
   cadastros: [{ id: 'produtos', label: 'Produtos' }, { id: 'servicos', label: 'Servicos' }, { id: 'importar', label: 'Importar XLSX' }, { id: 'regras', label: 'Regras Fiscais' }],
   operacoes: [{ id: 'inutilizar', label: 'Inutilizar' }, { id: 'manifestacao', label: 'Manifestacao' }],
   config: [{ id: 'configuracoes', label: 'SMTP' }, { id: 'api', label: 'API' }],
-  clientesapi: [{ id: 'clientesapi-lista', label: 'Clientes' }, { id: 'clientesapi-templates', label: 'Templates' }, { id: 'clientesapi-instancia', label: 'Nova instancia' }, { id: 'clientesapi-audit', label: 'Auditoria' }],
+  clientesapi: [{ id: 'clientesapi-lista', label: 'Clientes' }, { id: 'clientesapi-templates', label: 'Templates', soCompleto: true }, { id: 'clientesapi-instancia', label: 'Nova instancia' }, { id: 'clientesapi-audit', label: 'Auditoria' }],
 };
 
 var currentGroup = 'emissao';
@@ -2057,6 +2068,11 @@ function showGroup(groupName, subTabId) {
 
   // Sub-tab bar
   var subBar = document.getElementById('subTabBar');
+  // Sub-aba marcada `soCompleto` some no modo revenda. Hoje so a de Templates:
+  // ela gera plataforma de cliente por um caminho paralelo ao da aba Clientes,
+  // que ja faz o mesmo e ainda amarra a plataforma ao cliente certo. Duas
+  // portas para o mesmo lugar so servem para a pessoa escolher a errada.
+  if (window.modoDoPainel === 'revenda') group = group.filter(function(t) { return !t.soCompleto; });
   if (group.length <= 1) {
     subBar.style.display = 'none';
   } else {
@@ -2774,9 +2790,32 @@ async function initApp() {
   document.getElementById('destIndIE').addEventListener('change', updateOpTipo);
 }
 
+/**
+ * Modo revenda: some com as telas que esta instalacao nao opera.
+ *
+ * Guardado em `window` porque o indicador da SEFAZ tambem consulta: numa ponte
+ * sem emitente proprio, "sem certificado" e o estado CORRETO, e pintar isso de
+ * vermelho como se a SEFAZ estivesse fora do ar assusta a toa.
+ */
+window.modoDoPainel = 'completo';
+function aplicarModoDoPainel(modo) {
+  window.modoDoPainel = modo === 'revenda' ? 'revenda' : 'completo';
+  document.body.classList.toggle('modo-revenda', window.modoDoPainel === 'revenda');
+  if (window.modoDoPainel !== 'revenda') return;
+  // A aba inicial nao pode ser uma que acabou de sumir do menu.
+  var inicial = document.querySelector('#mainTabBar button.active');
+  if (inicial) inicial.classList.remove('active');
+  showGroup('clientesapi');
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   var res = await fetch('/api/ping');
   var ping = await res.json();
+  aplicarModoDoPainel(ping.modo);
+  if (ping.marca) {
+    document.getElementById('marcaDaInstancia').textContent = ping.marca;
+    document.title = ping.marca;
+  }
   if (ping.autenticacao && !getSenha()) {
     showLogin();
   } else {
@@ -2977,6 +3016,12 @@ async function checkSefaz() {
     if (data.online) {
       el.textContent = 'SEFAZ Online';
       el.className = 'sefaz-status online';
+    } else if (window.modoDoPainel === 'revenda') {
+      // Numa ponte que revende, o emitente proprio pode nunca existir: cada
+      // cliente tem o seu certificado, cifrado no banco. Dizer "SEFAZ: variavel
+      // ausente" em vermelho descreve um defeito que nao existe.
+      el.textContent = 'Ponte de revenda (sem emitente proprio)';
+      el.className = 'sefaz-status';
     } else {
       el.textContent = 'SEFAZ: ' + (data.xMotivo || 'Indisponivel').substring(0, 60);
       el.className = 'sefaz-status offline';
@@ -7298,6 +7343,69 @@ async function baixarTodasNotas(cnpj) {
   } catch (err) { alert('Erro: ' + err.message); }
 }
 
+
+/**
+ * Entregas de um webhook.
+ *
+ * As rotas existiam desde sempre e nenhuma tela chamava: o cliente configurava
+ * o webhook, as entregas falhavam, e do lado de ca nao havia como ver. O
+ * sintoma chegava pelo cliente dizendo "nao recebi", sem nada para conferir.
+ */
+async function verEntregasDoWebhook(id) {
+  var caixa = document.getElementById('entregas-' + id);
+  if (!caixa) return;
+  if (caixa.innerHTML) { caixa.innerHTML = ''; return; }  // segundo clique fecha
+  caixa.innerHTML = '<div style="color:#9ca3af">Carregando...</div>';
+  try {
+    var r = await apiFetch('/api/admin/webhooks/' + id + '/deliveries?limite=10');
+    var entregas = listaDe(await r.json(), 'deliveries');
+    if (!entregas.length) { caixa.innerHTML = '<div style="color:#9ca3af">Nenhuma entrega ainda</div>'; return; }
+    caixa.innerHTML = entregas.map(function(e) {
+      var ok = e.success;
+      return '<div style="display:flex;gap:8px;padding:4px 0;border-top:1px solid #e5e7eb">' +
+        '<span style="color:' + (ok ? '#10b981' : '#ef4444') + ';font-weight:600;min-width:52px">' +
+          (ok ? 'OK' : 'FALHOU') + '</span>' +
+        '<span style="min-width:120px">' + escapeHtml(e.event || '') + '</span>' +
+        '<span style="color:#6b7280">HTTP ' + (e.statusCode || '--') + ' | ' + (e.attempts || 0) + 'x</span>' +
+      '</div>';
+    }).join('');
+  } catch (err) {
+    caixa.innerHTML = '<div style="color:#dc2626">' + escapeHtml(err.message) + '</div>';
+  }
+}
+
+/** Liga ou desliga um webhook sem precisar apagar e recriar. */
+async function alternarWebhook(id, ativo) {
+  try {
+    var r = await apiFetch('/api/admin/webhooks/' + id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: ativo })
+    });
+    if (!r.ok) throw new Error((await r.json()).erro || 'Falha ao alterar.');
+    abrirDetalheCliente(_clienteDetalhe.cliente.cnpj);
+  } catch (err) { alert(err.message); }
+}
+
+/**
+ * Reenvia as entregas pendentes agora.
+ *
+ * O cron faz isso 1x/dia — que e o teto de uma conta Hobby, nao uma escolha.
+ * Quando um endpoint volta do ar, esperar ate amanha nao serve.
+ */
+async function reprocessarWebhooks(btn) {
+  var texto = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Reprocessando...';
+  try {
+    var r = await apiFetch('/api/admin/webhooks/reprocessar', { method: 'POST' });
+    var j = await r.json();
+    btn.textContent = r.ok ? ('Reprocessado: ' + (j.reenviadas != null ? j.reenviadas : 0)) : (j.erro || 'Falhou');
+  } catch (err) {
+    btn.textContent = err.message;
+  } finally {
+    setTimeout(function() { btn.disabled = false; btn.textContent = texto; }, 4000);
+  }
+}
+
 async function abrirDetalheCliente(cnpj) {
   document.getElementById('clientesApiLista').innerHTML = '<div class="hist-empty">Carregando detalhes...</div>';
   try {
@@ -7365,11 +7473,21 @@ function renderDetalheCliente(cnpj) {
 
   var whHtml = (d.webhooks || []).map(function(w) {
     return '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px;margin-bottom:6px;font-size:12px">' +
-      '<div style="display:flex;justify-content:space-between"><span style="font-weight:600">' + (w.url || '').substring(0, 60) + '</span>' +
+      '<div style="display:flex;justify-content:space-between"><span style="font-weight:600">' + escapeHtml((w.url || '').substring(0, 60)) + '</span>' +
       '<span style="color:' + (w.active ? '#10b981' : '#ef4444') + '">' + (w.active ? 'Ativo' : 'Inativo') + '</span></div>' +
-      '<div style="color:#6b7280;margin-top:2px">Eventos: ' + (w.events || []).join(', ') + '</div>' +
+      '<div style="color:#6b7280;margin-top:2px">Eventos: ' + escapeHtml((w.events || []).join(', ')) + '</div>' +
+      '<div style="margin-top:6px;display:flex;gap:6px">' +
+        '<button class="btn btn-sm" onclick="verEntregasDoWebhook(' + w.id + ')">Entregas</button>' +
+        '<button class="btn btn-sm" onclick="alternarWebhook(' + w.id + ',' + (w.active ? 'false' : 'true') + ')">' +
+          (w.active ? 'Desativar' : 'Ativar') + '</button>' +
+      '</div>' +
+      '<div id="entregas-' + w.id + '" style="margin-top:6px"></div>' +
     '</div>';
   }).join('') || '<div style="color:#9ca3af;font-size:12px">Nenhum webhook</div>';
+
+  if ((d.webhooks || []).length) {
+    whHtml += '<button class="btn btn-sm" style="margin-top:4px" onclick="reprocessarWebhooks(this)">Reprocessar pendentes</button>';
+  }
 
 
   var HEALTH_INFO = {
