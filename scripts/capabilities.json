@@ -1,0 +1,255 @@
+{
+  "version": "1.0",
+  "capabilities": [
+    {
+      "id": "Contexto fiscal",
+      "modulo": "domain/FiscalContext.ts",
+      "exports": ["buildNFe"],
+      "contratos": ["FiscalContextInput"],
+      "dependenciasMinimas": ["decimal.js"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Objeto preenchido com dados da transação",
+      "testeIntegracao": "IntegrationFlow.test.ts"
+    },
+    {
+      "id": "NFeKeyGenerator",
+      "modulo": "domain/NFeKeyGenerator.ts",
+      "exports": ["generateAccessKey"],
+      "contratos": [],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Chave de 44 dígitos com DV mod 11",
+      "testeIntegracao": "NFeKeyGenerator.test.ts"
+    },
+    {
+      "id": "XmlGenerator",
+      "modulo": "infrastructure/xml/XmlGenerator.ts",
+      "exports": ["XmlGenerator"],
+      "contratos": [],
+      "dependenciasMinimas": ["xmlbuilder2"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Buffer XML estruturado conforme XSD",
+      "testeIntegracao": "XmlGenerator.test.ts"
+    },
+    {
+      "id": "Signer",
+      "modulo": "infrastructure/crypto/Signer.ts",
+      "exports": ["Signer"],
+      "contratos": [],
+      "dependenciasMinimas": ["xml-crypto", "node-forge"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "XML assinado com XMLDSig RSA-SHA1",
+      "testeIntegracao": "Signer.test.ts"
+    },
+    {
+      "id": "SoapClient",
+      "modulo": "infrastructure/soap/SoapClient.ts",
+      "exports": ["SoapClient"],
+      "contratos": [],
+      "dependenciasMinimas": ["axios"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Envelope SOAP 1.2 enviado e resposta recebida",
+      "testeIntegracao": "IntegrationFlow.test.ts"
+    },
+    {
+      "id": "ResponseParser",
+      "modulo": "infrastructure/soap/ResponseParser.ts",
+      "exports": ["parseAutorizacaoResponse", "parseStatusServicoResponse"],
+      "contratos": ["AutorizacaoResponse", "StatusServicoResponse"],
+      "dependenciasMinimas": ["xmlbuilder2"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Objeto estruturado a partir do XML SEFAZ",
+      "testeIntegracao": "IntegrationFlow.test.ts"
+    },
+    {
+      "id": "SefazEndpoints",
+      "modulo": "infrastructure/soap/SefazEndpoints.ts",
+      "exports": ["getEndpoints"],
+      "contratos": [],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "URLs corretas para 12 UFs + SVRS/SVAN",
+      "testeIntegracao": "IntegrationFlow.test.ts"
+    },
+    {
+      "id": "NFeRepository",
+      "modulo": "infrastructure/db/NFeRepository.ts",
+      "exports": ["NFeRepository"],
+      "contratos": ["NFeRecord"],
+      "dependenciasMinimas": ["pg"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "CRUD transacional com queries parametrizadas",
+      "testeIntegracao": "TransmissaoNFeUseCase.test.ts"
+    },
+    {
+      "id": "TransmissaoNFeUseCase",
+      "modulo": "application/TransmissaoNFeUseCase.ts",
+      "exports": ["TransmissaoNFeUseCase"],
+      "contratos": ["TransmissaoResult"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Fluxo completo: gerar XML → assinar → enviar → persistir",
+      "testeIntegracao": "TransmissaoNFeUseCase.test.ts"
+    },
+    {
+      "id": "EventXmlGenerator",
+      "modulo": "infrastructure/xml/EventXmlGenerator.ts",
+      "exports": ["EventXmlGenerator"],
+      "contratos": ["CancelamentoInput", "CartaCorrecaoInput"],
+      "dependenciasMinimas": ["xmlbuilder2"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "XML envEvento para cancelamento e CC-e",
+      "testeIntegracao": "EventXmlGenerator.test.ts"
+    },
+    {
+      "id": "CancelamentoNFeUseCase",
+      "modulo": "application/CancelamentoNFeUseCase.ts",
+      "exports": ["CancelamentoNFeUseCase"],
+      "contratos": ["CancelamentoResult"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Fluxo: gerar evento → assinar → enviar → atualizar status CANCELADA",
+      "testeIntegracao": "CancelamentoNFe.test.ts"
+    },
+    {
+      "id": "CartaCorrecaoUseCase",
+      "modulo": "application/CartaCorrecaoUseCase.ts",
+      "exports": ["CartaCorrecaoUseCase"],
+      "contratos": ["CartaCorrecaoResult"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Fluxo: gerar CC-e → assinar → enviar → retornar protocolo",
+      "testeIntegracao": "CartaCorrecao.test.ts"
+    },
+    {
+      "id": "ConsultaProtocoloUseCase",
+      "modulo": "application/ConsultaProtocoloUseCase.ts",
+      "exports": ["ConsultaProtocoloUseCase"],
+      "contratos": ["ConsultaResult"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Consulta SEFAZ por chave e reconcilia status local",
+      "testeIntegracao": "ConsultaProtocolo.test.ts"
+    },
+    {
+      "id": "DanfeGenerator",
+      "modulo": "infrastructure/pdf/DanfeGenerator.ts",
+      "exports": ["DanfeGenerator"],
+      "contratos": ["DanfeInput"],
+      "dependenciasMinimas": ["pdfkit"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "PDF A4 com header, emitente, destinatario, itens, totais",
+      "testeIntegracao": "DanfeGenerator.test.ts"
+    },
+    {
+      "id": "RetryHandler",
+      "modulo": "infrastructure/retry/RetryHandler.ts",
+      "exports": ["RetryHandler"],
+      "contratos": ["RetryOptions"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Retry exponencial com deteccao de erros retryable",
+      "testeIntegracao": "RetryHandler.test.ts"
+    },
+    {
+      "id": "IdempotencyGuard",
+      "modulo": "infrastructure/retry/IdempotencyGuard.ts",
+      "exports": ["IdempotencyGuard"],
+      "contratos": [],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Verifica duplicidade por chave antes de reenviar",
+      "testeIntegracao": "IdempotencyGuard.test.ts"
+    },
+    {
+      "id": "Config",
+      "modulo": "config/index.ts",
+      "exports": ["loadConfig"],
+      "contratos": ["NFeConfig"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Carrega .env e valida vars obrigatorias",
+      "testeIntegracao": "config.test.ts"
+    },
+    {
+      "id": "ContingenciaManager",
+      "modulo": "infrastructure/contingencia/ContingenciaManager.ts",
+      "exports": ["ContingenciaManager"],
+      "contratos": ["ContingenciaState", "ContingenciaConfig"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Ativa/desativa SVC-AN ou SVC-RS, resolve endpoints corretos",
+      "testeIntegracao": "ContingenciaManager.test.ts"
+    },
+    {
+      "id": "SvcEndpoints",
+      "modulo": "infrastructure/contingencia/SvcEndpoints.ts",
+      "exports": ["getSvcEndpoints", "getSvcType"],
+      "contratos": [],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "URLs SVC-AN e SVC-RS para homologacao e producao",
+      "testeIntegracao": "SvcEndpoints.test.ts"
+    },
+    {
+      "id": "XsdValidator",
+      "modulo": "infrastructure/validation/XsdValidator.ts",
+      "exports": ["XsdValidator"],
+      "contratos": ["ValidationResult", "ValidationError"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Validacao estrutural pre-voo + deteccao de XSDs locais",
+      "testeIntegracao": "XsdValidator.test.ts"
+    },
+    {
+      "id": "InutilizacaoXmlGenerator",
+      "modulo": "infrastructure/xml/InutilizacaoXmlGenerator.ts",
+      "exports": ["InutilizacaoXmlGenerator"],
+      "contratos": ["InutilizacaoInput"],
+      "dependenciasMinimas": ["xmlbuilder2"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "XML inutNFe valido com Id padded",
+      "testeIntegracao": "InutilizacaoXmlGenerator.test.ts"
+    },
+    {
+      "id": "StatusServicoXmlGenerator",
+      "modulo": "infrastructure/xml/StatusServicoXmlGenerator.ts",
+      "exports": ["StatusServicoXmlGenerator"],
+      "contratos": [],
+      "dependenciasMinimas": ["xmlbuilder2"],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "XML consStatServ com tpAmb e cUF",
+      "testeIntegracao": "StatusServicoXmlGenerator.test.ts"
+    },
+    {
+      "id": "InutilizacaoNFeUseCase",
+      "modulo": "application/InutilizacaoNFeUseCase.ts",
+      "exports": ["InutilizacaoNFeUseCase"],
+      "contratos": ["InutilizacaoResult"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Inutiliza faixa de numeracao via SEFAZ",
+      "testeIntegracao": "InutilizacaoNFe.test.ts"
+    },
+    {
+      "id": "StatusServicoUseCase",
+      "modulo": "application/StatusServicoUseCase.ts",
+      "exports": ["StatusServicoUseCase"],
+      "contratos": ["StatusServicoResult"],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Consulta status do servico SEFAZ (online/offline)",
+      "testeIntegracao": "StatusServico.test.ts"
+    },
+    {
+      "id": "NFeEngine",
+      "modulo": "NFeEngine.ts",
+      "exports": ["NFeEngine"],
+      "contratos": [],
+      "dependenciasMinimas": [],
+      "estado": "Implementado",
+      "evidenciaFuncionalExigida": "Facade unificada: emitir, cancelar, CC-e, consultar, inutilizar, status, DANFE, contingencia",
+      "testeIntegracao": "NFeEngine.test.ts"
+    }
+  ]
+}

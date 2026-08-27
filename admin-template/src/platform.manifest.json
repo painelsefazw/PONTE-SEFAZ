@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "1.0",
+  "project": {
+    "type": "admin_console",
+    "template": "clientes-api",
+    "templateVersion": "1.0"
+  },
+  "company": {
+    "id": "PONTE",
+    "name": "Ponte Fiscal",
+    "brandName": "Ponte Fiscal",
+    "cnpj": "00000000000000",
+    "uf": "MG"
+  },
+  "branding": {
+    "primary": "#4f46e5",
+    "secondary": "#312e81",
+    "accent": "#10b981",
+    "theme": "light"
+  },
+  "modules": {
+    "nfe": false,
+    "nfce": false,
+    "nfse": false,
+    "cte": false,
+    "mdfe": false
+  },
+  "features": {
+    "dashboard": true,
+    "users": false,
+    "reports": false,
+    "support": true
+  },
+  "support": {
+    "email": "",
+    "whatsapp": ""
+  },
+  "ui": {
+    "browserTitle": "Ponte Fiscal",
+    "loginMessage": "Console de clientes",
+    "footer": "Console administrativo da ponte fiscal."
+  }
+}

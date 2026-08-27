@@ -1,0 +1,73 @@
+{
+  "destinatario": {
+    "cnpj": "11222333000181",
+    "razaoSocial": "COMERCIAL FRUTAS NORTE LTDA",
+    "indIEDest": "1",
+    "ie": "0012345678901",
+    "endereco": {
+      "logradouro": "RUA DAS MANGAS",
+      "numero": "100",
+      "bairro": "CENTRO",
+      "codigoMunicipio": "3135050",
+      "nomeMunicipio": "JAIBA",
+      "uf": "MG",
+      "cep": "39508000"
+    }
+  },
+  "itens": [
+    {
+      "codigo": "001",
+      "descricao": "MANGA TOMMY ATKINS",
+      "ncm": "08045020",
+      "cfop": "5102",
+      "unidade": "KG",
+      "quantidade": "2.0000",
+      "valorUnitario": "5.00",
+      "icms": {
+        "origem": "0",
+        "cst": "00",
+        "modBC": "3",
+        "vBC": "10.00",
+        "pICMS": "18.00",
+        "vICMS": "1.80"
+      },
+      "pis": { "cst": "99" },
+      "cofins": { "cst": "99" }
+    },
+    {
+      "codigo": "002",
+      "descricao": "BANANA PRATA",
+      "ncm": "08039000",
+      "cfop": "5102",
+      "unidade": "KG",
+      "quantidade": "3.0000",
+      "valorUnitario": "3.00",
+      "icms": {
+        "origem": "0",
+        "cst": "00",
+        "modBC": "3",
+        "vBC": "9.00",
+        "pICMS": "18.00",
+        "vICMS": "1.62"
+      },
+      "pis": { "cst": "99" },
+      "cofins": { "cst": "99" }
+    }
+  ],
+  "pagamento": {
+    "formas": [
+      { "tipo": "01", "valor": "19.00" }
+    ]
+  },
+  "serie": "1",
+  "numero": "1",
+  "naturezaOperacao": "VENDA",
+  "finalidade": "1",
+  "tipoOperacao": "1",
+  "destino": "1",
+  "presenca": "1",
+  "modFrete": "9",
+  "informacoesAdicionais": {
+    "complementar": "Venda de frutas in natura"
+  }
+}

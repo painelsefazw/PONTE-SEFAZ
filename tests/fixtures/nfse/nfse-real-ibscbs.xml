@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NFSe xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">
+<infNFSe Id="NFS35306071252372968000142000000000776426070602320288">
+<xLocEmi>MOGI DAS CRUZES</xLocEmi>
+<xLocPrestacao>Mogi das Cruzes</xLocPrestacao>
+<nNFSe>7764</nNFSe>
+<cLocIncid>3530607</cLocIncid>
+<xLocIncid>Mogi das Cruzes</xLocIncid>
+<xTribNac>Medicina.</xTribNac>
+<verAplic>SilTecnologia_v1.00</verAplic>
+<ambGer>1</ambGer>
+<tpEmis>2</tpEmis>
+<cStat>100</cStat>
+<dhProc>2026-07-31T00:00:00-03:00</dhProc>
+<nDFSe>60232028</nDFSe>
+<emit>
+<CNPJ>52372968000142</CNPJ>
+<IM>17514</IM>
+<xNome>CENTRO DE ORTOPEDIA, FRATURAS E FISIOTERAPIA INTEGRADO LTDA</xNome>
+<enderNac>
+<xLgr>08780-10 - R BARAO DE JACEGUAI, 1657</xLgr>
+<nro>0</nro>
+<xBairro>CENTRO</xBairro>
+<cMun>3530607</cMun>
+<UF>SP</UF>
+<CEP>00878010</CEP>
+</enderNac>
+<fone>1140028922</fone>
+<email>contato@exemplo.com.br</email>
+</emit>
+<valores>
+<vBC>300.00</vBC>
+<pAliqAplic>3.00</pAliqAplic>
+<vISSQN>9.00</vISSQN>
+<vLiq>300.00</vLiq>
+</valores>
+<IBSCBS>
+<cLocalidadeIncid>3530607</cLocalidadeIncid>
+<xLocalidadeIncid>Mogi das Cruzes</xLocalidadeIncid>
+<valores>
+<vBC>291.00</vBC>
+<uf>
+<pIBSUF>0.10</pIBSUF>
+<pRedAliqUF>60.00</pRedAliqUF>
+<pAliqEfetUF>0.04</pAliqEfetUF>
+</uf>
+<mun>
+<pIBSMun>0.00</pIBSMun>
+<pRedAliqMun>60.00</pRedAliqMun>
+<pAliqEfetMun>0.00</pAliqEfetMun>
+</mun>
+<fed>
+<pCBS>0.90</pCBS>
+<pRedAliqCBS>60.00</pRedAliqCBS>
+<pAliqEfetCBS>0.36</pAliqEfetCBS>
+</fed>
+</valores>
+<totCIBS>
+<vTotNF>300.00</vTotNF>
+<gIBS>
+<vIBSTot>0.12</vIBSTot>
+<gIBSUFTot>
+<vIBSUF>0.12</vIBSUF>
+</gIBSUFTot>
+<gIBSMunTot>
+<vIBSMun>0.00</vIBSMun>
+</gIBSMunTot>
+</gIBS>
+<gCBS>
+<vCBS>1.05</vCBS>
+</gCBS>
+</totCIBS>
+</IBSCBS>
+<DPS versao="1.01">
+<infDPS Id="DPS353060725237296800014249998000000000007764">
+<tpAmb>1</tpAmb>
+<dhEmi>2026-07-31T00:00:00-03:00</dhEmi>
+<verAplic>SilTecnologia_v1.00</verAplic>
+<serie>49998</serie>
+<nDPS>7764</nDPS>
+<dCompet>2026-07-01</dCompet>
+<tpEmit>1</tpEmit>
+<cLocEmi>3530607</cLocEmi>
+<prest>
+<CNPJ>52372968000142</CNPJ>
+<IM>17514</IM>
+<fone>1140028922</fone>
+<email>contato@exemplo.com.br</email>
+<regTrib>
+<opSimpNac>1</opSimpNac>
+<regEspTrib>0</regEspTrib>
+</regTrib>
+</prest>
+<toma>
+<CPF>11144477735</CPF>
+<xNome>MARIA DA SILVA (FICTICIO)</xNome>
+<end>
+<endNac>
+<cMun>3530607</cMun>
+<CEP>08700000</CEP>
+</endNac>
+<xLgr>RUA DE TESTE</xLgr>
+<nro>331</nro>
+<xBairro>BAIRRO TESTE</xBairro>
+</end>
+</toma>
+<serv>
+<locPrest>
+<cLocPrestacao>3530607</cLocPrestacao>
+</locPrest>
+<cServ>
+<cTribNac>040101</cTribNac>
+<xDescServ>SEVIÇOS MEDICOS PRESTADOS.</xDescServ>
+<cNBS>123012200</cNBS>
+</cServ>
+</serv>
+<valores>
+<vServPrest>
+<vServ>300.00</vServ>
+</vServPrest>
+<trib>
+<tribMun>
+<tribISSQN>1</tribISSQN>
+<tpRetISSQN>1</tpRetISSQN>
+</tribMun>
+<tribFed/>
+<totTrib>
+<vTotTrib>
+<vTotTribFed>0.00</vTotTribFed>
+<vTotTribEst>0.00</vTotTribEst>
+<vTotTribMun>9.00</vTotTribMun>
+</vTotTrib>
+</totTrib>
+</trib>
+</valores>
+<IBSCBS>
+<finNFSe>0</finNFSe>
+<cIndOp>030101</cIndOp>
+<indDest>0</indDest>
+<valores>
+<trib>
+<gIBSCBS>
+<CST>200</CST>
+<cClassTrib>200029</cClassTrib>
+</gIBSCBS>
+</trib>
+</valores>
+</IBSCBS>
+</infDPS>
+</DPS>
+</infNFSe>
+</NFSe>
+

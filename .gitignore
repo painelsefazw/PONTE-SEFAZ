@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.pfx
+*.p12
+debug/
+output/
+coverage/
+.vercel

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0",
+  "project": {
+    "type": "fiscal_white_label",
+    "template": "fiscal-platform",
+    "templateVersion": "1.0"
+  },
+  "company": {
+    "id": "CLI_EXEMPLO",
+    "name": "SUA EMPRESA LTDA",
+    "brandName": "Sua Empresa",
+    "cnpj": "00000000000000",
+    "uf": "MG"
+  },
+  "branding": {
+    "primary": "#334155",
+    "secondary": "#1e293b",
+    "accent": "#10b981",
+    "theme": "light"
+  },
+  "modules": { "nfe": true, "nfce": false, "nfse": false, "cte": false, "mdfe": false },
+  "features": { "dashboard": true, "users": false, "reports": true, "support": true },
+  "support": {
+    "email": "",
+    "whatsapp": ""
+  },
+  "ui": {
+    "browserTitle": "Sua Empresa",
+    "loginMessage": "Bem-vindo",
+    "footer": "© 2026 Sua Empresa. Todos os direitos reservados."
+  }
+}

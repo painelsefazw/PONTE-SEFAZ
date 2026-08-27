@@ -1,0 +1,38 @@
+﻿{
+    "generatedAtUtc":  "2026-07-12T22:45:54Z",
+    "files":  {
+                  "nfe_v4.00.xsd":  {
+                                        "sizeBytes":  716,
+                                        "SHA-256":  "adce3646c13ceb54922ec3142fc1dc45bd4fb839ac35ad583e86c733c07d27df",
+                                        "name":  "nfe_v4.00.xsd",
+                                        "relativePath":  "nfe_v4.00.xsd"
+                                    },
+                  "xmldsig-core-schema_v1.01.xsd":  {
+                                                        "sizeBytes":  3747,
+                                                        "SHA-256":  "f56744a5f51c03f027de13f39f869307091781a9ef1d91b1ebe14719ce28e1ac",
+                                                        "name":  "xmldsig-core-schema_v1.01.xsd",
+                                                        "relativePath":  "xmldsig-core-schema_v1.01.xsd"
+                                                    },
+                  "DFeTiposBasicos_v1.00.xsd":  {
+                                                    "sizeBytes":  61958,
+                                                    "SHA-256":  "7fe1dbd89a1dd80826c5134c2406b7eb5df4fa7a9177c5aa6e72319caba7c6d2",
+                                                    "name":  "DFeTiposBasicos_v1.00.xsd",
+                                                    "relativePath":  "DFeTiposBasicos_v1.00.xsd"
+                                                },
+                  "tiposBasico_v4.00.xsd":  {
+                                                "sizeBytes":  22532,
+                                                "SHA-256":  "772619c85723e598840667ca66e7298a250442df47eeb94b397d2a333ce62047",
+                                                "name":  "tiposBasico_v4.00.xsd",
+                                                "relativePath":  "tiposBasico_v4.00.xsd"
+                                            },
+                  "leiauteNFe_v4.00.xsd":  {
+                                               "sizeBytes":  352527,
+                                               "SHA-256":  "598c71780cbc6b54f170464bd6d5538c2d01a99d987a1666b662d4e166b84bf7",
+                                               "name":  "leiauteNFe_v4.00.xsd",
+                                               "relativePath":  "leiauteNFe_v4.00.xsd"
+                                           }
+              },
+    "manifestVersion":  "1.0",
+    "logicalRoot":  "schemas",
+    "totalFiles":  5
+}
