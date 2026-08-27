@@ -366,8 +366,8 @@ body.modo-operador .fiscal-avancado { display: none !important; }
   </div>
   <div class="topbar-right">
     <span id="modoBadge" class="modo-badge contador escondido-na-revenda">CONTADOR</span>
-    <span id="sefazStatus" class="sefaz-status" onclick="checkSefaz()" style="cursor:pointer" title="Clique para atualizar">Verificando SEFAZ...</span>
-    <span id="ambientePill" class="status-pill hom" onclick="toggleAmbiente()" title="Clique para alternar ambiente">HOMOLOGACAO</span>
+    <span id="sefazStatus" class="sefaz-status escondido-na-revenda" onclick="checkSefaz()" style="cursor:pointer" title="Clique para atualizar">Verificando SEFAZ...</span>
+    <span id="ambientePill" class="status-pill hom escondido-na-revenda" onclick="toggleAmbiente()" title="Clique para alternar ambiente">HOMOLOGACAO</span>
     <button class="btn-logout" onclick="logout()" title="Sair">Sair</button>
   </div>
 </div>
@@ -1844,7 +1844,10 @@ body.modo-operador .fiscal-avancado { display: none !important; }
   <div class="section">
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
       <span>Clientes API</span>
-      <button class="btn btn-primary" onclick="showCadastroClienteApi()">+ Novo Cliente API</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="showCadastroClienteApi('api')" title="O cliente ja tem sistema e so quer credencial para integrar">+ Cliente por API</button>
+        <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Cliente com plataforma</button>
+      </div>
     </div>
     <div id="clientesApiDashboard" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
     <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -2013,19 +2016,7 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 <div class="container">
   <div class="section">
     <div class="section-title">Log de Auditoria</div>
-    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
-      <select id="auditActionFilter" onchange="loadAuditLog()" style="padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
-        <option value="">Todas as acoes</option>
-        <option value="client.created">Cliente criado</option>
-        <option value="client.status_changed">Status alterado</option>
-        <option value="service.activated">Servico ativado</option>
-        <option value="service.deactivated">Servico desativado</option>
-        <option value="webhook.created">Webhook criado</option>
-        <option value="whitelabel.saved">White-label salvo</option>
-        <option value="platform.generated">Plataforma gerada</option>
-        <option value="template.created">Template criado</option>
-      </select>
-    </div>
+    <div style="color:#6b7280;font-size:12px;margin-bottom:12px">O que foi feito em cada cliente, do mais recente para o mais antigo.</div>
     <div id="auditLogLista"><div class="hist-empty">Carregando...</div></div>
   </div>
 </div>
@@ -6748,15 +6739,31 @@ var WZ_SERVICOS = [
   { id: 'nfse', nome: 'NFS-e', desc: 'Nota fiscal de servico' }
 ];
 
-function showCadastroClienteApi() {
+/**
+ * Duas modalidades, dois botoes.
+ *
+ * `api` — o cliente ja tem sistema e so quer credencial para integrar.
+ * `plataforma` — o cliente recebe um site pronto, com a marca dele.
+ *
+ * Antes era um botao so, e a diferenca aparecia depois, num campo perdido no
+ * meio do cadastro. So que ela muda o que precisa ser preenchido e o que
+ * acontece depois: quem entra por API nunca vai ter marca, logo nem
+ * repositorio; quem entra por plataforma sem marca definida recebe um site
+ * sem identidade. Escolher na entrada e o que evita os dois.
+ */
+function showCadastroClienteApi(modalidade) {
+  var comPlataforma = modalidade === 'plataforma';
   wzCliente = {
     passo: 1, cnpj: '', razaoSocial: '', fantasia: '', municipio: '', uf: '',
     segmento: '', atividade: '', email: '', responsavel: '',
     plano: 'business', servicos: ['nfe'],
     certBase64: '', certNome: '', certSenha: '', manual: false,
-    ie: '', crt: '3', endereco: null
+    ie: '', crt: '3', endereco: null,
+    modalidade: comPlataforma ? 'plataforma' : 'api',
+    whiteLabelAtiva: comPlataforma
   };
-  document.getElementById('modalClienteTitulo').textContent = 'Novo Cliente API';
+  document.getElementById('modalClienteTitulo').textContent =
+    comPlataforma ? 'Novo cliente com plataforma' : 'Novo cliente por API';
   document.getElementById('modalClienteApiContent').innerHTML = wzRender();
   document.getElementById('modalClienteApi').style.display = 'block';
   var i = document.getElementById('wzCnpj');
@@ -7063,6 +7070,10 @@ async function wzSalvar() {
         plano: c.plano,
         responsavel: c.responsavel || undefined,
         emailTecnico: c.email || undefined,
+        // A modalidade escolhida no botao. Sem isto, o cliente cadastrado como
+        // "com plataforma" nascia identico ao de API e so virava white-label
+        // quando alguem lembrasse de marcar depois.
+        whiteLabelAtiva: c.whiteLabelAtiva === true,
         observacoes: obs.join(' | ') || undefined,
         // Vai junto do cadastro: sem isso a chave existe mas a nota nao monta.
         // Campo vazio sai como undefined para nao apagar dado ja gravado caso
@@ -9068,9 +9079,11 @@ async function publicarTemplate(id) {
 // ---------------------------------------------------------------------------
 
 async function loadAuditLog() {
-  var action = document.getElementById('auditActionFilter').value;
-  var qs = '?limite=50';
-  if (action) qs += '&action=' + encodeURIComponent(action);
+  // Sem filtro de acao: a pergunta que se faz aqui e "o que aconteceu NESTE
+  // cliente", nao "onde ja ativaram servico". Filtrar por acao respondia a
+  // segunda, que ninguem faz — e escondia a primeira, misturando todos os
+  // clientes numa lista unica.
+  var qs = '?limite=200';
   try {
     var r = await apiFetch('/api/admin/audit' + qs);
     renderAuditLog(listaDe(await r.json(), 'entries'));
@@ -9085,24 +9098,67 @@ function renderAuditLog(logs) {
     el.innerHTML = '<div class="hist-empty">Nenhum registro de auditoria</div>';
     return;
   }
-  var html = '<div style="max-height:600px;overflow-y:auto">';
+
+  // Agrupa por CNPJ. O log cru mistura todos os clientes numa lista so, e ai a
+  // pergunta que se faz de verdade — "o que andaram fazendo neste cliente" —
+  // exige ler tudo e filtrar com o olho.
+  var porEmpresa = {};
+  var ordem = [];
   logs.forEach(function(l) {
-    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:4px;font-size:12px">' +
-      '<div style="display:flex;justify-content:space-between">' +
-        '<span style="font-weight:600">' + escapeHtml(l.action || '') + '</span>' +
-        '<span style="color:#6b7280">' + new Date(l.createdAt || l.created_at).toLocaleString('pt-BR') + '</span>' +
-      '</div>' +
-      '<div style="color:#6b7280;margin-top:2px">' +
-        'Ator: ' + escapeHtml(l.actor || '—') +
-        (l.empresaCnpj || l.empresa_cnpj ? ' &middot; CNPJ: ' + (l.empresaCnpj || l.empresa_cnpj) : '') +
-        (l.entityType || l.entity_type ? ' &middot; ' + (l.entityType || l.entity_type) + (l.entityId || l.entity_id ? '#' + (l.entityId || l.entity_id) : '') : '') +
-      '</div>' +
-      (l.requestId || l.request_id ? '<div style="color:#9ca3af;margin-top:2px;font-family:monospace">' + (l.requestId || l.request_id) + '</div>' : '') +
-    '</div>';
+    var cnpj = l.empresaCnpj || l.empresa_cnpj || 'sistema';
+    if (!porEmpresa[cnpj]) { porEmpresa[cnpj] = []; ordem.push(cnpj); }
+    porEmpresa[cnpj].push(l);
+  });
+
+  var ROTULOS = {
+    'client.created': 'Cliente criado',
+    'client.status_changed': 'Status alterado',
+    'service.activated': 'Servico ativado',
+    'service.deactivated': 'Servico desativado',
+    'apikey.created': 'Chave gerada',
+    'apikey.revoked': 'Chave revogada',
+    'webhook.created': 'Webhook criado',
+    'whitelabel.saved': 'Marca salva',
+    'platform.generated': 'Plataforma gerada',
+    'platform.published': 'Plataforma publicada',
+    'danfe.marca.salva': 'Logo do DANFE salva',
+    'danfe.marca.removida': 'Logo do DANFE removida',
+    'instancia.publicada': 'Instancia publicada'
+  };
+  // Acoes que derrubam integracao de quem esta emitindo merecem destaque.
+  var GRAVES = { 'apikey.revoked': 1, 'client.status_changed': 1, 'service.deactivated': 1 };
+
+  var html = '<div style="max-height:640px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">';
+  ordem.forEach(function(cnpj) {
+    var itens = porEmpresa[cnpj];
+    var nome = itens[0].razaoSocial || itens[0].razao_social || (cnpj === 'sistema' ? 'Sistema' : formatarCnpj(cnpj));
+    html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">' +
+      '<div style="padding:10px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<span style="font-weight:600;font-size:13px">' + escapeHtml(nome) + '</span>' +
+        '<span style="color:#9ca3af;font-size:11px">' + itens.length + ' registro(s)</span>' +
+      '</div>';
+    itens.forEach(function(l) {
+      var acao = l.action || '';
+      var grave = GRAVES[acao];
+      html += '<div style="padding:9px 14px;border-top:1px solid #f3f4f6;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:12px">' +
+        '<span style="font-weight:600;color:' + (grave ? '#dc2626' : '#374151') + ';min-width:150px">' +
+          escapeHtml(ROTULOS[acao] || acao) + '</span>' +
+        '<span style="color:#6b7280;flex:1">' + escapeHtml(l.actor || '—') + '</span>' +
+        '<span style="color:#9ca3af">' + new Date(l.createdAt || l.created_at).toLocaleString('pt-BR') + '</span>' +
+      '</div>';
+    });
+    html += '</div>';
   });
   html += '</div>';
   el.innerHTML = html;
 }
+
+function formatarCnpj(v) {
+  var d = String(v || '').replace(/\D/g, '');
+  if (d.length !== 14) return v;
+  return d.slice(0,2) + '.' + d.slice(2,5) + '.' + d.slice(5,8) + '/' + d.slice(8,12) + '-' + d.slice(12);
+}
+
 </script>
 </body>
 </html>

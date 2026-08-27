@@ -1,1 +1,56 @@
-{"version":2,"regions":["gru1"],"builds":[{"src":"api/index.ts","use":"@vercel/node","config":{"includeFiles":["src/webapp/public/**","schemas/**","node_modules/xmllint-wasm/**","platform-template/**","admin-template/**","src/**","api/**","scripts/**","tests/**/*","database/**","schemas-nfse/**","package.json","package-lock.json","tsconfig.json","jest.config.js","Dockerfile","vercel.json","domain_models.ts","danfe-service/DanfePhpService.ts"],"maxDuration":60}}],"routes":[{"src":"/api/(.*)","dest":"/api/index.ts"},{"src":"/(.*)","dest":"/api/index.ts"}],"crons":[{"path":"/api/keepalive","schedule":"0 12 * * *"},{"path":"/api/cron/webhooks-retry","schedule":"0 6 * * *"}]}
+{
+  "version": 2,
+  "regions": [
+    "gru1"
+  ],
+  "builds": [
+    {
+      "src": "api/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "src/webapp/public/**",
+          "schemas/**",
+          "node_modules/xmllint-wasm/**",
+          "platform-template/**",
+          "admin-template/**",
+          "src/**",
+          "api/**",
+          "scripts/**",
+          "tests/**/*",
+          "database/**",
+          "schemas-nfse/**",
+          "package.json",
+          "package-lock.json",
+          "tsconfig.json",
+          "jest.config.js",
+          "Dockerfile",
+          "vercel.json",
+          "domain_models.ts",
+          "danfe-service/DanfePhpService.ts"
+        ],
+        "maxDuration": 60
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.ts"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.ts"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/webhooks-retry",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

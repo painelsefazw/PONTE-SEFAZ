@@ -55,6 +55,7 @@ import {
   escolherToken, SEM_TOKEN, CAMINHO_MANIFEST,
 } from './kit-plataforma';
 import { montarKitDaInstancia, urlDeDeployNaVercel, amarrarConsoleNaPonte, candidatosDeRaiz, discoEstaAtrasado } from './kit-instancia';
+import { MarcaDoDanfeStore, conferirLogo, normalizarPosicao } from './danfe-marca';
 
 // DANFE oficial (sped-da) via serviço PHP separado: quando DANFE_SERVICE_URL está
 // definido, o PDF vem do layout homologado; senão, usa o gerador simplificado.
@@ -86,8 +87,24 @@ async function gerarDanfePdf(opts: {
   let pdf: Buffer | undefined;
   if (DANFE_SERVICE_URL && opts.nfeProcXml) {
     try {
+      /**
+       * A logo sai do CNPJ do emitente, que ja esta dentro da nota.
+       *
+       * Poderia ser um parametro, mas seriam quatro pontos de chamada para
+       * lembrar de preencher — e o que fosse esquecido geraria DANFE sem logo
+       * em silencio, exatamente o defeito que isto veio corrigir. Tirando de
+       * dentro do documento, nao ha o que esquecer.
+       */
+      const emitente = String(opts.nfe?.emit?.CNPJ ?? '').replace(/\D/g, '');
+      let marca;
+      try {
+        const store = emitente ? await getMarcaDoDanfeStore() : null;
+        const achada = store ? await store.obter(emitente) : null;
+        if (achada) marca = { logoBase64: achada.logoBase64, posicao: achada.posicao };
+      } catch { /* sem logo o DANFE sai igual ao de antes — nao vale derrubar a nota */ }
+
       const svc = new DanfePhpService({ serviceUrl: DANFE_SERVICE_URL, serviceKey: DANFE_KEY, timeoutMs: 25000 });
-      pdf = await svc.generateFromXml(opts.nfeProcXml);
+      pdf = await svc.generateFromXml(opts.nfeProcXml, marca);
     } catch { /* cai no gerador simplificado abaixo */ }
   }
   if (!pdf) {
@@ -190,6 +207,30 @@ async function getNcmStore(): Promise<NcmStore> {
 // NFS-e: notas de serviço, numeração da DPS e catálogo de serviços (Postgres)
 let cachedNfseStore: NfseStore | null = null;
 let cachedNfeRecebidaStore: NfeRecebidaStore | null = null;
+
+/**
+ * A logomarca que sai no DANFE, por CNPJ do emitente.
+ *
+ * Devolve `null` sem banco em vez de lancar: a logo e enfeite do documento, e
+ * derrubar a emissao de uma nota fiscal porque a decoracao nao carregou seria
+ * trocar um problema pequeno por um grande.
+ */
+let cachedMarcaDanfe: MarcaDoDanfeStore | null = null;
+async function getMarcaDoDanfeStore(): Promise<MarcaDoDanfeStore | null> {
+  if (cachedMarcaDanfe) return cachedMarcaDanfe;
+  const dbUrl = urlDoBanco();
+  if (!dbUrl) return null;
+  const { Pool } = require('pg');
+  const local = /localhost|127\.0\.0\.1/.test(dbUrl);
+  const store = new MarcaDoDanfeStore(new Pool({
+    connectionString: dbUrl,
+    ssl: local ? undefined : { rejectUnauthorized: false },
+    max: 2,
+  }));
+  await store.init();
+  cachedMarcaDanfe = store;
+  return store;
+}
 
 async function getNfeRecebidaStore(): Promise<NfeRecebidaStore> {
   if (!cachedNfeRecebidaStore) {
@@ -2291,6 +2332,69 @@ app.get('/api/me', async (req, res) => {
     });
   } catch (err: any) {
     res.status(500).json({ erro: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// A logomarca que sai impressa no DANFE
+//
+// O quadro do emitente no DANFE tem espaco reservado para a logo desde sempre,
+// e a biblioteca que o desenha sabe preenche-lo. O que faltava era de onde
+// tirar a imagem: o XML da NF-e nao carrega figura nenhuma. Resultado — toda
+// nota de todo cliente saia com aquele espaco vazio, justamente no documento
+// que o cliente entrega ao cliente DELE.
+//
+// Resolvido pela empresa do pedido, e nao por um CNPJ no caminho: assim a
+// mesma rota serve ao painel (que escolhe a empresa no topo) e a plataforma do
+// cliente (que so alcanca a propria, pela chave de API).
+// ---------------------------------------------------------------------------
+app.get('/api/danfe/marca', async (req, res) => {
+  try {
+    const emp = await resolveEmpresa(req);
+    const store = await getMarcaDoDanfeStore();
+    if (!store) { res.json({ configurada: false, motivo: 'sem banco' }); return; }
+    const marca = await store.obter(emp.cnpj);
+    // A imagem VAI no corpo: a tela precisa mostrar a previa do que sera
+    // impresso, e mandar so "tem logo" obrigaria a uma segunda rota.
+    res.json({
+      configurada: Boolean(marca),
+      ...(marca ? { logoBase64: marca.logoBase64, posicao: marca.posicao, atualizadaEm: marca.atualizadaEm } : {}),
+    });
+  } catch (err: any) {
+    res.status(400).json({ erro: err.message });
+  }
+});
+
+app.post('/api/danfe/marca', async (req, res) => {
+  try {
+    const emp = await resolveEmpresa(req);
+    const logo = String(req.body?.logoBase64 ?? req.body?.logo ?? '');
+
+    const recusa = conferirLogo(logo);
+    if (recusa) { res.status(400).json(recusa); return; }
+
+    const store = await getMarcaDoDanfeStore();
+    if (!store) {
+      res.status(503).json({ erro: 'Guardar a logo exige banco configurado (NFE_DB_URL).' });
+      return;
+    }
+    await store.salvar(emp.cnpj, logo, req.body?.posicao);
+    registrarAudit('admin', 'danfe.marca.salva', emp.cnpj, { requestId: (req as any).requestId });
+    res.json({ sucesso: true, posicao: normalizarPosicao(req.body?.posicao) });
+  } catch (err: any) {
+    res.status(400).json({ erro: err.message });
+  }
+});
+
+app.delete('/api/danfe/marca', async (req, res) => {
+  try {
+    const emp = await resolveEmpresa(req);
+    const store = await getMarcaDoDanfeStore();
+    if (store) await store.remover(emp.cnpj);
+    registrarAudit('admin', 'danfe.marca.removida', emp.cnpj, { requestId: (req as any).requestId });
+    res.json({ sucesso: true });
+  } catch (err: any) {
+    res.status(400).json({ erro: err.message });
   }
 });
 
