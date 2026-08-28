@@ -7350,7 +7350,83 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '7. Email e Utilitarios',
+        nome: '7. Parametros do DANFE (logo e texto fixo)',
+        resumo: 'Duas coisas saem impressas no DANFE e NAO vem no XML da nota: a '
+          + 'logomarca do emitente e o texto fixo que a empresa repete em toda nota. '
+          + 'Sao guardadas por CNPJ e aplicadas em TODA geracao de DANFE — nao ha '
+          + 'parametro para passar na emissao.',
+        endpoints: [
+          {
+            metodo: 'GET', path: '/api/danfe/marca',
+            descricao: 'Ler a logo e o texto fixo do emitente. Com API Key, o CNPJ vem da chave.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/danfe/marca`,
+            response_sucesso: {
+              configurada: true, posicao: 'C', logoBase64: '/9j/4AAQSkZJRg...',
+              textoPadrao: 'Pagamento via PIX CNPJ 12.345.678/0001-90',
+              atualizadaEm: '2026-08-28T09:12:00.000Z',
+            },
+          },
+          {
+            metodo: 'POST', path: '/api/danfe/marca',
+            descricao: 'Gravar logo, posicao e/ou texto fixo. Campo ausente NAO apaga o que ja '
+              + 'estava — logo e texto sao salvos em telas separadas, e um nao pode derrubar o outro.',
+            campos: [
+              {
+                nome: 'logoBase64', tipo: 'string (base64)', obrigatorio: false,
+                descricao: 'A imagem SEM o prefixo `data:` (o prefixo tambem e aceito e removido). '
+                  + 'ENVIE JPG: o servico que desenha o DANFE roda num PHP sem a extensao `gd`, '
+                  + 'e sem ela a biblioteca falha em qualquer PNG, com ou sem transparencia. '
+                  + 'String vazia REMOVE a logo. Limite de 400 KB.',
+              },
+              {
+                nome: 'posicao', tipo: "'L' | 'C' | 'R'", obrigatorio: false,
+                descricao: 'Onde a logo fica no quadro do emitente: esquerda, centro ou direita. '
+                  + 'Qualquer outro valor vira `L`. Logo quadrada costuma ficar melhor em `C`, '
+                  + 'porque em `L`/`R` ela come metade da largura e aperta a razao social.',
+              },
+              {
+                nome: 'textoPadrao', tipo: 'string', obrigatorio: false,
+                descricao: 'Sai em "Informacoes complementares", somado ao texto do pedido. '
+                  + 'Limite de 2000 caracteres: o campo `infCpl` do leiaute 4.00 vai ate 5000 e '
+                  + 'e dividido com o texto da emissao e o demonstrativo de IBS/CBS. '
+                  + 'String vazia REMOVE o texto.',
+              },
+            ],
+            curl_exemplo: `curl -s -X POST \\
+  -H "x-api-key: SUA_CHAVE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+  "posicao": "C",
+  "textoPadrao": "Pagamento via PIX CNPJ 12.345.678/0001-90"
+}' ${BASE}/api/danfe/marca`,
+            response_sucesso: { sucesso: true, posicao: 'C' },
+            response_erro: {
+              erro: 'PNG nao e desenhado no DANFE. Envie JPG.',
+              comoResolver: 'Salve a logo como JPG sobre fundo branco — o DANFE e impresso em '
+                + 'papel branco, entao a transparencia nao mudaria o resultado.',
+            },
+          },
+          {
+            metodo: 'DELETE', path: '/api/danfe/marca',
+            descricao: 'Apagar logo e texto fixo do emitente de uma vez.',
+            curl_exemplo: `curl -s -X DELETE -H "x-api-key: SUA_CHAVE" ${BASE}/api/danfe/marca`,
+            response_sucesso: { sucesso: true },
+          },
+          {
+            metodo: 'GET', path: '/api/nota/{chave}/danfe',
+            descricao: 'Baixar o DANFE em PDF, ja com a logo e o texto fixo aplicados.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/nota/CHAVE_44_DIGITOS/danfe -o danfe.pdf`,
+          },
+        ],
+        avisos: [
+          'Se a logo falhar por qualquer motivo, o DANFE sai SEM ela — documento fiscal sem '
+          + 'enfeite serve; documento que nao sai, nao.',
+          'O texto fixo entra no XML na emissao, entao ele vale para a nota inteira: aparece no '
+          + 'DANFE e tambem em qualquer visualizador que leia o XML.',
+        ],
+      },
+      {
+        nome: '8. Email e Utilitarios',
         endpoints: [
           {
             metodo: 'POST', path: '/api/enviar-email',

@@ -30,10 +30,32 @@ describe('alinhamento em colunas', () => {
   test('a linha da lista de clientes e uma grade, nao um space-between', () => {
     const fn = bloco('function renderClientesLista(');
     expect(fn).toContain('display:grid');
-    expect(fn).toMatch(/grid-template-columns:minmax\(0,1fr\) \d+px \d+px \d+px/);
+    // Cinco colunas: logo | nome (elastico) | modalidade | marca | situacao.
+    expect(fn).toMatch(/grid-template-columns:\d+px minmax\(0,1fr\) \d+px \d+px \d+px/);
     expect(fn).not.toContain('justify-content:space-between');
     // O nome corta com reticencias em vez de empurrar as colunas.
     expect(fn).toContain('text-overflow:ellipsis');
+  });
+
+  test('a logo do cliente abre a linha, e as iniciais cobrem quem nao tem', () => {
+    // Numa lista de trinta linhas de texto o olho nao acha ninguem: todas sao
+    // "RAZAO SOCIAL LTDA" com um CNPJ embaixo. A logo e o que faz reconhecer o
+    // cliente antes de ler o nome — e e a MESMA que sai no DANFE, nao uma
+    // segunda imagem para manter.
+    const fn = bloco('function renderClientesLista(');
+    expect(fn).toContain("'<div id=\"logoCli-' + c.empresaCnpj");
+    expect(fn).toContain('iniciaisDaEmpresa(');
+
+    // Ela chega DEPOIS da lista: base64 de trinta logos no mesmo JSON
+    // transformaria a abertura da tela numa transferencia de megabytes.
+    expect(painel).toContain('function carregarLogosDosClientes(');
+    expect(painel).toContain('_logosDeClientes');
+
+    // As iniciais ignoram o tipo societario — "LTDA" e "ME" aparecem em
+    // metade dos cadastros e nao distinguem ninguem.
+    const ini = bloco('function iniciaisDaEmpresa(');
+    expect(ini).toContain("'LTDA'");
+    expect(ini).toContain("'EIRELI'");
   });
 
   test('a coluna vazia continua existindo', () => {

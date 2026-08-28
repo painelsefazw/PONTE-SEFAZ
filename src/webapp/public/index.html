@@ -7541,12 +7541,27 @@ function renderClientesLista(clients, total) {
     html += '<div onclick="abrirDetalheCliente(\'' + c.empresaCnpj + '\')" ' +
         'style="background:var(--cartao);border:1px solid var(--borda);border-radius:10px;' +
         'padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s;' +
-        'display:grid;grid-template-columns:minmax(0,1fr) 108px 108px 132px;' +
+        'display:grid;grid-template-columns:44px minmax(0,1fr) 108px 108px 132px;' +
         'align-items:center;gap:12px" ' +
         'onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" ' +
         'onmouseout="this.style.boxShadow=\'none\'">' +
 
-      // Coluna 1 — quem e o cliente.
+      // Coluna 1 — a marca do cliente.
+      //
+      // Numa lista de trinta linhas de texto, o olho nao acha ninguem: todas
+      // sao "RAZAO SOCIAL LTDA" com um CNPJ embaixo. A logo e o que faz a
+      // pessoa reconhecer o cliente antes de ler o nome. Vem da MESMA imagem
+      // que sai impressa no DANFE — nao ha uma segunda para manter.
+      //
+      // Sem logo, as iniciais: um quadrado vazio seria pior que nenhum.
+      '<div id="logoCli-' + c.empresaCnpj + '" title="Logo que sai no DANFE" ' +
+        'style="width:36px;height:36px;border-radius:8px;border:1px solid var(--borda);' +
+        'background:var(--suave);display:flex;align-items:center;justify-content:center;' +
+        'overflow:hidden;font-size:12px;font-weight:700;color:var(--suave-texto)">' +
+        iniciaisDaEmpresa(c.razaoSocial || c.fantasia || '') +
+      '</div>' +
+
+      // Coluna 2 — quem e o cliente.
       '<div style="min-width:0">' +
         '<div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;' +
           'white-space:nowrap">' + (c.razaoSocial || c.empresaCnpj) + '</div>' +
@@ -7558,24 +7573,76 @@ function renderClientesLista(clients, total) {
         '</div>' +
       '</div>' +
 
-      // Coluna 2 — modalidade. So aparece quando a lista MISTURA as duas:
+      // Coluna 3 — modalidade. So aparece quando a lista MISTURA as duas:
       // dentro da aba "Por API", dizer "API" em cada linha e repetir o titulo
       // seis vezes. A coluna fica vazia, e nao some, para o resto nao deslizar.
       '<div>' + (c.modalidade && c.modalidade !== _modalidadeAtiva
         ? seloModalidade(c.modalidade) : '') + '</div>' +
 
-      // Coluna 3 — marca propria. Independente da modalidade: cliente de API
+      // Coluna 4 — marca propria. Independente da modalidade: cliente de API
       // pode ter a logo dele no DANFE.
       '<div>' + (c.whiteLabelAtiva
         ? selo('Marca própria', 'var(--roxo-fundo)', 'var(--roxo-tinta)',
                'Usa identidade visual própria') : '') + '</div>' +
 
-      // Coluna 4 — situacao. A ultima porque e a que se procura primeiro
+      // Coluna 5 — situacao. A ultima porque e a que se procura primeiro
       // quando se varre a lista de cima a baixo.
       '<div>' + selo(statusLabel, tingir(statusColor), statusColor) + '</div>' +
     '</div>';
   });
   el.innerHTML = html;
+  carregarLogosDosClientes(clients.map(function(c) { return c.empresaCnpj; }));
+}
+
+/** O que ja foi buscado, para nao repetir a cada redesenho da lista. */
+var _logosDeClientes = {};
+
+/**
+ * Preenche as logos DEPOIS que a lista aparece.
+ *
+ * Nao vem junto da listagem de proposito: a logo e uma imagem em base64, e
+ * trinta delas no mesmo JSON transformam a abertura da tela numa transferencia
+ * de alguns megabytes. Assim a lista aparece na hora e as marcas entram
+ * conforme chegam — que e o comportamento certo para algo decorativo.
+ */
+async function carregarLogosDosClientes(cnpjs) {
+  for (var i = 0; i < cnpjs.length; i++) {
+    var cnpj = cnpjs[i];
+    var caixa = document.getElementById('logoCli-' + cnpj);
+    if (!caixa) continue;
+
+    if (_logosDeClientes[cnpj] === undefined) {
+      try {
+        var r = await apiFetch('/api/danfe/marca', { headers: cabecalhoDaEmpresa(cnpj) });
+        var m = r.ok ? await r.json() : {};
+        _logosDeClientes[cnpj] = m.logoBase64 || null;
+      } catch (e) {
+        // Sem logo a lista continua inteira — iniciais bastam.
+        _logosDeClientes[cnpj] = null;
+      }
+    }
+
+    var b64 = _logosDeClientes[cnpj];
+    if (!b64) continue;
+    // JPEG comeca com FF D8 FF, que em base64 e sempre "/9j/".
+    var tipo = b64.indexOf('/9j/') === 0 ? 'image/jpeg' : 'image/png';
+    caixa.innerHTML = '<img src="data:' + tipo + ';base64,' + b64 + '" alt="" ' +
+      'style="width:100%;height:100%;object-fit:contain;background:#fff">';
+  }
+}
+
+/**
+ * As iniciais, para quando nao ha logo.
+ *
+ * Duas letras da razao social, ignorando o tipo societario — "LTDA" e "ME"
+ * aparecem em metade dos cadastros e nao distinguem ninguem.
+ */
+function iniciaisDaEmpresa(nome) {
+  var ignorar = ['LTDA', 'ME', 'EIRELI', 'SA', 'S/A', 'EPP', 'MEI', 'E', 'DE', 'DO', 'DA'];
+  var partes = String(nome || '').toUpperCase().split(/\s+/)
+    .filter(function(p) { return p && ignorar.indexOf(p) === -1; });
+  if (!partes.length) return '—';
+  return (partes[0][0] + (partes[1] ? partes[1][0] : '')).slice(0, 2);
 }
 
 // `formatarCnpj` fica adiante, junto da auditoria. Havia duas declaracoes com
