@@ -16,6 +16,7 @@ import { Route as PainelDashboardRouteImport } from './routes/_painel.dashboard'
 import { Route as PainelDestinatariosRouteImport } from './routes/_painel.destinatarios'
 import { Route as PainelFiscalRouteImport } from './routes/_painel.fiscal'
 import { Route as PainelRelatoriosRouteImport } from './routes/_painel.relatorios'
+import { Route as PainelParametrosRouteImport } from './routes/_painel.parametros'
 import { Route as PainelSuporteRouteImport } from './routes/_painel.suporte'
 import { Route as PainelNfceIndexRouteImport } from './routes/_painel.nfce.index'
 import { Route as PainelNfceIdRouteImport } from './routes/_painel.nfce.$id'
@@ -62,6 +63,11 @@ const PainelFiscalRoute = PainelFiscalRouteImport.update({
 const PainelRelatoriosRoute = PainelRelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
+  getParentRoute: () => PainelRoute,
+} as any)
+const PainelParametrosRoute = PainelParametrosRouteImport.update({
+  id: '/parametros',
+  path: '/parametros',
   getParentRoute: () => PainelRoute,
 } as any)
 const PainelSuporteRoute = PainelSuporteRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/destinatarios': typeof PainelDestinatariosRoute
   '/fiscal': typeof PainelFiscalRoute
   '/relatorios': typeof PainelRelatoriosRoute
+  '/parametros': typeof PainelParametrosRoute
   '/suporte': typeof PainelSuporteRoute
   '/nfce/$id': typeof PainelNfceIdRoute
   '/nfce/emitir': typeof PainelNfceEmitirRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/destinatarios': typeof PainelDestinatariosRoute
   '/fiscal': typeof PainelFiscalRoute
   '/relatorios': typeof PainelRelatoriosRoute
+  '/parametros': typeof PainelParametrosRoute
   '/suporte': typeof PainelSuporteRoute
   '/nfce/$id': typeof PainelNfceIdRoute
   '/nfce/emitir': typeof PainelNfceEmitirRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_painel/destinatarios': typeof PainelDestinatariosRoute
   '/_painel/fiscal': typeof PainelFiscalRoute
   '/_painel/relatorios': typeof PainelRelatoriosRoute
+  '/_painel/parametros': typeof PainelParametrosRoute
   '/_painel/suporte': typeof PainelSuporteRoute
   '/_painel/nfce/$id': typeof PainelNfceIdRoute
   '/_painel/nfce/emitir': typeof PainelNfceEmitirRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/destinatarios'
     | '/fiscal'
     | '/relatorios'
+    | '/parametros'
     | '/suporte'
     | '/nfce/$id'
     | '/nfce/emitir'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/destinatarios'
     | '/fiscal'
     | '/relatorios'
+    | '/parametros'
     | '/suporte'
     | '/nfce/$id'
     | '/nfce/emitir'
@@ -247,6 +258,7 @@ export interface FileRouteTypes {
     | '/_painel/destinatarios'
     | '/_painel/fiscal'
     | '/_painel/relatorios'
+    | '/_painel/parametros'
     | '/_painel/suporte'
     | '/_painel/nfce/$id'
     | '/_painel/nfce/emitir'
@@ -316,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/relatorios'
       fullPath: '/relatorios'
       preLoaderRoute: typeof PainelRelatoriosRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/_painel/parametros': {
+      id: '/_painel/parametros'
+      path: '/parametros'
+      fullPath: '/parametros'
+      preLoaderRoute: typeof PainelParametrosRouteImport
       parentRoute: typeof PainelRoute
     }
     '/_painel/suporte': {
@@ -418,6 +437,7 @@ interface PainelRouteChildren {
   PainelDestinatariosRoute: typeof PainelDestinatariosRoute
   PainelFiscalRoute: typeof PainelFiscalRoute
   PainelRelatoriosRoute: typeof PainelRelatoriosRoute
+  PainelParametrosRoute: typeof PainelParametrosRoute
   PainelSuporteRoute: typeof PainelSuporteRoute
   PainelNfceIdRoute: typeof PainelNfceIdRoute
   PainelNfceEmitirRoute: typeof PainelNfceEmitirRoute
@@ -439,6 +459,7 @@ const PainelRouteChildren: PainelRouteChildren = {
   PainelDestinatariosRoute: PainelDestinatariosRoute,
   PainelFiscalRoute: PainelFiscalRoute,
   PainelRelatoriosRoute: PainelRelatoriosRoute,
+  PainelParametrosRoute: PainelParametrosRoute,
   PainelSuporteRoute: PainelSuporteRoute,
   PainelNfceIdRoute: PainelNfceIdRoute,
   PainelNfceEmitirRoute: PainelNfceEmitirRoute,

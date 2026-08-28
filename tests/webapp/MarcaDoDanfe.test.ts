@@ -1,10 +1,20 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { conferirLogo, normalizarPosicao, LIMITE_DA_LOGO } from '../../src/webapp/danfe-marca';
+import {
+  conferirLogo, conferirTextoPadrao, normalizarPosicao,
+  LIMITE_DA_LOGO, LIMITE_DO_TEXTO,
+} from '../../src/webapp/danfe-marca';
 
-/** Um PNG de 1x1 — bytes reais, com a assinatura que a biblioteca procura. */
+/** PNGs de 1x1 reais — cabecalho IHDR de verdade, gerado com CRC valido. */
 const PNG_1X1 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC';
+/** O mesmo PNG, mas RGBA — o formato em que quase toda logo e exportada. */
+const PNG_COM_ALFA =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const PNG_ENTRELACADO =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAAHncGNIAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC';
+const PNG_16_BITS =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABEAIAAADA54+dAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC';
 /** Um JPEG minimo — basta comecar com FF D8 FF para o teste de formato. */
 const JPG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64)]).toString('base64');
 
@@ -58,6 +68,31 @@ describe('conferir a logo antes de guardar', () => {
     expect(recusa.comoResolver).toMatch(/600x200|600×200/);
   });
 
+  /**
+   * O runtime PHP da Vercel nao tem `gd` — e nao e configuracao: a extensao nao
+   * existe em versao nenhuma do runtime. Sem ela a imagem vai direto para o
+   * FPDF, que e de uma geracao que recusa estes tres casos.
+   *
+   * O que torna isto grave e o MODO da falha: a nota sai autorizada, correta,
+   * so que sem a logo. Ninguem abre chamado para isso — o cliente so conclui
+   * que a plataforma nao faz logo.
+   */
+  test('recusa PNG com transparencia, que e como quase toda logo e exportada', () => {
+    const recusa = conferirLogo(PNG_COM_ALFA)!;
+    expect(recusa.erro).toMatch(/transpar/i);
+    expect(recusa.comoResolver).toMatch(/JPG/);
+  });
+
+  test('recusa PNG entrelacado e de 16 bits pelo mesmo motivo', () => {
+    expect(conferirLogo(PNG_ENTRELACADO)!.erro).toMatch(/entrelac/i);
+    expect(conferirLogo(PNG_16_BITS)!.erro).toMatch(/16 bits/i);
+  });
+
+  test('PNG comum continua passando', () => {
+    // A recusa e dos tres casos que o FPDF nao desenha, nao de PNG.
+    expect(conferirLogo(PNG_1X1)).toBeNull();
+  });
+
   test('o limite tem folga para uma logo de verdade', () => {
     // 400 KB comporta um PNG de 600x200 com sobra — o objetivo e barrar o
     // arquivo de camera, nao a logo caprichada.
@@ -78,6 +113,36 @@ describe('posicao da logo no quadro', () => {
     for (const ruim of ['X', '', null, undefined, 42, 'esquerda']) {
       expect(normalizarPosicao(ruim as unknown)).toBe('L');
     }
+  });
+});
+
+/**
+ * O texto fixo da empresa.
+ *
+ * O outro lado do mesmo buraco: a frase que sai em toda nota — dados
+ * bancarios, garantia, o aviso que a contabilidade exige — ou era redigitada a
+ * cada emissao (e um dia esquecida), ou virava regra dentro do ERP do cliente,
+ * que nao e lugar dela.
+ */
+describe('texto fixo que acompanha a nota', () => {
+  test('texto normal passa', () => {
+    expect(conferirTextoPadrao('Pagamento via PIX. Garantia de 90 dias.')).toBeNull();
+    expect(conferirTextoPadrao('')).toBeNull();
+    expect(conferirTextoPadrao(undefined)).toBeNull();
+  });
+
+  test('recusa texto acima do limite, citando a rejeicao', () => {
+    // infCpl vai ate 5000 no leiaute 4.00 — passar disso e rejeicao 215 na
+    // SEFAZ, e a nota nao sai. Barrar aqui e barato; descobrir na emissao nao.
+    const recusa = conferirTextoPadrao('x'.repeat(LIMITE_DO_TEXTO + 1))!;
+    expect(recusa.erro).toMatch(/limite/i);
+    expect(recusa.comoResolver).toMatch(/215/);
+  });
+
+  test('o limite deixa espaco para o texto do pedido e o demonstrativo', () => {
+    // Os 5000 caracteres nao sao so do texto fixo: dividem-se com o que vem na
+    // emissao e com o destaque obrigatorio de IBS/CBS.
+    expect(LIMITE_DO_TEXTO).toBeLessThan(5000);
   });
 });
 
@@ -118,6 +183,50 @@ describe('o caminho ate o PDF', () => {
     // Sem isso, cada nota emitida deixa um arquivo para tras no container.
     expect(php).toContain('finally');
     expect(php).toContain('@unlink($arquivoDaLogo)');
+  });
+
+  test('o texto fixo entra na nota, nao no PDF', () => {
+    // O PDF e desenhado a partir do XML. Um texto injetado so na hora de
+    // imprimir sairia no papel e nao no documento fiscal — dois conteudos
+    // diferentes para a mesma nota, que e exatamente o que nao pode.
+    expect(appTs).toMatch(/comTextoPadraoDoDanfe\(\s*[\r\n]?\s*normalizarInfoAdicionais/);
+  });
+
+  test('o texto do pedido vem antes do fixo', () => {
+    // O especifico daquela nota vale mais que o recado padrao; invertido, o
+    // aviso da nota fica no fim de um paragrafo que ninguem le.
+    expect(appTs).toContain('doPedido ? `${doPedido} | ${padrao}` : padrao');
+  });
+
+  test('salvar so o texto nao apaga a logo', () => {
+    // As duas coisas sao salvas em abas separadas. Se um corpo sem logo
+    // limpasse a logo, o cliente so descobriria no DANFE seguinte.
+    expect(appTs).toContain('const veioLogo =');
+    expect(appTs).toMatch(/logoBase64: logo,/);
+  });
+
+  test('configurar a logo nao exige poder emitir', () => {
+    // `resolveEmpresa` lanca quando falta certificado ou cadastro fiscal — e o
+    // cliente recem-criado, que e quem se quer configurar, e justamente esse.
+    expect(appTs).toContain('async function cnpjDosParametros');
+    expect(appTs).toMatch(/if \(travado\) return String\(travado\)/);
+  });
+
+  test('as duas telas achatam a imagem antes de enviar', () => {
+    // Recusar PNG com alfa no servidor protege quem chama a API, mas seria uma
+    // parede na cara de quem so quer subir a logo da empresa — e a logo da
+    // empresa TEM alfa. As telas convertem para JPEG sobre branco, que e a cor
+    // do papel: o usuario nao precisa saber que existe um FPDF do outro lado.
+    const painel = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'src', 'webapp', 'public', 'index.html'), 'utf8');
+    const plataforma = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'platform-template', 'src', 'routes',
+        '_painel.parametros.tsx'), 'utf8');
+    for (const tela of [painel, plataforma]) {
+      expect(tela).toContain('achatarParaJpeg');
+      expect(tela).toMatch(/toDataURL\(['"]image\/jpeg['"]/);
+      expect(tela).toMatch(/fillStyle = ['"]#ffffff['"]/);
+    }
   });
 
   test('o JSON so e lido quando o cliente diz que e JSON', () => {

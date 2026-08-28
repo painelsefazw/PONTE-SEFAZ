@@ -1,7 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type ReactNode } from "react";
-import { BarChart3, BookOpen, FileText, LayoutDashboard, LifeBuoy, LogOut, Menu, Package, ReceiptText, Satellite, Settings, ShoppingCart, Truck, Users, X } from "lucide-react";
+import { BarChart3, BookOpen, FileText, LayoutDashboard, LifeBuoy, LogOut, Menu, Package, ReceiptText, Satellite, Settings, ShoppingCart, Stamp, Truck, Users, X } from "lucide-react";
 import { manifest, formatCnpj, logoEscura, marca, moduloAtivo, rodape } from "@/lib/manifest";
 import { sair } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,10 @@ const nav = [
   // que era, alias, o unico jeito de cadastrar NBS e tributacao nacional.
   { to: "/fiscal", label: "Cadastro fiscal", icon: Package, modulos: ["nfe", "nfce", "nfse"] },
   { to: "/relatorios", label: "Relat\u00f3rios", icon: BarChart3 },
+  // O que sai impresso no papel: a logo do quadro do emitente e o texto fixo.
+  // S\u00f3 faz sentido para quem emite documento com DANFE \u2014 a NFS-e tem layout
+  // pr\u00f3prio, definido pela prefeitura, e nada disto a alcan\u00e7a.
+  { to: "/parametros", label: "Par\u00e2metros do DANFE", icon: Stamp, modulos: ["nfe", "nfce"] },
   { to: "/configuracoes", label: "Configura\u00e7\u00f5es", icon: Settings },
   { to: "/suporte", label: "Suporte", icon: LifeBuoy },
 ]

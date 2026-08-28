@@ -2752,8 +2752,12 @@ async function apiFetch(url, options) {
   opts.headers = Object.assign({}, opts.headers || {});
   var senha = getSenha();
   if (senha) opts.headers['x-api-key'] = senha;
+  // A empresa selecionada no topo e o padrao, nao uma imposicao: telas que
+  // agem sobre OUTRO CNPJ — a ficha de um cliente, por exemplo — mandam o
+  // cabecalho junto, e ele tem de valer. Antes o padrao sobrescrevia, e a
+  // configuracao ia parar na empresa errada sem nenhum aviso.
   var empresa = localStorage.getItem('nfe_empresa_cnpj');
-  if (empresa) opts.headers['x-empresa-cnpj'] = empresa;
+  if (empresa && !opts.headers['x-empresa-cnpj']) opts.headers['x-empresa-cnpj'] = empresa;
   var res = await fetch(url, opts);
   if (res.status === 401) {
     return new Promise(function(resolve) {
@@ -6684,10 +6688,9 @@ function renderClientesLista(clients, total) {
   el.innerHTML = html;
 }
 
-function formatarCnpj(cnpj) {
-  if (!cnpj || cnpj.length !== 14) return cnpj;
-  return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
-}
+// `formatarCnpj` fica adiante, junto da auditoria. Havia duas declaracoes com
+// esse nome: como declaracao de funcao sobe e a ultima vence, toda a tela ja
+// usava a de baixo — esta aqui era codigo morto que so aparentava estar vivo.
 
 // ===================== Assistente de novo cliente API =====================
 // O cadastro antigo pedia ~28 campos digitados. Aqui o CNPJ busca tudo na
@@ -7467,6 +7470,191 @@ function divergenciaPlanoHtml(div, cnpj) {
   '</div>';
 }
 
+
+// ---------------------------------------------------------------------------
+// Parametros do DANFE: a logo do quadro do emitente e o texto fixo da nota.
+//
+// Os dois campos que o XML nao carrega e que, por isso, nunca chegavam ao
+// papel. Ficam aqui na ficha do cliente, e no proprio site dele quando ha
+// template — as duas telas falam com a mesma rota, resolvida pelo CNPJ do
+// cabecalho, entao nao ha dois lugares para manter.
+// ---------------------------------------------------------------------------
+var POSICOES_DA_LOGO = [['L', 'Esquerda'], ['C', 'Centro'], ['R', 'Direita']];
+var LIMITE_DA_LOGO = 400 * 1024;
+var LIMITE_DO_TEXTO_DANFE = 2000;
+
+function cabecalhoDaEmpresa(cnpj) {
+  return { 'x-empresa-cnpj': String(cnpj).replace(/\D/g, '') };
+}
+
+async function carregarParametrosDanfe(cnpj) {
+  var el = document.getElementById('danfeParams-' + cnpj);
+  if (!el) return;
+  var m = {};
+  try {
+    var res = await apiFetch('/api/danfe/marca', { headers: cabecalhoDaEmpresa(cnpj) });
+    m = await res.json();
+  } catch (e) {
+    el.innerHTML = '<span style="color:#ef4444">Nao foi possivel ler os parametros.</span>';
+    return;
+  }
+  if (m && m.erro) {
+    el.innerHTML = '<span style="color:#ef4444">' + escapeHtml(m.erro) + '</span>';
+    return;
+  }
+
+  var pos = m.posicao || 'L';
+  var previa = m.logoBase64
+    // JPEG comeca com FF D8 FF, que em base64 e sempre "/9j/".
+    ? '<img src="data:' + (m.logoBase64.indexOf('/9j/') === 0 ? 'image/jpeg' : 'image/png') +
+      ';base64,' + m.logoBase64 + '" alt="" ' +
+      'style="max-height:52px;max-width:150px;object-fit:contain">'
+    : '<span style="color:#9ca3af;font-size:12px">Sem logo</span>';
+
+  el.innerHTML =
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">' +
+      '<div style="flex:0 0 auto">' +
+        '<div style="display:flex;align-items:center;justify-content:center;width:170px;height:70px;' +
+          'border:1px dashed #d1d5db;border-radius:8px;background:#f9fafb;padding:6px">' + previa + '</div>' +
+        '<input type="file" id="danfeLogo-' + cnpj + '" accept="image/png,image/jpeg" style="display:none" ' +
+          'onchange="escolherLogoDanfe(\'' + cnpj + '\', this)">' +
+        '<div style="margin-top:6px;display:flex;gap:10px">' +
+          '<button class="btn btn-sm" onclick="document.getElementById(\'danfeLogo-' + cnpj + '\').click()">Escolher logo</button>' +
+          (m.logoBase64 ? '<button class="btn btn-sm" onclick="limparLogoDanfe(\'' + cnpj + '\')">Remover</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="flex:1 1 260px;min-width:240px">' +
+        '<label style="font-size:12px;color:#6b7280;display:block;margin-bottom:4px">Posicao no quadro do emitente</label>' +
+        '<select id="danfePos-' + cnpj + '" style="padding:7px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;width:100%">' +
+          POSICOES_DA_LOGO.map(function (o) {
+            return '<option value="' + o[0] + '"' + (o[0] === pos ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') +
+        '</select>' +
+        '<label style="font-size:12px;color:#6b7280;display:block;margin:10px 0 4px">' +
+          'Texto fixo (sai em Informacoes complementares, somado ao texto da emissao)</label>' +
+        '<textarea id="danfeTexto-' + cnpj + '" rows="4" maxlength="' + LIMITE_DO_TEXTO_DANFE + '" ' +
+          'placeholder="Ex.: Pagamento via PIX CNPJ ' + formatarCnpj(cnpj) + '" ' +
+          'style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical">' +
+          escapeHtml(m.textoPadrao || '') + '</textarea>' +
+        '<div style="margin-top:8px;display:flex;gap:10px;align-items:center">' +
+          '<button class="btn btn-sm btn-primary" onclick="salvarParametrosDanfe(\'' + cnpj + '\')">Salvar parametros</button>' +
+          '<span id="danfeMsg-' + cnpj + '" style="font-size:12px;color:#6b7280"></span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+/** Guarda a imagem escolhida ate o Salvar, para nao gravar a cada clique. */
+var _logoPendente = {};
+
+/**
+ * Achata a imagem em JPEG sobre fundo branco.
+ *
+ * O servico de DANFE roda no runtime PHP da Vercel, que nao tem a extensao
+ * `gd` — e nao ha como liga-la, ela nao existe em versao nenhuma do runtime.
+ * Sem `gd`, a imagem vai direto para o FPDF, que recusa PNG com transparencia,
+ * com 16 bits por canal ou entrelacado. E recusa em silencio: a nota sai
+ * autorizada, so que sem a logo.
+ *
+ * Converter aqui resolve os tres de uma vez e nao perde nada: o DANFE e
+ * impresso em papel branco, entao transparencia vira branco de qualquer jeito.
+ * De quebra o arquivo encolhe, e a logo viaja junto do XML em toda geracao.
+ */
+function achatarParaJpeg(arquivo) {
+  return new Promise(function (resolve, reject) {
+    var leitor = new FileReader();
+    leitor.onerror = function () { reject(new Error('Nao foi possivel ler o arquivo.')); };
+    leitor.onload = function () {
+      var img = new Image();
+      img.onerror = function () { reject(new Error('O arquivo nao e uma imagem valida.')); };
+      img.onload = function () {
+        // O quadro do emitente usa cerca de um terco da largura do DANFE.
+        // Acima de 900px de largura so se paga transferencia por pixel que a
+        // impressao nao mostra.
+        var escala = Math.min(1, 900 / (img.width || 1));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * escala));
+        c.height = Math.max(1, Math.round(img.height * escala));
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.92));
+      };
+      img.src = String(leitor.result);
+    };
+    leitor.readAsDataURL(arquivo);
+  });
+}
+
+async function escolherLogoDanfe(cnpj, input) {
+  var arquivo = input.files && input.files[0];
+  if (!arquivo) return;
+  var msg = document.getElementById('danfeMsg-' + cnpj);
+  // Conferir aqui evita subir 3 MB para receber a recusa depois. O servidor
+  // confere de novo — a tela nao e a autoridade.
+  if (!/^image\/(png|jpeg)$/.test(arquivo.type)) {
+    msg.style.color = '#ef4444';
+    msg.textContent = 'Use PNG ou JPG. SVG e WEBP nao sao desenhados no DANFE.';
+    return;
+  }
+  if (arquivo.size > LIMITE_DA_LOGO) {
+    msg.style.color = '#ef4444';
+    msg.textContent = 'A imagem tem ' + Math.round(arquivo.size / 1024) + ' KB e o limite e 400 KB.';
+    return;
+  }
+  try {
+    _logoPendente[cnpj] = await achatarParaJpeg(arquivo);
+    msg.style.color = '#6b7280';
+    msg.textContent = 'Imagem escolhida. Clique em Salvar parametros.';
+  } catch (e) {
+    msg.style.color = '#ef4444';
+    msg.textContent = e.message || 'Nao foi possivel preparar a imagem.';
+  }
+}
+
+async function limparLogoDanfe(cnpj) {
+  if (!confirm('Remover a logo deste cliente?')) return;
+  delete _logoPendente[cnpj];
+  await gravarParametrosDanfe(cnpj, { logoBase64: '' }, 'Logo removida.');
+}
+
+async function salvarParametrosDanfe(cnpj) {
+  var corpo = {
+    posicao: document.getElementById('danfePos-' + cnpj).value,
+    textoPadrao: document.getElementById('danfeTexto-' + cnpj).value
+  };
+  // Sem logo nova, o campo nem vai: mandar vazio apagaria a que ja esta la.
+  if (_logoPendente[cnpj]) corpo.logoBase64 = _logoPendente[cnpj];
+  await gravarParametrosDanfe(cnpj, corpo, 'Salvo. Vale para as notas emitidas a partir de agora.');
+}
+
+async function gravarParametrosDanfe(cnpj, corpo, sucesso) {
+  var msg = document.getElementById('danfeMsg-' + cnpj);
+  if (msg) { msg.style.color = '#6b7280'; msg.textContent = 'Salvando...'; }
+  try {
+    var res = await apiFetch('/api/danfe/marca', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, cabecalhoDaEmpresa(cnpj)),
+      body: JSON.stringify(corpo)
+    });
+    var r = await res.json();
+    if (!res.ok || r.erro) {
+      if (msg) {
+        msg.style.color = '#ef4444';
+        msg.textContent = (r.erro || 'Falhou.') + (r.comoResolver ? ' ' + r.comoResolver : '');
+      }
+      return;
+    }
+    delete _logoPendente[cnpj];
+    await carregarParametrosDanfe(cnpj);
+    var novo = document.getElementById('danfeMsg-' + cnpj);
+    if (novo) { novo.style.color = '#059669'; novo.textContent = sucesso; }
+  } catch (e) {
+    if (msg) { msg.style.color = '#ef4444'; msg.textContent = 'Falha de rede ao salvar.'; }
+  }
+}
+
 function renderDetalheCliente(cnpj) {
   var d = _clienteDetalhe;
   var c = d.cliente;
@@ -7614,6 +7802,13 @@ function renderDetalheCliente(cnpj) {
         '<div style="margin-top:8px"><button onclick="showAdicionarServico(\'' + cnpj + '\')" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-weight:600">+ Adicionar servico</button></div>' +
       '</div>' +
 
+      // O que sai impresso no papel. O XML da NF-e nao carrega logo nem o
+      // recado fixo da empresa, entao o DANFE de todo cliente saia com o quadro
+      // do emitente vazio — no documento que o cliente entrega ao cliente DELE.
+      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Parametros do DANFE</h4>' +
+        '<div id="danfeParams-' + cnpj + '" style="font-size:13px;color:#9ca3af">Carregando...</div>' +
+      '</div>' +
+
       '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Webhooks</h4>' + whHtml +
         '<div style="margin-top:8px"><button onclick="showCriarWebhook(\'' + cnpj + '\')" style="font-size:12px;color:#6366f1;background:none;border:none;cursor:pointer;font-weight:600">+ Adicionar webhook</button></div>' +
       '</div>' +
@@ -7636,6 +7831,11 @@ function renderDetalheCliente(cnpj) {
         '<button onclick="excluirClienteApi(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid #ef4444;color:#fff;background:#ef4444;border-radius:6px;font-size:12px;cursor:pointer;margin-left:auto">Excluir Cliente</button>' +
       '</div>' +
     '</div>';
+
+  // Depois do HTML no lugar: os parametros vem de outra rota e nao valem
+  // atrasar a ficha inteira. Sem `await` de proposito — a secao se preenche
+  // sozinha quando a resposta chegar.
+  carregarParametrosDanfe(cnpj);
 }
 
 function statusBtn(cnpj, current, target, label) {

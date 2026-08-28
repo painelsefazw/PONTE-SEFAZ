@@ -55,7 +55,7 @@ import {
   escolherToken, SEM_TOKEN, CAMINHO_MANIFEST,
 } from './kit-plataforma';
 import { montarKitDaInstancia, urlDeDeployNaVercel, amarrarConsoleNaPonte, candidatosDeRaiz, discoEstaAtrasado } from './kit-instancia';
-import { MarcaDoDanfeStore, conferirLogo, normalizarPosicao } from './danfe-marca';
+import { MarcaDoDanfeStore, conferirLogo, conferirTextoPadrao, normalizarPosicao } from './danfe-marca';
 
 // DANFE oficial (sped-da) via serviço PHP separado: quando DANFE_SERVICE_URL está
 // definido, o PDF vem do layout homologado; senão, usa o gerador simplificado.
@@ -100,7 +100,9 @@ async function gerarDanfePdf(opts: {
       try {
         const store = emitente ? await getMarcaDoDanfeStore() : null;
         const achada = store ? await store.obter(emitente) : null;
-        if (achada) marca = { logoBase64: achada.logoBase64, posicao: achada.posicao };
+        // Só a logo interessa aqui: o texto padrão já entrou no XML na
+        // emissão, e o DANFE o imprime a partir dele.
+        if (achada?.logoBase64) marca = { logoBase64: achada.logoBase64, posicao: achada.posicao };
       } catch { /* sem logo o DANFE sai igual ao de antes — nao vale derrubar a nota */ }
 
       const svc = new DanfePhpService({ serviceUrl: DANFE_SERVICE_URL, serviceKey: DANFE_KEY, timeoutMs: 25000 });
@@ -2348,17 +2350,42 @@ app.get('/api/me', async (req, res) => {
 // mesma rota serve ao painel (que escolhe a empresa no topo) e a plataforma do
 // cliente (que so alcanca a propria, pela chave de API).
 // ---------------------------------------------------------------------------
+/**
+ * De quem são os parâmetros que esta requisição pede.
+ *
+ * Não usa `resolveEmpresa` porque ela resolve quem pode EMITIR: sem certificado
+ * ou com cadastro fiscal incompleto, ela lança. E é justamente o cliente recém
+ * criado — ainda sem certificado — que se quer configurar antes da primeira
+ * nota. Configurar a logo não depende de poder emitir.
+ *
+ * A ordem protege o isolamento: quando a chave de API prende o pedido a um
+ * CNPJ (`tenantCnpj`), esse valor vence, e o cliente não alcança a marca de
+ * outro nem mandando o cabeçalho.
+ */
+async function cnpjDosParametros(req: express.Request): Promise<string> {
+  const travado = (req as any).tenantCnpj as string | undefined;
+  if (travado) return String(travado).replace(/\D/g, '');
+  const doHeader = (req.header('x-empresa-cnpj') || '').replace(/\D/g, '');
+  if (doHeader.length === 14) return doHeader;
+  return (await resolveEmpresa(req)).cnpj;
+}
+
 app.get('/api/danfe/marca', async (req, res) => {
   try {
-    const emp = await resolveEmpresa(req);
+    const emp = { cnpj: await cnpjDosParametros(req) };
     const store = await getMarcaDoDanfeStore();
     if (!store) { res.json({ configurada: false, motivo: 'sem banco' }); return; }
     const marca = await store.obter(emp.cnpj);
     // A imagem VAI no corpo: a tela precisa mostrar a previa do que sera
     // impresso, e mandar so "tem logo" obrigaria a uma segunda rota.
     res.json({
-      configurada: Boolean(marca),
-      ...(marca ? { logoBase64: marca.logoBase64, posicao: marca.posicao, atualizadaEm: marca.atualizadaEm } : {}),
+      configurada: Boolean(marca?.logoBase64 || marca?.textoPadrao),
+      ...(marca ? {
+        logoBase64: marca.logoBase64,
+        posicao: marca.posicao,
+        textoPadrao: marca.textoPadrao,
+        atualizadaEm: marca.atualizadaEm,
+      } : {}),
     });
   } catch (err: any) {
     res.status(400).json({ erro: err.message });
@@ -2367,18 +2394,35 @@ app.get('/api/danfe/marca', async (req, res) => {
 
 app.post('/api/danfe/marca', async (req, res) => {
   try {
-    const emp = await resolveEmpresa(req);
-    const logo = String(req.body?.logoBase64 ?? req.body?.logo ?? '');
+    const emp = { cnpj: await cnpjDosParametros(req) };
 
-    const recusa = conferirLogo(logo);
+    // Logo e texto são dois parâmetros independentes, salvos em abas
+    // separadas. Um corpo que traz só um deles não pode apagar o outro — daí
+    // `undefined` em vez de string vazia quando o campo nem veio.
+    const veioLogo = req.body?.logoBase64 !== undefined || req.body?.logo !== undefined;
+    const logo = veioLogo ? String(req.body?.logoBase64 ?? req.body?.logo ?? '') : undefined;
+    const veioTexto = req.body?.textoPadrao !== undefined;
+    const texto = veioTexto ? String(req.body?.textoPadrao ?? '') : undefined;
+
+    if (!veioLogo && !veioTexto && req.body?.posicao === undefined) {
+      res.status(400).json({ erro: 'Nada para salvar: envie logoBase64, textoPadrao ou posicao.' });
+      return;
+    }
+    // Logo vazia é remoção, não imagem inválida: é assim que a tela desfaz o
+    // envio sem precisar de uma rota só para isso.
+    const recusa = (logo ? conferirLogo(logo) : null) ?? conferirTextoPadrao(texto ?? '');
     if (recusa) { res.status(400).json(recusa); return; }
 
     const store = await getMarcaDoDanfeStore();
     if (!store) {
-      res.status(503).json({ erro: 'Guardar a logo exige banco configurado (NFE_DB_URL).' });
+      res.status(503).json({ erro: 'Guardar os parametros do DANFE exige banco configurado (NFE_DB_URL).' });
       return;
     }
-    await store.salvar(emp.cnpj, logo, req.body?.posicao);
+    await store.salvar(emp.cnpj, {
+      logoBase64: logo,
+      posicao: req.body?.posicao,
+      textoPadrao: texto,
+    });
     registrarAudit('admin', 'danfe.marca.salva', emp.cnpj, { requestId: (req as any).requestId });
     res.json({ sucesso: true, posicao: normalizarPosicao(req.body?.posicao) });
   } catch (err: any) {
@@ -2388,7 +2432,7 @@ app.post('/api/danfe/marca', async (req, res) => {
 
 app.delete('/api/danfe/marca', async (req, res) => {
   try {
-    const emp = await resolveEmpresa(req);
+    const emp = { cnpj: await cnpjDosParametros(req) };
     const store = await getMarcaDoDanfeStore();
     if (store) await store.remover(emp.cnpj);
     registrarAudit('admin', 'danfe.marca.removida', emp.cnpj, { requestId: (req as any).requestId });
@@ -2746,6 +2790,38 @@ function normalizarInfoAdicionais(info: any): { fisco?: string; complementar?: s
   return undefined;
 }
 
+/**
+ * Junta o texto fixo do emitente ao que veio no pedido.
+ *
+ * É o mesmo par que a tela de Parâmetros configura junto da logo: um sai no
+ * quadro do emitente, o outro no de informações complementares. Sem isto, a
+ * frase que a empresa repete em toda nota — dados bancários, garantia, o aviso
+ * que a contabilidade exige — teria de ser digitada a cada emissão, ou virar
+ * regra dentro do ERP do cliente, que não é lugar dela.
+ *
+ * O texto do pedido vem primeiro porque é o específico daquela nota; o padrão
+ * complementa. E a busca é protegida: banco fora do ar não pode impedir a
+ * emissão por causa de um texto de rodapé.
+ */
+async function comTextoPadraoDoDanfe(
+  info: { fisco?: string; complementar?: string } | undefined,
+  cnpj: string,
+): Promise<{ fisco?: string; complementar?: string } | undefined> {
+  let padrao = '';
+  try {
+    const store = cnpj ? await getMarcaDoDanfeStore() : null;
+    const marca = store ? await store.obter(cnpj) : null;
+    padrao = String(marca?.textoPadrao ?? '').trim();
+  } catch { /* sem o texto a nota sai igual a de antes — nao vale derrubar a emissao */ }
+  if (!padrao) return info;
+
+  const doPedido = String(info?.complementar ?? '').trim();
+  return {
+    ...(info ?? {}),
+    complementar: doPedido ? `${doPedido} | ${padrao}` : padrao,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/emitir — emissão NF-e
 // ---------------------------------------------------------------------------
@@ -3026,7 +3102,8 @@ app.post('/api/emitir', async (req, res) => {
       // dizendo quem contratou, o caso normal é o emitente (CIF): é ele que está
       // cobrando o valor na nota.
       modFrete: body.modFrete || (temFrete(body) ? '0' : '9'),
-      informacoesAdicionais: normalizarInfoAdicionais(body.informacoesAdicionais),
+      informacoesAdicionais: await comTextoPadraoDoDanfe(
+        normalizarInfoAdicionais(body.informacoesAdicionais), emp.cnpj),
       pICMSUFDest: body.pICMSUFDest || undefined,
     };
 
