@@ -77,12 +77,13 @@ describe('o painel esconde as telas certas', () => {
     }
   });
 
-  test('na barra lateral o titulo PODE quebrar — e a coluna que e estreita', () => {
+  test('nao ha titulo no topo para espremer', () => {
     // O `nowrap` original existia porque o titulo dividia uma faixa horizontal
-    // com seletor, selo e botao: quebrar ali empurrava tudo. Na barra lateral
-    // ele tem a coluna inteira e mais nada ao lado, entao quebrar e o certo —
-    // cortar o nome da instalacao com reticencias seria pior.
-    expect(html).toMatch(/\.topbar h1 \{[^}]*white-space: normal/);
+    // com seletor, selo e botao, e quebrar ali empurrava tudo. A faixa saiu
+    // inteira: ela gastava altura em toda tela para repetir o nome do sistema
+    // em que a pessoa acabou de entrar. O nome vive na aba do navegador.
+    expect(html).toMatch(/\.topbar \{ display: none/);
+    expect(html).toContain('<title>Ponte SEFAZ</title>');
   });
 
   test('a sub-aba Templates some — ela duplica a de Clientes', () => {

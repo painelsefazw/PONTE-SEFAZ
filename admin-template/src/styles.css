@@ -76,7 +76,8 @@
   --card-foreground: oklch(0.235 0.043 277);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.235 0.043 277);
-  --primary: oklch(0.373 0.034 259.7);
+  /* Indigo 600 — a mesma marca do painel da ponte (#4f46e5). */
+  --primary: oklch(0.511 0.262 276.9);
   --primary-foreground: oklch(0.99 0.002 247.9);
   --secondary: oklch(0.21 0.034 264.7);
   --secondary-foreground: oklch(0.99 0.002 247.9);
@@ -88,7 +89,7 @@
   --destructive-foreground: oklch(0.99 0.002 247.9);
   --border: oklch(0.905 0.008 255.5);
   --input: oklch(0.905 0.008 255.5);
-  --ring: oklch(0.696 0.17 162.5);
+  --ring: oklch(0.511 0.262 276.9);
   --success: oklch(0.696 0.17 162.5);
   --success-foreground: oklch(0.21 0.034 264.7);
   /* Texto sobre fundo TINGIDO (success/15), nao sobre o verde solido. Sao
@@ -122,8 +123,9 @@
   --card-foreground: oklch(0.97 0.003 247.9);
   --popover: oklch(0.21 0.034 264.7);
   --popover-foreground: oklch(0.97 0.003 247.9);
-  --primary: oklch(0.62 0.03 259.7);
-  --primary-foreground: oklch(0.15 0.03 264.7);
+  /* Indigo 500 — clareado para o fundo escuro (#6366f1). */
+  --primary: oklch(0.585 0.233 277.1);
+  --primary-foreground: oklch(0.99 0.002 247.9);
   --secondary: oklch(0.28 0.032 264.7);
   --secondary-foreground: oklch(0.97 0.003 247.9);
   --muted: oklch(0.28 0.032 264.7);

@@ -18,15 +18,16 @@ describe('a instancia tem nome proprio', () => {
     expect(appTs).toContain("marca: String(process.env['WEBAPP_MARCA']");
     // Quem nao configurar nada continua vendo o nome de sempre: a mudanca nao
     // pode renomear instalacao que ja existe.
-    expect(appTs).toMatch(/WEBAPP_MARCA[\s\S]{0,60}'NF-e Engine'/);
+    expect(appTs).toMatch(/WEBAPP_MARCA[\s\S]{0,60}'Ponte SEFAZ'/);
   });
 
-  test('o titulo da pagina acompanha, e nao so o cabecalho', () => {
-    // A aba do navegador tambem identifica a instancia — com varias abertas,
-    // todas iguais, nao da para saber qual e qual.
-    expect(html).toContain('id="marcaDaInstancia"');
-    expect(html).toMatch(/marcaDaInstancia'\)\.textContent = ping\.marca/);
+  test('a marca da instancia vive no titulo da aba', () => {
+    // Ela ficava tambem num cabecalho, que saiu: gastava uma faixa inteira em
+    // toda tela para repetir o nome do sistema em que a pessoa acabou de
+    // entrar. A aba do navegador continua precisando dele — com varias
+    // abertas, todas iguais, nao da para saber qual e qual.
     expect(html).toContain('document.title = ping.marca');
+    expect(html).not.toContain('id="marcaDaInstancia"');
   });
 });
 

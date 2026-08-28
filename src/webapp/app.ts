@@ -564,7 +564,7 @@ app.get('/api/ping', (_req, res) => {
     // O titulo era fixo em "NF-e Engine". Numa instalacao que o cliente opera
     // — ou que voce revende com marca propria — o nome do fornecedor no topo
     // e, no minimo, estranho.
-    marca: String(process.env['WEBAPP_MARCA'] ?? '').trim() || 'NF-e Engine',
+    marca: String(process.env['WEBAPP_MARCA'] ?? '').trim() || 'Ponte SEFAZ',
     autenticacao: Boolean(process.env['WEBAPP_SENHA']),
   });
 });
@@ -4586,10 +4586,10 @@ app.post('/api/configuracoes/testar-email', async (req, res) => {
       auth: { user: smtp.user, pass: smtp.pass },
     });
     await transporter.sendMail({
-      from: `"NF-e Engine" <${smtp.from}>`,
+      from: `"Ponte SEFAZ" <${smtp.from}>`,
       to: destinatario,
-      subject: 'Teste de email — NF-e Engine',
-      html: '<h2>Email de teste</h2><p>Se voce recebeu esta mensagem, o SMTP esta configurado corretamente!</p><p style="color:#64748b;font-size:12px">NF-e Engine — Emissor de Notas Fiscais</p>',
+      subject: 'Teste de e-mail — Ponte SEFAZ',
+      html: '<h2>Email de teste</h2><p>Se voce recebeu esta mensagem, o SMTP esta configurado corretamente!</p><p style="color:#64748b;font-size:12px">Ponte SEFAZ — Emissor de notas fiscais eletrônicas</p>',
     });
     res.json({ sucesso: true, mensagem: `Email de teste enviado para ${destinatario}` });
   } catch (err: any) {
@@ -6494,7 +6494,7 @@ app.get('/api/postman.json', (req, res) => {
 app.get('/api/docs', (req, res) => {
   const BASE = baseUrl(req);
   res.json({
-    titulo: 'NF-e Engine — API REST para Integracao ERP',
+    titulo: 'Ponte SEFAZ — API REST para integração com ERP',
     versao: '3.0',
     baseUrl: BASE,
     autenticacao: {

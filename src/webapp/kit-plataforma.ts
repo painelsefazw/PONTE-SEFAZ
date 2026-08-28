@@ -40,6 +40,24 @@ export const CAMINHO_MANIFEST = 'src/platform.manifest.json';
 const NAO_COPIAR = new Set(['.lovable/project.json']);
 
 /**
+ * O `.env` de verdade nunca viaja no pacote.
+ *
+ * Ele nao deveria existir na pasta do modelo — mas existe assim que alguem roda
+ * o projeto para conferir alguma coisa, e foi exatamente isso que aconteceu. O
+ * `.gitignore` protege o repositorio; nao protege ESTA leitura, que e do disco
+ * e nao do Git. Sem esta regra, uma conferida local vira a chave de API dentro
+ * do repositorio de todo cliente gerado depois — e chave em Git de cliente nao
+ * se apaga, so se revoga.
+ *
+ * `.env.example` continua indo: ele e a documentacao do formato, com os valores
+ * em branco de proposito.
+ */
+function ehEnvDeVerdade(relativo: string): boolean {
+  const nome = relativo.split('/').pop() ?? '';
+  return (nome === '.env' || nome.startsWith('.env.')) && nome !== '.env.example';
+}
+
+/**
  * Le o modelo do disco e devolve os arquivos por caminho.
  *
  * Serverless nao tem o repositorio inteiro em disco: a Vercel embarca so o que o
@@ -87,7 +105,7 @@ export async function lerModeloDaPasta(
     for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
       const completo = path.join(dir, item.name);
       const relativo = path.relative(raiz, completo).split(path.sep).join('/');
-      if (NAO_COPIAR.has(relativo)) continue;
+      if (NAO_COPIAR.has(relativo) || ehEnvDeVerdade(relativo)) continue;
       // node_modules e build nunca entram: o cliente instala do package.json.
       if (item.isDirectory()) {
         if (['node_modules', '.git', '.output', '.wrangler', '.tanstack'].includes(item.name)) continue;

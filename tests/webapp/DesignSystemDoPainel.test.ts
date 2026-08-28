@@ -10,7 +10,7 @@ import * as path from 'path';
  * cliente não vê duas tecnologias, vê dois sistemas.
  *
  * Estes testes prendem o que faz as duas se parecerem: a mesma fonte, a mesma
- * paleta em oklch, a mesma caixa alta com acento. Nenhum deles julga se está
+ * cor de marca, os mesmos papeis de cor e a mesma caixa alta com acento. Nenhum deles julga se está
  * bonito — isso não se testa. Eles pegam o que acontece de verdade: alguém
  * mexe numa cor, escreve um hexadecimal solto, e seis meses depois as duas
  * telas voltaram a ser diferentes sem que ninguém tenha decidido isso.
@@ -30,13 +30,30 @@ describe('o painel usa o design system do console', () => {
     expect(folhaDoConsole).toContain('Inter Tight');
   });
 
-  test('a paleta e a mesma, e vem em oklch', () => {
-    // Não é semelhança de olho: são os mesmos valores. `--lateral` do painel é
-    // o `--sidebar` do console, e a barra lateral escura é o traço que mais
-    // identifica as duas telas como o mesmo produto.
-    for (const cor of ['oklch(0.21 0.034 264.7)', 'oklch(0.696 0.17 162.5)']) {
-      expect(painel).toContain(cor);
-      expect(folhaDoConsole).toContain(cor);
+  test('a marca e a mesma cor nas duas telas', () => {
+    // Indigo 600. As duas telas escrevem esse valor no formato da sua propria
+    // folha — `#4f46e5` no painel, `oklch(0.511 0.262 276.9)` no console — e
+    // sao a MESMA cor. Antes o console tinha um slate escuro como primaria e o
+    // painel um indigo: botao azul de um lado, cinza do outro, no que deveria
+    // ser um produto so.
+    expect(painel).toContain('--marca: #4f46e5');
+    expect(folhaDoConsole).toContain('--primary: oklch(0.511 0.262 276.9)');
+  });
+
+  test('cada cor de sentido tem fundo, borda e tinta — nos dois temas', () => {
+    // Esta e a regra que faz o tema escuro fechar. Um aviso nao e "amarelo": e
+    // um fundo tingido, um contorno e uma cor de TEXTO que se le sobre aquele
+    // fundo. Sem os tres papeis separados, inverter o tema poe texto escuro
+    // sobre fundo escuro — que foi exatamente como a tela quebrou.
+    for (const familia of ['sucesso', 'alerta', 'perigo', 'info']) {
+      for (const papel of ['fundo', 'borda', 'tinta']) {
+        expect(painel).toContain(`--${familia}-${papel}:`);
+      }
+    }
+    // E os tres precisam ser REDEFINIDOS no escuro, nao herdados.
+    const escuro = painel.slice(painel.indexOf('[data-tema="escuro"]'));
+    for (const papel of ['--alerta-fundo', '--alerta-tinta', '--perigo-fundo', '--perigo-tinta']) {
+      expect(escuro).toContain(papel);
     }
   });
 
@@ -44,12 +61,34 @@ describe('o painel usa o design system do console', () => {
     expect(painel).toMatch(/@media \(prefers-color-scheme: dark\)/);
   });
 
-  test('a barra lateral so existe onde ha largura para ela', () => {
-    // Abaixo de 1024px a barra vira de novo a faixa horizontal original: 248px
-    // fixos num celular comeriam metade da tela. O console faz o mesmo — lá a
-    // barra vira gaveta.
-    expect(painel).toMatch(/@media \(min-width: 1024px\)[\s\S]{0,900}position: fixed/);
-    expect(painel).toMatch(/--largura-lateral: 248px/);
+  test('nao ha barra lateral, e nao ha cabecalho', () => {
+    // Os dois foram tentados e os dois sairam a pedido: a barra lateral comia
+    // largura de uma tela que e cheia de tabela larga, e o cabecalho gastava
+    // uma faixa inteira para repetir o nome do sistema em que a pessoa acabou
+    // de entrar. A navegacao e horizontal e o contexto mora ao lado dela.
+    expect(painel).not.toContain('--largura-lateral');
+    expect(painel).toMatch(/\.topbar \{ display: none/);
+    expect(painel).toContain('<div class="appbar">');
+  });
+
+  test('ha um botao de tema, e ele lembra a escolha', () => {
+    // Tres estados, nao dois: claro, escuro e "o que o sistema disser" — este
+    // ultimo e o padrao. E a escolha sobrevive ao F5: um botao de tema que
+    // esquece a cada visita irrita mais do que ajuda.
+    expect(painel).toContain('id="btnTema"');
+    expect(painel).toContain('function alternarTema()');
+    expect(painel).toMatch(/localStorage\.setItem\('nfe_tema'/);
+    expect(painel).toMatch(/:root\[data-tema="claro"\]/);
+    expect(painel).toMatch(/:root:not\(\[data-tema="claro"\]\)/);
+  });
+
+  test('o rodape assina o sistema', () => {
+    expect(painel).toMatch(/Desenvolvido por Wemerson &copy; 2026/);
+  });
+
+  test('o nome do sistema e Ponte SEFAZ', () => {
+    expect(painel).toContain('<title>Ponte SEFAZ</title>');
+    expect(painel).not.toContain('NF-e Engine');
   });
 
   test('a caixa alta e do CSS, nunca do texto', () => {
@@ -82,12 +121,15 @@ describe('o painel usa o design system do console', () => {
 
   test('a barra de contexto e a navegacao sao coisas separadas', () => {
     // O seletor de empresa, o estado da SEFAZ e o ambiente descrevem em nome de
-    // QUEM se opera. Enfiados na coluna de navegação, não cabiam; e misturados
-    // ao menu, confundiam "onde estou" com "como estou".
-    const lateral = painel.slice(painel.indexOf('<div class="topbar">'),
-      painel.indexOf('</div>', painel.indexOf('<div class="topbar">')));
-    expect(lateral).not.toContain('empresaSelWrap');
-    expect(lateral).not.toContain('sefazStatus');
-    expect(painel).toContain('<div class="appbar">');
+    // QUEM se opera — "como estou", não "onde estou". Misturados ao menu, as
+    // duas perguntas viravam uma faixa só e nenhuma se lia bem.
+    const contexto = painel.slice(painel.indexOf('<div class="appbar">'),
+      painel.indexOf('id="subTabBar"'));
+    for (const id of ['empresaSelWrap', 'sefazStatus', 'ambientePill', 'btnTema']) {
+      expect(contexto).toContain(id);
+    }
+    const menu = painel.slice(painel.indexOf('id="mainTabBar"'),
+      painel.indexOf('<div class="appbar">'));
+    expect(menu).not.toContain('sefazStatus');
   });
 });

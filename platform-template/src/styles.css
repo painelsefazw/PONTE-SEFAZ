@@ -76,7 +76,8 @@
   --card-foreground: oklch(0.235 0.043 277);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.235 0.043 277);
-  --primary: oklch(0.373 0.034 259.7);
+  /* Indigo 600 — a mesma marca do painel da ponte e do console (#4f46e5). */
+  --primary: oklch(0.511 0.262 276.9);
   --primary-foreground: oklch(0.99 0.002 247.9);
   --secondary: oklch(0.21 0.034 264.7);
   --secondary-foreground: oklch(0.99 0.002 247.9);
