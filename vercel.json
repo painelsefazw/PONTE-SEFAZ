@@ -13,7 +13,6 @@
           "schemas/**",
           "node_modules/xmllint-wasm/**",
           "platform-template/**",
-          "admin-template/**",
           "src/**",
           "api/**",
           "scripts/**",

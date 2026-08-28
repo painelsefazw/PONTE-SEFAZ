@@ -2,42 +2,32 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
- * O painel da ponte e o console de clientes precisam ter a MESMA cara.
+ * O painel tem um sistema visual, e ele precisa continuar existindo.
  *
- * São duas telas do mesmo produto feitas em tecnologias diferentes — o painel é
- * HTML servido direto, o console é React com Tailwind — e foi exatamente por
- * isso que elas divergiram: cada uma recebeu o visual da sua própria época. O
- * cliente não vê duas tecnologias, vê dois sistemas.
+ * Estes testes nasceram comparando o painel com o console de clientes, quando
+ * eram duas telas do mesmo produto com caras diferentes. O console saiu — o
+ * painel foi refeito e tomou o lugar dele —, mas o que os testes prendem
+ * continua valendo, e sozinho: cor que só sai de token, caixa alta que vem do
+ * CSS (para o acento sobreviver), os três papéis de cada cor de sentido, e o
+ * tema escuro fechando.
  *
- * Estes testes prendem o que faz as duas se parecerem: a mesma fonte, a mesma
- * cor de marca, os mesmos papeis de cor e a mesma caixa alta com acento. Nenhum deles julga se está
- * bonito — isso não se testa. Eles pegam o que acontece de verdade: alguém
- * mexe numa cor, escreve um hexadecimal solto, e seis meses depois as duas
- * telas voltaram a ser diferentes sem que ninguém tenha decidido isso.
+ * Nenhum deles julga se está bonito — isso não se testa. Eles pegam o que
+ * acontece de verdade: alguém escreve um hexadecimal solto no meio de uma
+ * regra, e seis meses depois metade da tela não acompanha mais o tema.
  */
 
 const painel = fs.readFileSync(
   path.resolve(__dirname, '..', '..', 'src', 'webapp', 'public', 'index.html'), 'utf8');
-const folhaDoConsole = fs.readFileSync(
-  path.resolve(__dirname, '..', '..', 'admin-template', 'src', 'styles.css'), 'utf8');
-const tipografia = fs.readFileSync(
-  path.resolve(__dirname, '..', '..', 'admin-template', 'src', 'lib', 'tipografia.ts'), 'utf8');
-
-describe('o painel usa o design system do console', () => {
-  test('a mesma fonte, carregada da mesma origem', () => {
+describe('o painel tem um sistema visual', () => {
+  test('a fonte vem declarada, e nao herdada do sistema', () => {
     expect(painel).toContain('fonts.googleapis.com/css2?family=Inter+Tight');
     expect(painel).toMatch(/font-family: 'Inter Tight'/);
-    expect(folhaDoConsole).toContain('Inter Tight');
   });
 
-  test('a marca e a mesma cor nas duas telas', () => {
-    // Indigo 600. As duas telas escrevem esse valor no formato da sua propria
-    // folha — `#4f46e5` no painel, `oklch(0.511 0.262 276.9)` no console — e
-    // sao a MESMA cor. Antes o console tinha um slate escuro como primaria e o
-    // painel um indigo: botao azul de um lado, cinza do outro, no que deveria
-    // ser um produto so.
+  test('a marca tem um valor so, e ele e token', () => {
+    // Indigo 600. Uma cor de marca escrita em cinco lugares vira cinco cores
+    // diferentes no primeiro ajuste.
     expect(painel).toContain('--marca: #4f46e5');
-    expect(folhaDoConsole).toContain('--primary: oklch(0.511 0.262 276.9)');
   });
 
   test('cada cor de sentido tem fundo, borda e tinta — nos dois temas', () => {
@@ -131,16 +121,12 @@ describe('o painel usa o design system do console', () => {
     // geral" em "VISÃO GERAL" com o til; escrever "VISAO GERAL" na mão perde o
     // acento para sempre, e ninguém volta atrás depois.
     expect(painel).toMatch(/\.tab-bar button[\s\S]{0,600}text-transform: uppercase/);
-    expect(tipografia).toContain('text-transform');
-    expect(tipografia).toContain('uppercase');
   });
 
   test('os nomes oficiais escapam da caixa alta', () => {
     // "NF-e" é o nome do documento; "NF-E" não é o nome de nada. Os dois lados
     // precisam da mesma saída, senão a regra geral estraga a norma.
     expect(painel).toContain('.sem-caixa-alta');
-    expect(tipografia).toContain('SEM_CAPS');
-    expect(tipografia).toContain('normal-case');
   });
 
   test('os cartoes de numero nao carregam mais cor escrita na mao', () => {

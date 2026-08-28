@@ -37,10 +37,6 @@ export const PASTAS_DA_INSTANCIA = [
   // O modelo das plataformas dos clientes. Sem ele a instância nova nasce sem
   // conseguir gerar cliente nenhum — que é metade do produto.
   'platform-template',
-  // E o console administrativo, pela mesma razão: a instância nova herda a
-  // capacidade de entregar interface própria a quem a operar, em vez de ficar
-  // presa ao painel embutido.
-  'admin-template',
 ];
 
 /**
@@ -721,36 +717,6 @@ export function urlDeDeployNaVercel(opts: { repositorio: string; nome?: string }
 // O console sai sabendo de qual ponte ele e
 // ---------------------------------------------------------------------------
 
-/**
- * Preenche `EMISSOR_API_URL` no `.env.example` do console com o endereco da
- * ponte que o gerou.
- *
- * Sem isso o console nasce generico e quem instala tem que digitar o endereco
- * a mao — e digitar endereco a mao foi, nesta semana, a etapa que mais quebrou
- * instalacao. Aqui nao ha desculpa para pedir: a ponte SABE o proprio endereco,
- * porque ele chega em cada requisicao.
- *
- * So esta variavel: `EMISSOR_ADMIN_KEY` e `APP_ACCESS_PASSWORD` sao segredos e
- * continuam vazias. Endereco nao e segredo — e publico por definicao, ja que e
- * para onde os clientes apontam.
- */
-export function amarrarConsoleNaPonte(
-  arquivos: Map<string, Buffer>,
-  enderecoDaPonte: string,
-): Map<string, Buffer> {
-  const endereco = String(enderecoDaPonte ?? '').trim().replace(/\/+$/, '');
-  const exemplo = arquivos.get('.env.example');
-  if (!endereco || !exemplo) return arquivos;
-
-  const quebra = /\r?\n/;
-  const linhas = exemplo.toString('utf8').split(quebra);
-  const preenchidas = linhas.map((linha) => (
-    linha.trim() === 'EMISSOR_API_URL=' ? `EMISSOR_API_URL=${endereco}` : linha
-  ));
-
-  arquivos.set('.env.example', Buffer.from(preenchidas.join('\n'), 'utf8'));
-  return arquivos;
-}
 
 
 /**

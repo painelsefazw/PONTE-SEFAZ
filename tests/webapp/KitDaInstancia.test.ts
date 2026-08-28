@@ -103,24 +103,6 @@ describe('o pacote da ponte', () => {
     expect(arquivos.has('platform-template/package.json')).toBe(true);
   });
 
-  it('leva o console administrativo', () => {
-    // Pela mesma razao do modelo das plataformas: a instancia nova herda a
-    // capacidade de entregar interface propria a quem a operar.
-    expect(arquivos.has('admin-template/src/lib/admin.functions.ts')).toBe(true);
-    expect(arquivos.has('admin-template/package.json')).toBe(true);
-  });
-
-  it('leva o exemplo de variaveis do console tambem', () => {
-    // Sem ele, quem instalasse o console a partir deste pacote teria de
-    // descobrir os nomes das variaveis lendo o codigo.
-    expect(arquivos.has('admin-template/.env.example')).toBe(true);
-    const exemplo = arquivos.get('admin-template/.env.example')!.toString('utf8');
-    for (const linha of exemplo.split(/\r?\n/)) {
-      if (linha.startsWith('#') || !linha.includes('=')) continue;
-      expect(linha.trim()).toMatch(/=$/);
-    }
-  });
-
   it('o exemplo diz o que acontece SEM o servico de DANFE', () => {
     // A variavel ja estava listada; o que faltava era a consequencia de
     // deixa-la em branco. Sem isso, quem instala escolhe sem saber que esta

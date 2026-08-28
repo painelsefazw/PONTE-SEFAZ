@@ -54,7 +54,7 @@ import {
   baixarModelo, lerModeloDaPasta, montarZip, publicarNoGitHub, verificarAcessoAoRepositorio,
   escolherToken, SEM_TOKEN, CAMINHO_MANIFEST,
 } from './kit-plataforma';
-import { montarKitDaInstancia, urlDeDeployNaVercel, amarrarConsoleNaPonte, candidatosDeRaiz, discoEstaAtrasado } from './kit-instancia';
+import { montarKitDaInstancia, urlDeDeployNaVercel, candidatosDeRaiz, discoEstaAtrasado } from './kit-instancia';
 import { MarcaDoDanfeStore, conferirLogo, conferirTextoPadrao, normalizarPosicao } from './danfe-marca';
 
 // DANFE oficial (sped-da) via serviço PHP separado: quando DANFE_SERVICE_URL está
@@ -8974,80 +8974,6 @@ app.get('/api/admin/clients/:cnpj/kit.zip', async (req, res) => {
  * das plataformas. Sem a variavel, a rota responde dizendo isso em vez de falhar
  * com erro de autenticacao do GitHub, que nao explica nada a quem opera.
  */
-// ---------------------------------------------------------------------------
-// Console de clientes — front end administrativo, para construir por fora
-// ---------------------------------------------------------------------------
-
-/** Pasta do modelo do console, e o arquivo que prova que ela e o console. */
-const PASTA_CONSOLE = process.env['ADMIN_TEMPLATE_DIR'] || 'admin-template';
-const MARCADOR_CONSOLE = 'src/lib/admin.functions.ts';
-
-/**
- * O console de clientes, pronto para subir num construtor.
- *
- * A ponte ja traz um painel que funciona. Este existe para quem quer interface
- * propria, hospedada a parte e evoluida no construtor — sem que isso signifique
- * reescrever a conversa com a API do zero.
- *
- * O que ele nao leva, e nao pode levar: a chave administrativa. Ela entra por
- * variavel de ambiente no provedor, e so o lado servidor do console a le.
- */
-app.get('/api/admin/console/kit.zip', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  try {
-    const arquivos = amarrarConsoleNaPonte(
-      await lerModeloDaPasta(PASTA_CONSOLE, MARCADOR_CONSOLE), baseUrl(req));
-    const zip = montarZip(arquivos);
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="console-clientes.zip"');
-    res.setHeader('X-Arquivos', String(arquivos.size));
-    res.send(zip);
-  } catch (err: any) {
-    res.status(500).json({ erro: err.message });
-  }
-});
-
-app.post('/api/admin/console/publicar', async (req, res) => {
-  if (!requireAdmin(req, res)) return;
-  try {
-    const escolha = escolherToken(req.body?.token, process.env['GITHUB_TOKEN']);
-    if (!escolha) { res.status(400).json(SEM_TOKEN); return; }
-    const token = escolha.token;
-
-    const urlRepositorio = String(req.body?.repositoryUrl || '').trim();
-    if (!urlRepositorio) {
-      res.status(400).json({ erro: 'Informe a URL do repositorio (repositoryUrl).' });
-      return;
-    }
-
-    const arquivos = amarrarConsoleNaPonte(
-      await lerModeloDaPasta(PASTA_CONSOLE, MARCADOR_CONSOLE), baseUrl(req));
-    const resultado = await publicarNoGitHub({
-      arquivos,
-      urlRepositorio,
-      token,
-      mensagem: 'Console de clientes da ponte fiscal\n\n'
-        + 'Front end administrativo: clientes, servicos, chaves e publicacao das\n'
-        + 'plataformas. A chave da ponte entra por variavel de ambiente e nunca\n'
-        + 'vai para o navegador — leia o README.\n\n'
-        + 'Publicado pelo painel do Emissor.',
-    });
-
-    registrarAudit('admin', 'console.publicado', 'sistema', {
-      requestId: (req as any).requestId,
-    });
-    res.json({ sucesso: true, ...resultado, repositoryUrl: urlRepositorio });
-  } catch (err: any) {
-    const doGitHub = err?.response?.data?.message;
-    res.status(502).json({
-      erro: doGitHub ? `GitHub recusou: ${doGitHub}` : `Nao foi possivel publicar: ${err.message}`,
-      ...(err?.response?.status === 404
-        ? { comoResolver: 'O token nao enxerga este repositorio. Confira o escopo dele.' }
-        : {}),
-    });
-  }
-});
-
 // ---------------------------------------------------------------------------
 // Kit da INSTANCIA — a ponte inteira, para virar outra instalacao
 // ---------------------------------------------------------------------------

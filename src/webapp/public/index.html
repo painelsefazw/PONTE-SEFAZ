@@ -365,7 +365,7 @@ body.modo-operador .fiscal-avancado { display: none !important; }
            text-decoration: underline; font-family: inherit; }
 
 /* ===========================================================================
-   DESIGN SYSTEM — a mesma linguagem visual do console de clientes.
+   DESIGN SYSTEM — a linguagem visual desta ponte.
    ===========================================================================
 
    Este painel e HTML servido direto, sem build, e continua assim de proposito.
@@ -2525,33 +2525,6 @@ body {
       <div id="instMsg" style="font-size:12px;margin-top:8px"></div>
     </div>
 
-    <div style="border-top:1px solid var(--borda);margin-top:20px;padding-top:14px">
-      <div style="font-size:13px;font-weight:700;color:var(--texto);margin-bottom:4px">Console de clientes (front end separado)</div>
-      <p style="font-size:12px;color:var(--texto-medio);line-height:1.6;margin-bottom:10px">
-        A ponte ja vem com este painel. O console e para quem quer <b>interface própria</b>,
-        hospedada a parte e evoluida no construtor: React + TypeScript, com lista de clientes,
-        cadastro, servicos, chaves de API e publicacao das plataformas.
-        A chave administrativa entra por variavel de ambiente e <b>nunca vai para o navegador</b> —
-        toda chamada passa por funcao de servidor.
-      </p>
-      <div style="background:var(--info-fundo);border:1px solid var(--info-borda);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12px;color:var(--info-tinta)">
-        <b>O console não fala com o banco.</b> A corrente e: console &rarr; ponte &rarr; Supabase.
-        Ele so precisa do endereco da ponte e da senha de admin dela — nunca da connection string,
-        que num front end seria o banco inteiro exposto.
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-primary" onclick="baixarConsole(this)">Baixar console (.zip)</button>
-        <input id="consoleRepoUrl" placeholder="https://github.com/dono/console" style="flex:1;min-width:220px;padding:9px 11px;border:1px solid var(--borda);border-radius:8px;font-size:13px">
-        <button class="btn" onclick="publicarConsole(this)">Publicar</button>
-      </div>
-      <div style="font-size:11px;color:var(--suave-texto);margin-top:6px">
-        Depois de subir, cadastre no construtor (Cloud &rsaquo; Secrets) so tres valores:
-        <code>EMISSOR_API_URL</code> (endereco da ponte),
-        <code>EMISSOR_ADMIN_KEY</code> (a WEBAPP_SENHA dela) e
-        <code>APP_ACCESS_PASSWORD</code> (senha para entrar no console).
-      </div>
-      <div id="consoleMsg" style="font-size:12px;margin-top:8px"></div>
-    </div>
 
     <div style="border-top:1px solid var(--borda);margin-top:16px;padding-top:12px">
       <div style="font-size:12px;font-weight:600;color:var(--texto-medio);margin-bottom:6px">Depois de publicar</div>
@@ -9972,61 +9945,7 @@ function kitAlternativaZipHtml() {
   '</div>';
 }
 
-/** Baixa o console de clientes: front end administrativo, projeto a parte. */
-async function baixarConsole(btn) {
-  var texto = btn.textContent;
-  var msg = document.getElementById('consoleMsg');
-  btn.disabled = true; btn.textContent = 'Montando...';
-  try {
-    var r = await apiFetch('/api/admin/console/kit.zip');
-    if (!r.ok) {
-      var j = await r.json().catch(function () { return {}; });
-      msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(j.erro || 'Nao foi possivel montar o console.') + '</span>';
-      return;
-    }
-    var blob = await r.blob();
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'console-clientes.zip';
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    msg.innerHTML = '<span style="color:var(--sucesso)">Baixado: ' + Math.round(blob.size / 1024) + ' KB. Leia o README dentro do pacote.</span>';
-  } catch (e) {
-    msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(e.message) + '</span>';
-  } finally {
-    btn.disabled = false; btn.textContent = texto;
-  }
-}
 
-/** Publica o console no repositorio escolhido. */
-async function publicarConsole(btn) {
-  var url = (document.getElementById('consoleRepoUrl').value || '').trim();
-  var msg = document.getElementById('consoleMsg');
-  if (!url) { msg.innerHTML = '<span style="color:var(--perigo)">Cole a URL do repositorio.</span>'; return; }
-  var texto = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Publicando...';
-  msg.innerHTML = '<span style="color:var(--suave-texto)">Enviando ao GitHub...</span>';
-  try {
-    var r = await apiFetch('/api/admin/console/publicar', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repositoryUrl: url })
-    });
-    var j = await r.json();
-    if (!r.ok || !j.sucesso) {
-      msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(j.erro || 'Falha ao publicar.') + '</span>' +
-        (j.comoResolver ? '<div style="color:var(--suave-texto);margin-top:4px">' + escapeHtml(j.comoResolver) + '</div>' : '') +
-        '<div style="margin-top:8px"><button class="btn btn-primary" onclick="baixarConsole(this)">Baixar console (.zip)</button></div>';
-      return;
-    }
-    msg.innerHTML = '<span style="color:var(--sucesso)">Publicado: ' + j.arquivos + ' arquivos no branch ' +
-      escapeHtml(j.branch) + ' (commit ' + escapeHtml(String(j.commit).slice(0, 7)) + ').</span>' +
-      '<div style="color:var(--suave-texto);margin-top:4px">Importe no construtor e cadastre EMISSOR_API_URL, EMISSOR_ADMIN_KEY e APP_ACCESS_PASSWORD.</div>';
-  } catch (e) {
-    msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(e.message) + '</span>';
-  } finally {
-    btn.disabled = false; btn.textContent = texto;
-  }
-}
 
 /**
  * O token colado na tela, se houver.
@@ -10040,57 +9959,7 @@ function tokenDaInstancia() {
   return el ? (el.value || '').trim() : '';
 }
 
-/** Baixa o console de clientes — o painel administrativo em projeto separado. */
-async function baixarConsole(btn) {
-  var texto = btn.textContent;
-  var msg = document.getElementById('consoleMsg');
-  btn.disabled = true; btn.textContent = 'Montando...';
-  try {
-    var r = await apiFetch('/api/admin/console/kit.zip');
-    if (!r.ok) {
-      var j = await r.json().catch(function () { return {}; });
-      msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(j.erro || 'Falha ao montar o console.') + '</span>';
-      return;
-    }
-    var blob = await r.blob();
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'console-clientes.zip';
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-    msg.innerHTML = '<span style="color:var(--sucesso)">Baixado: ' + Math.round(blob.size / 1024) + ' KB. Leia o README dentro do pacote.</span>';
-  } catch (e) {
-    msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(e.message) + '</span>';
-  } finally {
-    btn.disabled = false; btn.textContent = texto;
-  }
-}
 
-/** Publica o console no repositorio escolhido. */
-async function publicarConsole(btn) {
-  var url = (document.getElementById('consoleRepoUrl').value || '').trim();
-  var msg = document.getElementById('consoleMsg');
-  if (!url) { msg.innerHTML = '<span style="color:var(--perigo)">Cole a URL do repositorio.</span>'; return; }
-  var texto = btn.textContent;
-  btn.disabled = true; btn.textContent = 'Publicando...';
-  try {
-    var r = await apiFetch('/api/admin/console/publicar', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repositoryUrl: url, token: tokenDaInstancia() })
-    });
-    var j = await r.json();
-    if (!r.ok || !j.sucesso) {
-      msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(j.erro || 'Falha ao publicar.') + '</span>' +
-        (j.comoResolver ? '<div style="color:var(--suave-texto);margin-top:4px">' + escapeHtml(j.comoResolver) + '</div>' : '');
-      return;
-    }
-    msg.innerHTML = '<span style="color:var(--sucesso)">Publicado: ' + j.arquivos + ' arquivos (commit ' + escapeHtml(String(j.commit).slice(0, 7)) + ').</span>';
-  } catch (e) {
-    msg.innerHTML = '<span style="color:var(--perigo)">' + escapeHtml(e.message) + '</span>';
-  } finally {
-    btn.disabled = false; btn.textContent = texto;
-  }
-}
 
 /**
  * Baixa a ponte inteira, empacotada para virar outra instalacao.
