@@ -2422,6 +2422,21 @@ body {
 </div>
 </div>
 
+<!-- Modal: usado por TODA tela de detalhe do cliente — cadastro, certificado,
+     marca, chave de API, logs, template. Ele mora fora das abas de proposito:
+     e um so, e cada funcao troca o titulo e o conteudo dele. Se este bloco
+     sumir, nada abre e nada reclama, porque `getElementById` devolve `null` e
+     a funcao morre na primeira linha, calada. Ja aconteceu. -->
+<div id="modalClienteApi" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:999;overflow-y:auto">
+<div style="max-width:680px;margin:30px auto;background:var(--cartao);border-radius:16px;padding:0;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.15)">
+  <div style="padding:24px 28px 0;display:flex;justify-content:space-between;align-items:center">
+    <h2 style="font-size:20px;font-weight:700;margin:0;color:var(--marca-tinta)" id="modalClienteTitulo">Novo cliente por API</h2>
+    <button onclick="document.getElementById('modalClienteApi').style.display='none'" title="Fechar" style="background:var(--suave);border:none;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;color:var(--suave-texto);display:flex;align-items:center;justify-content:center">&times;</button>
+  </div>
+  <div id="modalClienteApiContent" style="padding:20px 28px 28px"></div>
+</div>
+</div>
+
 <div class="tab-content somente-contador" id="tab-clientesapi-templates">
 <div class="container">
   <div class="section">
