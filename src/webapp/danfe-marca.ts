@@ -25,7 +25,7 @@ export type PosicaoDaLogo = 'L' | 'C' | 'R';
 
 export interface MarcaDoDanfe {
   cnpj: string;
-  /** A imagem em base64, SEM o prefixo `data:`. PNG ou JPG. */
+  /** A imagem em base64, SEM o prefixo `data:`. JPG — ver `RECUSA_DO_PNG`. */
   logoBase64?: string;
   posicao: PosicaoDaLogo;
   /**
@@ -47,11 +47,16 @@ export interface MarcaDoDanfe {
  * A logo viaja junto do XML em toda geração de DANFE. Uma imagem de 3 MB
  * transforma cada download de nota numa transferência de 3 MB — e, em
  * serverless, aproxima o limite de corpo da requisição. 400 KB comporta com
- * folga um PNG de 600×200, que e mais resolucao do que o quadro do DANFE usa.
+ * folga um JPG de 600×200, que e mais resolucao do que o quadro do DANFE usa.
  */
 export const LIMITE_DA_LOGO = 400 * 1024;
 
-/** Formatos que a biblioteca do DANFE desenha. */
+/**
+ * Formatos que este arquivo sabe identificar — o que não é o mesmo que os
+ * formatos aceitos. O PNG está aqui de propósito, mesmo sendo recusado logo
+ * adiante: reconhecê-lo é o que permite dizer "PNG não é desenhado no DANFE,
+ * envie JPG" em vez do inútil "formato não reconhecido".
+ */
 const FORMATOS = [
   { assinatura: '89504e47', tipo: 'image/png' },
   { assinatura: 'ffd8ff', tipo: 'image/jpeg' },
@@ -63,45 +68,33 @@ export interface LogoRecusada {
 }
 
 /**
- * O que o desenhista de PDF do DANFE consegue, de fato, desenhar.
+ * A recusa de PNG, que não é capricho e não é sobre o formato.
  *
- * Aqui não vale a intuição de "PNG é PNG". O serviço de DANFE roda no runtime
- * PHP da Vercel, que **não traz a extensão `gd`** — e não é configuração: ela
- * não está na lista de extensões de nenhuma versão do runtime. Sem `gd`, a
- * biblioteca não converte nada, e a imagem cai direto no FPDF, que é de uma
- * geração que recusa três coisas: canal alfa, 16 bits por canal e entrelaçada.
+ * O serviço que desenha o DANFE roda no runtime PHP da Vercel, que **não traz
+ * a extensão `gd`** — e não é configuração: ela não está na lista de extensões
+ * de nenhuma versão do runtime. Só que a biblioteca do DANFE chama
+ * `imagecreatefrompng` para **todo** PNG, antes de olhar o conteúdo. Sem `gd`
+ * essa função não existe, e a geração morre com "Call to undefined function".
  *
- * Recusar aqui é o ponto barato. Aceita, a imagem só falha quando alguém baixa
- * um DANFE — e o modo como falha é o pior possível: a nota sai, correta e
- * autorizada, apenas sem a logo. Ninguém abre um chamado para isso; o cliente
- * só conclui que a plataforma não faz logo.
+ * Medido em produção, com o serviço no ar: JPG devolve o PDF com a logo
+ * dentro; PNG devolve 500, tenha ele transparência ou não. Por isso a regra
+ * aqui é o formato inteiro, e não os casos que o FPDF recusaria — a biblioteca
+ * nunca chega a consultar o FPDF.
  *
- * As telas já mandam JPEG sobre fundo branco justamente para não esbarrar
- * nisto. Esta função protege quem chama a API direto.
+ * O que torna isto grave é o modo da falha do outro lado: o emissor tenta de
+ * novo sem a logo, então a nota sai correta e autorizada, apenas sem ela.
+ * Ninguém abre chamado para isso; o cliente só conclui que a plataforma não
+ * faz logo. As telas convertem a imagem escolhida para JPEG antes de enviar,
+ * então quem usa o painel nunca vê esta mensagem — ela protege quem chama a
+ * API direto.
  */
-function conferirPngQueOFpdfDesenha(bytes: Buffer): LogoRecusada | null {
-  // Assinatura (8) + tamanho do chunk (4) + "IHDR" (4) + largura (4) + altura (4).
-  const IHDR = 8 + 4 + 4 + 4 + 4;
-  if (bytes.length < IHDR + 5) return { erro: 'PNG truncado: falta o cabecalho IHDR.' };
-  const profundidade = bytes[IHDR];
-  const tipoDeCor = bytes[IHDR + 1];
-  const entrelacada = bytes[IHDR + 4];
-
-  const comoResolver = 'Salve a logo como JPG sobre fundo branco — o DANFE e impresso em papel '
-    + 'branco, entao a transparencia nao faz diferenca no resultado. Pelo painel isso e '
-    + 'automatico: a tela converte a imagem escolhida antes de enviar.';
-
-  if (tipoDeCor === 4 || tipoDeCor === 6) {
-    return { erro: 'PNG com transparencia (canal alfa) nao e desenhado no DANFE.', comoResolver };
-  }
-  if (profundidade > 8) {
-    return { erro: `PNG de ${profundidade} bits por canal nao e desenhado no DANFE.`, comoResolver };
-  }
-  if (entrelacada) {
-    return { erro: 'PNG entrelacado (interlaced) nao e desenhado no DANFE.', comoResolver };
-  }
-  return null;
-}
+const RECUSA_DO_PNG: LogoRecusada = {
+  erro: 'PNG nao e desenhado no DANFE. Envie JPG.',
+  comoResolver: 'O servico que desenha o DANFE nao tem a extensao `gd` do PHP, e sem ela a '
+    + 'biblioteca falha em qualquer PNG, com ou sem transparencia. Salve a logo como JPG sobre '
+    + 'fundo branco — o DANFE e impresso em papel branco, entao a transparencia nao mudaria o '
+    + 'resultado. Pelo painel isso e automatico: a tela converte antes de enviar.',
+};
 
 /**
  * Confere a imagem antes de guardar — pura, para poder ser testada sem banco.
@@ -142,13 +135,13 @@ export function conferirLogo(base64: string): LogoRecusada | null {
   const formato = FORMATOS.find((f) => inicio.startsWith(f.assinatura));
   if (!formato) {
     return {
-      erro: 'Formato nao reconhecido. Use PNG ou JPG.',
+      erro: 'Formato nao reconhecido. Use JPG.',
       comoResolver: 'SVG e WEBP nao sao desenhados pela biblioteca do DANFE. '
         + 'Exporte como JPG, ou escolha o arquivo pelo painel, que converte sozinho.',
     };
   }
 
-  if (formato.tipo === 'image/png') return conferirPngQueOFpdfDesenha(bytes);
+  if (formato.tipo === 'image/png') return RECUSA_DO_PNG;
 
   return null;
 }

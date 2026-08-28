@@ -27,15 +27,14 @@ const JPG = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(6
  * justamente no documento que o cliente entrega ao cliente dele.
  */
 describe('conferir a logo antes de guardar', () => {
-  test('aceita PNG e JPG', () => {
-    expect(conferirLogo(PNG_1X1)).toBeNull();
+  test('aceita JPG', () => {
     expect(conferirLogo(JPG)).toBeNull();
   });
 
   test('aceita o prefixo data: que o navegador produz', () => {
     // `FileReader.readAsDataURL` devolve com prefixo. Exigir que a tela o
     // remova e transferir para ela um trabalho que e de uma linha aqui.
-    expect(conferirLogo('data:image/png;base64,' + PNG_1X1)).toBeNull();
+    expect(conferirLogo('data:image/jpeg;base64,' + JPG)).toBeNull();
   });
 
   test('recusa vazio', () => {
@@ -52,7 +51,7 @@ describe('conferir a logo antes de guardar', () => {
     // erro que ela devolve fala de recurso de imagem, sem citar a logo.
     const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>').toString('base64');
     const recusa = conferirLogo(svg)!;
-    expect(recusa.erro).toMatch(/PNG ou JPG/i);
+    expect(recusa.erro).toMatch(/Use JPG/i);
     expect(recusa.comoResolver).toMatch(/SVG/);
   });
 
@@ -69,32 +68,37 @@ describe('conferir a logo antes de guardar', () => {
   });
 
   /**
-   * O runtime PHP da Vercel nao tem `gd` — e nao e configuracao: a extensao nao
-   * existe em versao nenhuma do runtime. Sem ela a imagem vai direto para o
-   * FPDF, que e de uma geracao que recusa estes tres casos.
+   * A recusa do PNG — que so a producao ensinou.
    *
-   * O que torna isto grave e o MODO da falha: a nota sai autorizada, correta,
-   * so que sem a logo. Ninguem abre chamado para isso — o cliente so conclui
-   * que a plataforma nao faz logo.
+   * O runtime PHP da Vercel nao tem `gd`, e nao e configuracao: a extensao nao
+   * existe em versao nenhuma do runtime. Dai eu havia deduzido que o problema
+   * seriam os tres casos que o FPDF recusa (alfa, 16 bits, entrelacado), e
+   * este teste recusava so esses tres. Errado: a biblioteca chama
+   * `imagecreatefrompng` para TODO PNG, antes de olhar o conteudo — sem `gd`
+   * isso e "Call to undefined function", nao um PNG mal formado.
+   *
+   * Medido contra o servico no ar: JPG devolve o PDF com a logo dentro; PNG
+   * devolve 500, tenha alfa ou nao. Ou seja, um PNG comum passava por este
+   * validador e perdia a logo calado — o pior modo de falhar, porque a nota
+   * sai autorizada e correta, so que sem ela. Ninguem abre chamado para isso;
+   * o cliente so conclui que a plataforma nao faz logo.
    */
-  test('recusa PNG com transparencia, que e como quase toda logo e exportada', () => {
-    const recusa = conferirLogo(PNG_COM_ALFA)!;
-    expect(recusa.erro).toMatch(/transpar/i);
-    expect(recusa.comoResolver).toMatch(/JPG/);
+  test('recusa PNG — qualquer PNG, porque o servico nao tem gd', () => {
+    for (const png of [PNG_1X1, PNG_COM_ALFA, PNG_ENTRELACADO, PNG_16_BITS]) {
+      const recusa = conferirLogo(png)!;
+      expect(recusa.erro).toMatch(/PNG/);
+      expect(recusa.comoResolver).toMatch(/JPG/);
+    }
   });
 
-  test('recusa PNG entrelacado e de 16 bits pelo mesmo motivo', () => {
-    expect(conferirLogo(PNG_ENTRELACADO)!.erro).toMatch(/entrelac/i);
-    expect(conferirLogo(PNG_16_BITS)!.erro).toMatch(/16 bits/i);
-  });
-
-  test('PNG comum continua passando', () => {
-    // A recusa e dos tres casos que o FPDF nao desenha, nao de PNG.
-    expect(conferirLogo(PNG_1X1)).toBeNull();
+  test('a recusa diz o motivo verdadeiro, que e o `gd` ausente', () => {
+    // Sem o motivo, a mensagem vira "use JPG porque sim" — e o proximo a mexer
+    // aqui tenta o PNG de novo, achando que era manha do validador.
+    expect(conferirLogo(PNG_1X1)!.comoResolver).toMatch(/gd/);
   });
 
   test('o limite tem folga para uma logo de verdade', () => {
-    // 400 KB comporta um PNG de 600x200 com sobra — o objetivo e barrar o
+    // 400 KB comporta um JPG de 600x200 com sobra — o objetivo e barrar o
     // arquivo de camera, nao a logo caprichada.
     expect(LIMITE_DA_LOGO).toBeGreaterThanOrEqual(200 * 1024);
   });
@@ -213,10 +217,10 @@ describe('o caminho ate o PDF', () => {
   });
 
   test('as duas telas achatam a imagem antes de enviar', () => {
-    // Recusar PNG com alfa no servidor protege quem chama a API, mas seria uma
-    // parede na cara de quem so quer subir a logo da empresa — e a logo da
-    // empresa TEM alfa. As telas convertem para JPEG sobre branco, que e a cor
-    // do papel: o usuario nao precisa saber que existe um FPDF do outro lado.
+    // Recusar PNG no servidor protege quem chama a API, mas seria uma parede na
+    // cara de quem so quer subir a logo da empresa — e a logo da empresa quase
+    // sempre E um PNG. As telas convertem para JPEG sobre branco, que e a cor do
+    // papel: o usuario nao precisa saber que falta um `gd` do outro lado.
     const painel = fs.readFileSync(
       path.resolve(__dirname, '..', '..', 'src', 'webapp', 'public', 'index.html'), 'utf8');
     const plataforma = fs.readFileSync(
