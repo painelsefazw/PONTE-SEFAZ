@@ -56,22 +56,45 @@ describe('modalidade do cliente e coluna propria', () => {
     expect(backfill.slice(0, 600)).toContain("WHERE modalidade = 'api'");
   });
 
-  test('da para listar so uma modalidade', () => {
-    // São duas listas com perguntas diferentes: em plataforma se olha
-    // publicação e versão; em API, chave e último uso. Misturadas, cada
-    // pergunta varre clientes que não têm como respondê-la.
+  test('cada modalidade tem a sua ABA, com o seu cadastro', () => {
+    // Era um seletor "todas as modalidades" no topo de uma lista só. Um
+    // seletor ainda deixa as duas no mesmo lugar, e elas não respondem às
+    // mesmas perguntas: em plataforma se olha publicação e versão; em API,
+    // chave e último uso.
+    //
+    // Separadas em abas, cada uma tem o SEU botão de cadastro — e some a
+    // chance de cadastrar na modalidade errada por ter clicado no botão
+    // errado, que era possível quando os dois botões dividiam a mesma tela.
     expect(store).toContain('modalidade?: ModalidadeCliente;');
     expect(store).toMatch(/conditions\.push\(`c\.modalidade = /);
     expect(app).toMatch(/modalidade: req\.query\.modalidade === 'plataforma'/);
-    expect(painel).toContain('id="clienteApiModalidadeFilter"');
-    expect(painel).toMatch(/qs \+= '&modalidade=' \+ modalidade/);
+
+    expect(painel).not.toContain('clienteApiModalidadeFilter');
+    for (const mod of ['api', 'plataforma']) {
+      expect(painel).toContain(`id="tab-clientesapi-${mod}"`);
+      expect(painel).toContain(`id="clientesApiLista-${mod}"`);
+      expect(painel).toContain(`showCadastroClienteApi('${mod}')`);
+    }
+    expect(painel).toContain("{ id: 'clientesapi-api', label: 'Por API' }");
+    expect(painel).toContain("{ id: 'clientesapi-plataforma', label: 'Com plataforma' }");
+    // A aba aberta É a modalidade — a busca vai sempre presa a ela.
+    expect(painel).toMatch(/_modalidadeAtiva = 'api'/);
+    expect(painel).toMatch(/_modalidadeAtiva = 'plataforma'/);
+    expect(painel).toMatch(/qs = '\?limite=50&modalidade=' \+ _modalidadeAtiva/);
   });
 
-  test('os contadores separam as duas', () => {
+  test('os contadores de cada aba sao DAQUELA modalidade', () => {
+    // Dizer "2 ativos" na aba "Por API" quando um deles é de plataforma é uma
+    // conta errada exibida com confiança. O servidor devolve o recorte por
+    // modalidade justamente para isso.
     expect(store).toMatch(/COUNT\(\*\) FILTER \(WHERE modalidade = 'api'\)/);
     expect(store).toMatch(/COUNT\(\*\) FILTER \(WHERE modalidade = 'plataforma'\)/);
-    expect(painel).toContain("cardMini('Por API'");
-    expect(painel).toContain("cardMini('Com plataforma'");
+    expect(store).toContain('porModalidade');
+    expect(store).toMatch(/GROUP BY modalidade/);
+    const render = painel.slice(painel.indexOf('function renderClientesDashboard('));
+    const corpo = render.slice(0, render.indexOf('\n}'));
+    expect(corpo).toContain('d.porModalidade');
+    expect(corpo).toContain('_modalidadeAtiva');
   });
 
   test('o cadastro grava a modalidade escolhida no botao', () => {

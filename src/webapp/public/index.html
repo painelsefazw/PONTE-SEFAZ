@@ -2318,28 +2318,27 @@ body {
 </div>
 
 <!-- TAB: Clientes API - Lista -->
-<div class="tab-content somente-contador" id="tab-clientesapi-lista">
+<!-- Uma aba por modalidade.
+     O seletor "todas as modalidades" ainda deixava as duas listas no mesmo
+     lugar, e elas nao respondem as mesmas perguntas: em "com plataforma" se
+     olha publicacao e versao; em "por API", chave e ultimo uso. Separadas, cada
+     aba tem o SEU botao de cadastro — e nao ha como cadastrar na modalidade
+     errada por ter clicado no botao errado. -->
+<div class="tab-content somente-contador" id="tab-clientesapi-api">
 <div class="container">
   <div class="section">
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Clientes</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="showCadastroClienteApi('api')" title="O cliente já tem sistema e so quer credencial para integrar">+ Cliente por API</button>
-        <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Cliente com plataforma</button>
-      </div>
+      <span>Clientes por API</span>
+      <button class="btn btn-primary" onclick="showCadastroClienteApi('api')" title="O cliente ja tem sistema e so quer credencial para integrar">+ Novo cliente por API</button>
     </div>
-    <div id="clientesApiDashboard" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
+    <div style="font-size:12px;color:var(--suave-texto);margin:-8px 0 16px">Empresas que já têm sistema próprio e usam apenas a credencial de integração. Não recebem site, repositório nem senha de painel.</div>
+    <div id="clientesApiResumo-api" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
     <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <input type="text" id="clienteApiBusca" placeholder="Buscar por nome ou CNPJ" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px" oninput="loadClientesApi()">
-      <!-- A modalidade vem ANTES do status porque e a divisao mais grossa: as
-           duas listas tem perguntas diferentes. Em "com plataforma" se olha
-           publicacao e versao; em "por API", chave e ultimo uso. -->
-      <select id="clienteApiModalidadeFilter" onchange="loadClientesApi()" style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
-        <option value="">Todas as modalidades</option>
-        <option value="api">Somente por API</option>
-        <option value="plataforma">Somente com plataforma</option>
-      </select>
-      <select id="clienteApiStatusFilter" onchange="loadClientesApi()" style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
+      <input type="text" id="clienteApiBusca-api" placeholder="Buscar por nome ou CNPJ"
+             style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px"
+             oninput="loadClientesApi()">
+      <select id="clienteApiStatusFilter-api" onchange="loadClientesApi()"
+              style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
         <option value="">Todos os status</option>
         <option value="active">Ativo</option>
         <option value="sandbox">Ambiente de testes</option>
@@ -2349,23 +2348,40 @@ body {
         <option value="cancelled">Cancelado</option>
       </select>
     </div>
-    <div id="clientesApiLista"><div class="hist-empty">Carregando...</div></div>
+    <div id="clientesApiLista-api"><div class="hist-empty">Carregando...</div></div>
   </div>
 </div>
 </div>
 
-<!-- Modal: Cadastro Cliente API -->
-<div id="modalClienteApi" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:999;overflow-y:auto">
-<div style="max-width:680px;margin:30px auto;background:var(--cartao);border-radius:16px;padding:0;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.15)">
-  <div style="padding:24px 28px 0;display:flex;justify-content:space-between;align-items:center">
-    <h2 style="font-size:20px;font-weight:700;margin:0;color:var(--marca-tinta)" id="modalClienteTitulo">Novo Cliente API</h2>
-    <button onclick="document.getElementById('modalClienteApi').style.display='none'" style="background:var(--suave);border:none;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;color:var(--suave-texto);display:flex;align-items:center;justify-content:center">&times;</button>
+<div class="tab-content somente-contador" id="tab-clientesapi-plataforma">
+<div class="container">
+  <div class="section">
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Clientes com plataforma</span>
+      <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Novo cliente com plataforma</button>
+    </div>
+    <div style="font-size:12px;color:var(--suave-texto);margin:-8px 0 16px">Empresas que recebem um site pronto, publicado e mantido por nós — com repositório próprio e senha de painel.</div>
+    <div id="clientesApiResumo-plataforma" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
+    <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="text" id="clienteApiBusca-plataforma" placeholder="Buscar por nome ou CNPJ"
+             style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px"
+             oninput="loadClientesApi()">
+      <select id="clienteApiStatusFilter-plataforma" onchange="loadClientesApi()"
+              style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
+        <option value="">Todos os status</option>
+        <option value="active">Ativo</option>
+        <option value="sandbox">Ambiente de testes</option>
+        <option value="draft">Rascunho</option>
+        <option value="suspended">Suspenso</option>
+        <option value="past_due">Inadimplente</option>
+        <option value="cancelled">Cancelado</option>
+      </select>
+    </div>
+    <div id="clientesApiLista-plataforma"><div class="hist-empty">Carregando...</div></div>
   </div>
-  <div id="modalClienteApiContent" style="padding:20px 28px 28px"></div>
 </div>
 </div>
 
-<!-- TAB: Clientes API - Templates -->
 <div class="tab-content somente-contador" id="tab-clientesapi-templates">
 <div class="container">
   <div class="section">
@@ -2600,7 +2616,13 @@ var TAB_GROUPS = {
   cadastros: [{ id: 'produtos', label: 'Produtos' }, { id: 'servicos', label: 'Serviços' }, { id: 'importar', label: 'Importar XLSX' }, { id: 'regras', label: 'Regras fiscais' }],
   operacoes: [{ id: 'inutilizar', label: 'Inutilizar' }, { id: 'manifestacao', label: 'Manifestação' }],
   config: [{ id: 'configuracoes', label: 'SMTP' }, { id: 'api', label: 'API' }],
-  clientesapi: [{ id: 'clientesapi-lista', label: 'Clientes' }, { id: 'clientesapi-templates', label: 'Templates', soCompleto: true }, { id: 'clientesapi-instancia', label: 'Nova instância' }, { id: 'clientesapi-audit', label: 'Auditoria' }],
+  clientesapi: [
+    { id: 'clientesapi-api', label: 'Por API' },
+    { id: 'clientesapi-plataforma', label: 'Com plataforma' },
+    { id: 'clientesapi-templates', label: 'Templates', soCompleto: true },
+    { id: 'clientesapi-instancia', label: 'Nova instância' },
+    { id: 'clientesapi-audit', label: 'Auditoria' },
+  ],
 };
 
 var currentGroup = 'emissao';
@@ -2666,7 +2688,9 @@ function showTab(name) {
   if (name === 'servicos') loadServicos();
   if (name === 'nfsedfe') loadNfseDfe();
   if (name === 'configuracoes') loadConfiguracoes();
-  if (name === 'clientesapi-lista') loadClientesApi();
+  // Qual aba esta aberta E a modalidade: nao ha filtro para escolher errado.
+  if (name === 'clientesapi-api') { _modalidadeAtiva = 'api'; loadClientesApi(); }
+  if (name === 'clientesapi-plataforma') { _modalidadeAtiva = 'plataforma'; loadClientesApi(); }
   if (name === 'clientesapi-templates') loadTemplates();
   if (name === 'clientesapi-audit') loadAuditLog();
 }
@@ -7314,16 +7338,36 @@ function seloPlano(id) {
   return PLANO_SELO[String(id || '').toLowerCase()] || PLANO_SELO.pro;
 }
 
+/**
+ * A modalidade da aba aberta.
+ *
+ * Ela decide de onde os campos sao lidos, onde a lista e desenhada e o que a
+ * API devolve. Guardada aqui, e nao lida do DOM a cada uso, porque o detalhe
+ * do cliente tambem precisa saber em qual das duas caixas desenhar.
+ */
+var _modalidadeAtiva = 'api';
+
+/** O elemento `id-<modalidade>` da aba aberta. */
+function elDaModalidade(base) {
+  return document.getElementById(base + '-' + _modalidadeAtiva);
+}
+
+/** Onde a lista (ou o detalhe de um cliente) e desenhada. */
+function caixaDosClientes() {
+  return elDaModalidade('clientesApiLista');
+}
+
 async function loadClientesApi() {
   // O catalogo de planos vem do servidor; sem isto o wizard oferece plano velho.
   await carregarPlanos();
-  var busca = document.getElementById('clienteApiBusca').value;
-  var status = document.getElementById('clienteApiStatusFilter').value;
-  var modalidade = document.getElementById('clienteApiModalidadeFilter').value;
-  var qs = '?limite=50';
+  var campoBusca = elDaModalidade('clienteApiBusca');
+  var campoStatus = elDaModalidade('clienteApiStatusFilter');
+  if (!campoBusca) return;
+  var busca = campoBusca.value;
+  var status = campoStatus ? campoStatus.value : '';
+  var qs = '?limite=50&modalidade=' + _modalidadeAtiva;
   if (busca) qs += '&busca=' + encodeURIComponent(busca);
   if (status) qs += '&status=' + status;
-  if (modalidade) qs += '&modalidade=' + modalidade;
   try {
     var [dashR, listR] = await Promise.all([
       apiFetch('/api/admin/dashboard'),
@@ -7335,23 +7379,34 @@ async function loadClientesApi() {
     _clientesApiCache = list.clients || [];
     renderClientesLista(_clientesApiCache, list.total);
   } catch (e) {
-    document.getElementById('clientesApiLista').innerHTML = '<div class="hist-empty">Não foi possível carregar: ' + e.message + '</div>';
+    caixaDosClientes().innerHTML = '<div class="hist-empty">Não foi possível carregar: ' + e.message + '</div>';
   }
 }
 
+/**
+ * Os numeros DESTA aba.
+ *
+ * O total global nao serve aqui: dizer "2 ativos" na aba "Por API" quando um
+ * deles e de plataforma e uma conta errada exibida com confianca. O servidor
+ * devolve o recorte por modalidade justamente para isto.
+ */
 function renderClientesDashboard(d) {
-  var el = document.getElementById('clientesApiDashboard');
+  var el = elDaModalidade('clientesApiResumo');
+  if (!el) return;
+  var m = (d.porModalidade || {})[_modalidadeAtiva] || {
+    // Ponte antiga, sem o recorte: melhor mostrar o total da modalidade que o
+    // proprio servidor ja contava do que exibir numero de outra aba.
+    total: _modalidadeAtiva === 'plataforma' ? (d.comPlataforma || 0) : (d.porApi || 0),
+    ativos: 0, sandbox: 0, suspensos: 0, marcaPropria: 0
+  };
   el.innerHTML = [
-    // A modalidade vem primeiro: e a divisao que muda o trabalho do dia.
-    cardMini('Por API', d.porApi || 0, ''),
-    cardMini('Com plataforma', d.comPlataforma || 0, ''),
-    cardMini('Ativos', d.ativos || 0, 'success'),
+    cardMini('Total', m.total || 0, ''),
+    cardMini('Ativos', m.ativos || 0, 'success'),
     // `sandbox` e `white-label` sao os valores internos; na tela eles se leem
     // em portugues, porque quem opera nao precisa saber o nome do campo.
-    cardMini('Ambiente de testes', d.sandbox || 0, 'warn'),
-    cardMini('Suspensos', d.suspensos || 0, 'danger'),
-    cardMini('Total', d.total || 0, ''),
-    cardMini('Marca própria', d.whiteLabelAtivas || 0, '')
+    cardMini('Ambiente de testes', m.sandbox || 0, 'warn'),
+    cardMini('Suspensos', m.suspensos || 0, 'danger'),
+    cardMini('Marca própria', m.marcaPropria || 0, '')
   ].join('');
 }
 
@@ -7407,7 +7462,7 @@ function seloModalidade(modalidade) {
 }
 
 function renderClientesLista(clients, total) {
-  var el = document.getElementById('clientesApiLista');
+  var el = caixaDosClientes();
   if (!clients.length) {
     el.innerHTML = '<div class="hist-empty">Nenhum cliente cadastrado</div>';
     return;
@@ -7425,10 +7480,11 @@ function renderClientesLista(clients, total) {
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center">' +
-          // Modalidade e marca sao selos DIFERENTES de proposito: um cliente
-          // de API pode ter marca propria (a logo dele no DANFE) sem ter
-          // plataforma nenhuma, e ate hoje os dois casos se confundiam.
-          seloModalidade(c.modalidade) +
+          // O selo de modalidade so aparece quando a lista MISTURA as duas —
+          // dentro da aba "Por API", dizer "API" em cada linha e repetir o
+          // titulo seis vezes. A marca propria continua, porque ela e
+          // independente: cliente de API pode ter a logo dele no DANFE.
+          (c.modalidade && c.modalidade !== _modalidadeAtiva ? seloModalidade(c.modalidade) : '') +
           (c.whiteLabelAtiva ? '<span title="Marca própria" style="font-size:11px;background:var(--roxo-fundo);color:var(--roxo-tinta);padding:2px 8px;border-radius:99px">Marca própria</span>' : '') +
           '<span style="font-size:11px;background:' + statusColor + '15;color:' + statusColor + ';padding:3px 10px;border-radius:99px;font-weight:600">' + statusLabel + '</span>' +
         '</div>' +
@@ -8171,7 +8227,7 @@ async function reprocessarWebhooks(btn) {
 }
 
 async function abrirDetalheCliente(cnpj) {
-  document.getElementById('clientesApiLista').innerHTML = '<div class="hist-empty">Carregando detalhes...</div>';
+  caixaDosClientes().innerHTML = '<div class="hist-empty">Carregando detalhes...</div>';
   try {
     var [cR, sR, wR, hR, stR, kR, pR] = await Promise.all([
       apiFetch('/api/admin/clients/' + cnpj),
@@ -8193,7 +8249,7 @@ async function abrirDetalheCliente(cnpj) {
     _clienteDetalhe = { cliente: cliente, servicos: servicos, webhooks: webhooks, health: health, stats: stats, keys: keys, painel: painel };
     renderDetalheCliente(cnpj);
   } catch (e) {
-    document.getElementById('clientesApiLista').innerHTML = '<div class="hist-empty">Erro: ' + e.message + '</div>';
+    caixaDosClientes().innerHTML = '<div class="hist-empty">Erro: ' + e.message + '</div>';
   }
 }
 
@@ -8411,7 +8467,7 @@ async function gravarParametrosDanfe(cnpj, corpo, sucesso) {
 function renderDetalheCliente(cnpj) {
   var d = _clienteDetalhe;
   var c = d.cliente;
-  var el = document.getElementById('clientesApiLista');
+  var el = caixaDosClientes();
   var statusColor = STATUS_COLORS[c.status] || 'var(--suave-texto)';
   // O que o cliente COMPROU decide o que esta tela mostra. Antes ela mostrava
   // tudo para todos: quem entrou por API via senha de um site que nao tem e

@@ -526,6 +526,17 @@ export class ApiClientStore {
     ativos: number; sandbox: number; suspensos: number; total: number;
     porApi: number; comPlataforma: number;
     whiteLabelAtivas: number; emissoesMes: number;
+    /**
+     * O mesmo recorte, dentro de cada modalidade.
+     *
+     * O total global nao serve dentro de uma aba de modalidade: dizer "2
+     * ativos" na aba "Por API" quando um deles e de plataforma e uma conta
+     * errada exibida com confianca.
+     */
+    porModalidade: Record<'api' | 'plataforma', {
+      total: number; ativos: number; sandbox: number;
+      suspensos: number; marcaPropria: number;
+    }>;
   }> {
     const r = await this.pool.query(`
       SELECT
@@ -538,8 +549,30 @@ export class ApiClientStore {
         COUNT(*) FILTER (WHERE white_label_ativa = TRUE) as white_label
       FROM webapp_api_clients
     `);
+    const porMod = await this.pool.query(`
+      SELECT
+        modalidade,
+        COUNT(*) as total,
+        COUNT(*) FILTER (WHERE status = 'active') as ativos,
+        COUNT(*) FILTER (WHERE status = 'sandbox') as sandbox,
+        COUNT(*) FILTER (WHERE status IN ('suspended', 'past_due')) as suspensos,
+        COUNT(*) FILTER (WHERE white_label_ativa = TRUE) as marca_propria
+      FROM webapp_api_clients
+      GROUP BY modalidade
+    `);
+    const vazio = { total: 0, ativos: 0, sandbox: 0, suspensos: 0, marcaPropria: 0 };
+    const porModalidade = { api: { ...vazio }, plataforma: { ...vazio } };
+    for (const linha of porMod.rows) {
+      const chave = linha.modalidade === 'plataforma' ? 'plataforma' : 'api';
+      porModalidade[chave] = {
+        total: +linha.total, ativos: +linha.ativos, sandbox: +linha.sandbox,
+        suspensos: +linha.suspensos, marcaPropria: +linha.marca_propria,
+      };
+    }
+
     const row = r.rows[0];
     return {
+      porModalidade,
       total: +row.total,
       ativos: +row.ativos,
       sandbox: +row.sandbox,
