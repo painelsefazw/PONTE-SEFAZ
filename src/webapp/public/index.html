@@ -2397,16 +2397,6 @@ body {
       <input type="text" id="clienteApiBusca-api" placeholder="Buscar por nome ou CNPJ"
              style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px"
              oninput="loadClientesApi()">
-      <select id="clienteApiStatusFilter-api" onchange="loadClientesApi()"
-              style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
-        <option value="">Todos os status</option>
-        <option value="active">Ativo</option>
-        <option value="sandbox">Ambiente de testes</option>
-        <option value="draft">Rascunho</option>
-        <option value="suspended">Suspenso</option>
-        <option value="past_due">Inadimplente</option>
-        <option value="cancelled">Cancelado</option>
-      </select>
     </div>
     <div id="clientesApiLista-api"><div class="hist-empty">Carregando...</div></div>
   </div>
@@ -2426,16 +2416,6 @@ body {
       <input type="text" id="clienteApiBusca-plataforma" placeholder="Buscar por nome ou CNPJ"
              style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px"
              oninput="loadClientesApi()">
-      <select id="clienteApiStatusFilter-plataforma" onchange="loadClientesApi()"
-              style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
-        <option value="">Todos os status</option>
-        <option value="active">Ativo</option>
-        <option value="sandbox">Ambiente de testes</option>
-        <option value="draft">Rascunho</option>
-        <option value="suspended">Suspenso</option>
-        <option value="past_due">Inadimplente</option>
-        <option value="cancelled">Cancelado</option>
-      </select>
     </div>
     <div id="clientesApiLista-plataforma"><div class="hist-empty">Carregando...</div></div>
   </div>
@@ -7496,13 +7476,14 @@ async function loadClientesApi() {
   // O catalogo de planos vem do servidor; sem isto o wizard oferece plano velho.
   await carregarPlanos();
   var campoBusca = elDaModalidade('clienteApiBusca');
-  var campoStatus = elDaModalidade('clienteApiStatusFilter');
   if (!campoBusca) return;
   var busca = campoBusca.value;
-  var status = campoStatus ? campoStatus.value : '';
-  var qs = '?limite=50&modalidade=' + _modalidadeAtiva;
+  // Sem filtro de status de proposito: a lista vem inteira e a COR do cartao
+  // separa os estados. Filtrar escondia — para saber quantos estavam suspensos
+  // era preciso filtrar, contar e voltar, e enquanto se olhava um estado os
+  // outros nao existiam.
+  var qs = '?limite=200&modalidade=' + _modalidadeAtiva;
   if (busca) qs += '&busca=' + encodeURIComponent(busca);
-  if (status) qs += '&status=' + status;
   try {
     var [dashR, listR] = await Promise.all([
       apiFetch('/api/admin/dashboard'),
@@ -7637,8 +7618,14 @@ function renderClientesLista(clients, total) {
     // termina onde o texto dela acabou: nome curto empurra o selo para um
     // lugar, nome longo para outro, e a lista inteira fica torta. Colunas de
     // largura fixa fazem os selos formarem uma coluna de verdade.
+    // A cor do estado no proprio cartao: uma faixa a esquerda e um fundo de
+    // leve tingido. Nao substitui o selo escrito — cor sozinha exclui quem nao
+    // distingue verde de vermelho, e "Inadimplente" e "Suspenso" partilham o
+    // mesmo vermelho. Ela adianta a leitura; o selo confirma.
     html += '<div onclick="abrirDetalheCliente(\'' + c.empresaCnpj + '\')" ' +
-        'style="background:var(--cartao);border:1px solid var(--borda);border-radius:10px;' +
+        'style="background:linear-gradient(90deg, ' + tingir(statusColor) + ', var(--cartao) 220px);' +
+        'border:1px solid var(--borda);border-left:4px solid ' + statusColor + ';' +
+        'border-radius:10px;' +
         'padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s;' +
         'display:grid;grid-template-columns:44px minmax(0,1fr) 108px 108px 132px;' +
         'align-items:center;gap:12px" ' +

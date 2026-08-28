@@ -58,6 +58,26 @@ describe('alinhamento em colunas', () => {
     expect(ini).toContain("'EIRELI'");
   });
 
+  test('o estado se le pela COR do cartao, e nao por um filtro', () => {
+    // Filtro esconde. Para saber quantos estavam suspensos era preciso
+    // filtrar, contar e voltar — e enquanto se olhava um estado, os outros
+    // nao existiam. Com a cor no proprio cartao, a lista inteira responde de
+    // uma vez, e a comparacao entre estados fica gratis.
+    expect(painel).not.toContain('clienteApiStatusFilter');
+    const fn = bloco('function renderClientesLista(');
+    expect(fn).toContain('border-left:4px solid');
+    expect(fn).toContain('linear-gradient(90deg');
+    expect(fn).toContain('tingir(statusColor)');
+
+    // A cor NAO substitui o selo escrito: ela sozinha exclui quem nao
+    // distingue verde de vermelho, e "Inadimplente" e "Suspenso" partilham o
+    // mesmo vermelho. Ela adianta a leitura; o selo confirma.
+    expect(fn).toContain('selo(statusLabel');
+
+    // E a lista tem de vir inteira, senao a cor mostra so um pedaco.
+    expect(painel).toMatch(/qs = '\?limite=200&modalidade='/);
+  });
+
   test('a coluna vazia continua existindo', () => {
     // Quando a lista nao mistura modalidades, a coluna do selo fica vazia — e
     // fica, em vez de sumir. Sumindo, tudo o que vem depois desliza e as

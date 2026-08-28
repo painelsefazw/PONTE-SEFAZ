@@ -82,7 +82,9 @@ describe('modalidade do cliente e coluna propria', () => {
     // A aba aberta É a modalidade — a busca vai sempre presa a ela.
     expect(painel).toMatch(/_modalidadeAtiva = 'api'/);
     expect(painel).toMatch(/_modalidadeAtiva = 'plataforma'/);
-    expect(painel).toMatch(/qs = '\?limite=50&modalidade=' \+ _modalidadeAtiva/);
+    // O limite subiu de 50 para 200 quando o filtro de status saiu: a cor do
+    // cartao so distingue o que esta na tela, entao a lista vem inteira.
+    expect(painel).toMatch(/qs = '\?limite=200&modalidade=' \+ _modalidadeAtiva/);
   });
 
   test('os contadores de cada aba sao DAQUELA modalidade', () => {
