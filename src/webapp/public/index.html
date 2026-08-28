@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&display=swap">
 <title>NF-e Engine — Emissao</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -350,33 +354,298 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 .wz-btn-g { background: #fff; color: #4b5563; border-color: #d8dce3; }
 .wz-skip { background: none; border: none; color: #9ca3af; font-size: 12px; cursor: pointer;
            text-decoration: underline; font-family: inherit; }
+
+/* ===========================================================================
+   DESIGN SYSTEM — o mesmo do console de clientes.
+   ===========================================================================
+
+   Este painel nasceu como HTML e CSS escritos a mao, com a cor de cada coisa
+   digitada no lugar onde ela aparece. O console de clientes, gerado depois,
+   ficou noutro padrao: tokens de cor em oklch, Inter Tight, cartoes com borda
+   em vez de sombra, barra lateral escura. Duas telas do mesmo produto, com
+   duas caras.
+
+   O que segue traz a cara do console para ca SEM trocar de tecnologia — nao ha
+   React, nao ha build, e nao deveria haver: este arquivo e servido direto, e
+   isso e uma qualidade dele. O bloco vem no FIM da folha de proposito: com a
+   mesma especificidade, quem vem depois vence, entao ele redefine o visual sem
+   precisar apagar uma linha do que ja existia e funciona.
+
+   Tres regras que valem para tudo aqui:
+
+   - **Cor so sai de token.** Nada de hexadecimal novo no meio da regra. Trocar
+     a paleta inteira e mexer no `:root`.
+   - **Caixa alta e do CSS, nunca do texto.** `text-transform` preserva o
+     acento; escrever "CONFIGURACOES" na mao o perde para sempre.
+   - **Frase continua frase.** Titulo, rotulo, botao e aba em caixa alta;
+     explicacao, ajuda e mensagem de erro em escrita normal, porque paragrafo
+     em maiuscula ninguem le.
+   =========================================================================== */
+
+:root {
+  --raio: 0.625rem;
+  --fundo: oklch(0.958 0.004 247.9);
+  --texto: oklch(0.235 0.043 277);
+  --cartao: oklch(1 0 0);
+  --primaria: oklch(0.373 0.034 259.7);
+  --primaria-texto: oklch(0.99 0.002 247.9);
+  --suave: oklch(0.945 0.006 247.9);
+  --suave-texto: oklch(0.551 0.027 264.4);
+  --realce: oklch(0.696 0.17 162.5);
+  --perigo: oklch(0.577 0.245 27.325);
+  --perigo-texto: oklch(0.99 0.002 247.9);
+  --sucesso: oklch(0.696 0.17 162.5);
+  --sucesso-tinta: oklch(0.45 0.13 162.5);
+  --alerta: oklch(0.828 0.189 84.4);
+  --alerta-tinta: oklch(0.45 0.14 84.4);
+  --borda: oklch(0.905 0.008 255.5);
+  --lateral: oklch(0.21 0.034 264.7);
+  --lateral-texto: oklch(0.93 0.006 247.9);
+  --lateral-ativo: oklch(0.28 0.032 264.7);
+  --lateral-borda: oklch(0.32 0.03 264.7);
+  --largura-lateral: 248px;
+}
+
+/* O tema escuro segue a preferencia do sistema. Nao ha botao aqui de
+   proposito: este painel nao guarda preferencia de usuario, e um botao que
+   esquece a escolha a cada visita irrita mais do que ajuda. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: oklch(0.17 0.03 264.7);
+    --texto: oklch(0.97 0.003 247.9);
+    --cartao: oklch(0.21 0.034 264.7);
+    --primaria: oklch(0.62 0.03 259.7);
+    --primaria-texto: oklch(0.15 0.03 264.7);
+    --suave: oklch(0.28 0.032 264.7);
+    --suave-texto: oklch(0.72 0.02 264.4);
+    --sucesso-tinta: oklch(0.80 0.13 162.5);
+    --alerta-tinta: oklch(0.80 0.14 84.4);
+    --borda: oklch(1 0 0 / 12%);
+    --lateral: oklch(0.15 0.03 264.7);
+    --lateral-borda: oklch(1 0 0 / 12%);
+    --lateral-ativo: oklch(0.24 0.032 264.7);
+  }
+}
+
+body {
+  font-family: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+/* --- A caixa alta, num lugar so ---------------------------------------- */
+.topbar h1, .tab-bar button, .sub-tab-bar button,
+.section-title, .form-group label, .fld-lbl, .btn, .wz-btn,
+.items-table th, .hist-table th, .dash-card .dash-label,
+.emitente-bar .label, .tot-grid span, .pick-t, .modo-badge, .status-pill,
+.login-box h2, .wz-h, .key-legend, .drop-t, .aba-tot {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+/* A saida: nome oficial de documento nao vira maiuscula. "NF-e" e o nome;
+   "NF-E" nao e o nome de nada. */
+.sem-caixa-alta, .key-hint, .fld-opt, .pick-s, .drop-s, .wz-sub {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* --- Barra lateral ------------------------------------------------------ */
+/* O painel tinha topo escuro + abas horizontais. O console tem barra lateral
+   escura, e e ela que da a ele a cara de sistema. Aqui a conversao e so de
+   posicionamento: os mesmos elementos, fixados a esquerda. Nada de grid no
+   `body` — ele tem vinte filhos diretos (uma `div` por aba), e reposicionar
+   todos seria muito mais fragil do que fixar dois. */
+@media (min-width: 1024px) {
+  body { padding-left: var(--largura-lateral); }
+
+  .topbar {
+    position: fixed; top: 0; left: 0; width: var(--largura-lateral);
+    height: auto; min-height: 76px; padding: 18px 20px;
+    background: var(--lateral); color: var(--lateral-texto);
+    border-bottom: 1px solid var(--lateral-borda);
+    display: block; z-index: 120;
+  }
+  .topbar h1 { font-size: 15px; line-height: 1.25; white-space: normal; }
+  .topbar::after {
+    content: 'Ponte fiscal'; display: block; margin-top: 3px;
+    font-size: 10.5px; font-weight: 500; letter-spacing: 0.05em;
+    text-transform: uppercase; opacity: .6;
+  }
+
+  .tab-bar {
+    position: fixed; left: 0; top: 76px; bottom: 0;
+    width: var(--largura-lateral);
+    flex-direction: column; align-items: stretch; gap: 2px;
+    background: var(--lateral); border-bottom: none;
+    padding: 12px; overflow-y: auto; z-index: 119;
+  }
+  .tab-bar button {
+    text-align: left; padding: 9px 12px; border-radius: 8px;
+    color: color-mix(in oklch, var(--lateral-texto) 78%, transparent);
+    border-bottom: none; margin-bottom: 0; font-size: 12.5px;
+  }
+  .tab-bar button:hover { background: var(--lateral-ativo); color: var(--lateral-texto); }
+  .tab-bar button.active {
+    background: var(--lateral-ativo); color: #fff; border-bottom-color: transparent;
+  }
+}
+
+/* --- Barra superior da area de conteudo -------------------------------- */
+/* O seletor de empresa, o estado da SEFAZ, o ambiente e o "sair" nao cabem
+   numa coluna de 248px e nao pertencem a navegacao: sao o CONTEXTO do que se
+   esta operando. Vao para uma barra propria, no alto do conteudo. */
+.appbar {
+  position: sticky; top: 0; z-index: 90;
+  display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+  padding: 10px 20px; min-height: 56px;
+  background: var(--cartao); border-bottom: 1px solid var(--borda);
+}
+.appbar:empty { display: none; }
+.appbar .topbar-empresa { margin: 0 auto 0 0; }
+.appbar .topbar-empresa-label { color: var(--suave-texto); }
+.appbar .topbar-empresa select {
+  background: var(--cartao); color: var(--texto); border: 1px solid var(--borda);
+}
+.appbar .topbar-empresa select:hover { background: var(--suave); }
+.appbar .topbar-empresa select option { background: var(--cartao); color: var(--texto); }
+.appbar .sefaz-status { color: var(--suave-texto); margin-left: 0; opacity: 1; }
+.appbar .btn-logout {
+  background: transparent; border: 1px solid var(--borda); color: var(--texto);
+  padding: 5px 12px; border-radius: 8px; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+}
+.appbar .btn-logout:hover { background: var(--suave); }
+
+/* --- Cartoes, formularios, tabelas ------------------------------------- */
+.container { max-width: 1240px; padding: 24px 20px 56px; }
+
+.section, .dash-card {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  box-shadow: none;
+}
+.section { padding: 22px 24px; margin-bottom: 20px; }
+.section-title {
+  color: var(--texto); font-size: 13px; letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--borda); padding-bottom: 10px; margin-bottom: 18px;
+}
+.dash-card { text-align: left; padding: 18px 20px; }
+.dash-card .dash-num { color: var(--texto); font-size: 28px; }
+.dash-card .dash-label { color: var(--suave-texto); }
+
+.form-group label { color: var(--suave-texto); font-size: 11px; }
+.form-group input, .form-group select, .fld, .cnpj-hero input, .login-box input {
+  background: var(--cartao); color: var(--texto);
+  border: 1px solid var(--borda); border-radius: 8px;
+}
+.form-group input:focus, .form-group select:focus, .fld:focus,
+.cnpj-hero input:focus, .login-box input:focus {
+  outline: none; border-color: var(--realce);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--realce) 22%, transparent);
+}
+.form-group input::placeholder, .fld::placeholder { color: var(--suave-texto); }
+
+.hist-table th, .items-table th {
+  color: var(--suave-texto); border-bottom: 1px solid var(--borda);
+}
+.hist-table td, .items-table td { border-bottom: 1px solid var(--borda); }
+.hist-table tr:hover { background: var(--suave); }
+.hist-empty { color: var(--suave-texto); }
+.emitente-bar { background: var(--suave); border-radius: var(--raio); }
+.emitente-bar .label { color: var(--suave-texto); }
+.emitente-bar .value { color: var(--texto); }
+
+/* --- Botoes ------------------------------------------------------------- */
+.btn { border-radius: 8px; font-size: 12.5px; padding: 9px 16px; }
+.btn-sm { padding: 5px 11px; font-size: 11px; }
+.btn-primary { background: var(--primaria); color: var(--primaria-texto); }
+.btn-primary:hover { background: color-mix(in oklch, var(--primaria) 88%, black); }
+.btn-primary:disabled { background: var(--suave); color: var(--suave-texto); }
+.btn-success { background: var(--sucesso); color: oklch(0.21 0.034 264.7); }
+.btn-danger { background: var(--perigo); color: var(--perigo-texto); }
+.btn-outline { background: var(--cartao); border: 1px solid var(--borda); color: var(--texto); }
+.btn-outline:hover { background: var(--suave); }
+
+/* --- Abas internas ------------------------------------------------------ */
+.sub-tab-bar {
+  background: var(--cartao); border-bottom: 1px solid var(--borda); padding: 0 20px;
+}
+.sub-tab-bar button { color: var(--suave-texto); font-size: 12px; }
+.sub-tab-bar button:hover { color: var(--texto); }
+.sub-tab-bar button.active { color: var(--texto); border-bottom-color: var(--realce); }
+
+/* --- Sobreposicoes ------------------------------------------------------ */
+.login-overlay { background: var(--lateral); }
+.login-box, .loading-box, .onboarding-box {
+  background: var(--cartao); color: var(--texto);
+  border: 1px solid var(--borda); border-radius: var(--raio);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 28%);
+}
+.login-box h2 { color: var(--texto); font-size: 20px; }
+.login-box .login-sub, .login-remember, .onboarding-box p { color: var(--suave-texto); }
+.login-box .login-btn {
+  background: var(--primaria); color: var(--primaria-texto); border-radius: 8px;
+  text-transform: uppercase; letter-spacing: 0.03em; font-size: 13px;
+}
+.login-box .login-btn:hover { background: color-mix(in oklch, var(--primaria) 88%, black); }
+.spinner { border-color: var(--borda); border-top-color: var(--realce); }
+
+/* --- Assistente de cadastro -------------------------------------------- */
+.wz-step { color: var(--suave-texto); border-bottom-color: var(--borda); }
+.wz-step.on { color: var(--texto); border-bottom-color: var(--realce); }
+.wz-step.done { color: var(--sucesso-tinta); border-bottom-color: var(--sucesso); }
+.wz-h { color: var(--texto); font-size: 15px; }
+.wz-sub { color: var(--suave-texto); }
+.pick { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); }
+.pick:hover { border-color: var(--realce); background: var(--suave); }
+.pick.on { border-color: var(--realce); background: color-mix(in oklch, var(--realce) 12%, var(--cartao)); }
+.pick.on::after { color: var(--realce); }
+.pick-t { color: var(--texto); font-size: 12.5px; }
+.pick-s { color: var(--suave-texto); }
+.pick.on .pick-t, .pick.on .pick-s { color: var(--texto); }
+.drop { background: var(--suave); border: 2px dashed var(--borda); border-radius: var(--raio); }
+.drop:hover, .drop.over { border-color: var(--realce); background: var(--cartao); }
+.drop-t { color: var(--texto); }
+.drop-s { color: var(--suave-texto); }
+.wz-foot { border-top: 1px solid var(--borda); }
+.wz-btn { border-radius: 8px; font-size: 12.5px; }
+.wz-btn-p { background: var(--primaria); color: var(--primaria-texto); box-shadow: none; }
+.wz-btn-g { background: var(--cartao); color: var(--texto); border-color: var(--borda); }
+.wz-skip { color: var(--suave-texto); }
+.cnpj-hero input { border-width: 1px; border-radius: var(--raio); font-size: 17px; }
+.cnpj-hero button {
+  background: var(--primaria); color: var(--primaria-texto); border-radius: var(--raio);
+  text-transform: uppercase; letter-spacing: 0.03em; font-size: 12.5px;
+}
+.aba-tot { color: var(--suave-texto); }
+.aba-tot:hover { color: var(--texto); }
+.aba-tot-ativa { color: var(--texto); border-bottom-color: var(--realce); background: var(--cartao); }
+.tot-grid span { color: var(--suave-texto); }
+.tot-grid b { color: var(--texto); }
+.tot-destaque { border-top: 1px solid var(--borda); }
+.tot-destaque span { color: var(--texto); }
+.tot-destaque b { color: var(--texto); }
+.dash-card.success .dash-num { color: var(--sucesso-tinta); }
+.dash-card.warn .dash-num { color: var(--alerta-tinta); }
+.dash-card.danger .dash-num { color: var(--perigo); }
 </style>
 </head>
 <body>
 
 <!-- Top Bar -->
+<!-- Cabecalho da barra lateral: so a marca da instalacao. -->
 <div class="topbar">
   <h1 id="marcaDaInstancia">NF-e Engine</h1>
-  <!-- Seletor de empresa no cabecalho: a empresa vale para o sistema inteiro,
-       nao so para a aba de emissao. Ficando dentro da aba, dava para trocar de
-       aba e esquecer em nome de quem se estava operando. -->
-  <div id="empresaSelWrap" class="topbar-empresa escondido-na-revenda" style="display:none">
-    <span class="topbar-empresa-label">Empresa</span>
-    <select id="empresaSel" onchange="onEmpresaChange()"></select>
-  </div>
-  <div class="topbar-right">
-    <span id="modoBadge" class="modo-badge contador escondido-na-revenda">CONTADOR</span>
-    <span id="sefazStatus" class="sefaz-status escondido-na-revenda" onclick="checkSefaz()" style="cursor:pointer" title="Clique para atualizar">Verificando SEFAZ...</span>
-    <span id="ambientePill" class="status-pill hom escondido-na-revenda" onclick="toggleAmbiente()" title="Clique para alternar ambiente">HOMOLOGACAO</span>
-    <button class="btn-logout" onclick="logout()" title="Sair">Sair</button>
-  </div>
 </div>
 
 <!-- Login -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
     <h2>NF-e Engine</h2>
-    <div class="login-sub">Emissor de Notas Fiscais Eletronicas</div>
+    <div class="login-sub">Emissor de notas fiscais eletrônicas</div>
     <div class="login-err" id="loginErr">Senha incorreta. Tente novamente.</div>
     <input type="password" id="loginSenha" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')doLogin()">
     <label class="login-remember"><input type="checkbox" id="loginLembrar" checked> Lembrar neste navegador</label>
@@ -387,13 +656,33 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 <!-- Tabs -->
 <div class="tab-bar" id="mainTabBar">
   <button class="somente-contador" onclick="showGroup('painel')">Painel</button>
-  <button class="active escondido-na-revenda" onclick="showGroup('emissao')">Emissao</button>
+  <button class="active escondido-na-revenda" onclick="showGroup('emissao')">Emissão</button>
   <button class="escondido-na-revenda" onclick="showGroup('consultas')">Consultas</button>
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('empresas')">Empresas</button>
   <button class="escondido-na-revenda" onclick="showGroup('cadastros')">Cadastros</button>
-  <button class="somente-contador escondido-na-revenda" onclick="showGroup('operacoes')">Operacoes</button>
-  <button class="somente-contador escondido-na-revenda" onclick="showGroup('config')">Configuracoes</button>
+  <button class="somente-contador escondido-na-revenda" onclick="showGroup('operacoes')">Operações</button>
+  <button class="somente-contador escondido-na-revenda" onclick="showGroup('config')">Configurações</button>
   <button class="somente-contador" onclick="showGroup('clientesapi')">Clientes API</button>
+</div>
+<!-- Barra de contexto: em nome de QUEM se opera, em qual ambiente e como
+     esta a SEFAZ. Ficava no topo junto da marca; saiu de la quando a navegacao
+     virou barra lateral, porque contexto e navegacao sao coisas diferentes e
+     nenhuma das duas cabe bem no espaco da outra.
+
+     O seletor de empresa vale para o sistema inteiro, nao so para a aba de
+     emissao: dentro da aba, dava para trocar de aba e esquecer em nome de quem
+     se estava operando. -->
+<div class="appbar">
+  <div id="empresaSelWrap" class="topbar-empresa escondido-na-revenda" style="display:none">
+    <span class="topbar-empresa-label">Empresa</span>
+    <select id="empresaSel" onchange="onEmpresaChange()"></select>
+  </div>
+  <div class="topbar-right">
+    <span id="modoBadge" class="modo-badge contador escondido-na-revenda">Contador</span>
+    <span id="sefazStatus" class="sefaz-status escondido-na-revenda" onclick="checkSefaz()" style="cursor:pointer" title="Clique para atualizar">Verificando SEFAZ...</span>
+    <span id="ambientePill" class="status-pill hom escondido-na-revenda" onclick="toggleAmbiente()" title="Clique para alternar ambiente">Homologa&ccedil;&atilde;o</span>
+    <button class="btn-logout" onclick="logout()" title="Sair">Sair</button>
+  </div>
 </div>
 <div class="sub-tab-bar" id="subTabBar" style="display:none">
 </div>
@@ -1855,7 +2144,7 @@ body.modo-operador .fiscal-avancado { display: none !important; }
       <select id="clienteApiStatusFilter" onchange="loadClientesApi()" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px">
         <option value="">Todos os status</option>
         <option value="active">Ativo</option>
-        <option value="sandbox">Sandbox</option>
+        <option value="sandbox">Ambiente de testes</option>
         <option value="draft">Rascunho</option>
         <option value="suspended">Suspenso</option>
         <option value="past_due">Inadimplente</option>
@@ -2034,13 +2323,13 @@ let configData = {};
 // ---------------------------------------------------------------------------
 var TAB_GROUPS = {
   painel: [{ id: 'dashboard', label: 'Painel' }],
-  emissao: [{ id: 'emissao', label: 'NF-e (mod. 55)' }, { id: 'nfce', label: 'NFC-e (mod. 65)' }, { id: 'nfse', label: 'NFS-e (servico)' }],
-  consultas: [{ id: 'historico', label: 'Historico' }, { id: 'relatorios', label: 'Relatorios' }, { id: 'dfe', label: 'DF-e Recebidas' }, { id: 'nfsedfe', label: 'NFS-e Recebidas' }],
+  emissao: [{ id: 'emissao', label: 'NF-e (mod. 55)' }, { id: 'nfce', label: 'NFC-e (mod. 65)' }, { id: 'nfse', label: 'NFS-e (serviço)' }],
+  consultas: [{ id: 'historico', label: 'Histórico' }, { id: 'relatorios', label: 'Relatórios' }, { id: 'dfe', label: 'DF-e recebidas' }, { id: 'nfsedfe', label: 'NFS-e recebidas' }],
   empresas: [{ id: 'empresas', label: 'Empresas' }],
-  cadastros: [{ id: 'produtos', label: 'Produtos' }, { id: 'servicos', label: 'Servicos' }, { id: 'importar', label: 'Importar XLSX' }, { id: 'regras', label: 'Regras Fiscais' }],
-  operacoes: [{ id: 'inutilizar', label: 'Inutilizar' }, { id: 'manifestacao', label: 'Manifestacao' }],
+  cadastros: [{ id: 'produtos', label: 'Produtos' }, { id: 'servicos', label: 'Serviços' }, { id: 'importar', label: 'Importar XLSX' }, { id: 'regras', label: 'Regras fiscais' }],
+  operacoes: [{ id: 'inutilizar', label: 'Inutilizar' }, { id: 'manifestacao', label: 'Manifestação' }],
   config: [{ id: 'configuracoes', label: 'SMTP' }, { id: 'api', label: 'API' }],
-  clientesapi: [{ id: 'clientesapi-lista', label: 'Clientes' }, { id: 'clientesapi-templates', label: 'Templates', soCompleto: true }, { id: 'clientesapi-instancia', label: 'Nova instancia' }, { id: 'clientesapi-audit', label: 'Auditoria' }],
+  clientesapi: [{ id: 'clientesapi-lista', label: 'Clientes' }, { id: 'clientesapi-templates', label: 'Templates', soCompleto: true }, { id: 'clientesapi-instancia', label: 'Nova instância' }, { id: 'clientesapi-audit', label: 'Auditoria' }],
 };
 
 var currentGroup = 'emissao';
@@ -2874,11 +3163,11 @@ function updateAmbientePill() {
   const pill = document.getElementById('ambientePill');
   const aviso = document.getElementById('prodAviso');
   if (ambienteSelecionado() === '1') {
-    pill.textContent = 'PRODUCAO';
+    pill.textContent = 'Produção';
     pill.className = 'status-pill prod';
     aviso.style.display = 'block';
   } else {
-    pill.textContent = 'HOMOLOGACAO';
+    pill.textContent = 'Homologação';
     pill.className = 'status-pill hom';
     aviso.style.display = 'none';
   }
@@ -3015,7 +3304,7 @@ async function checkSefaz() {
       // Numa ponte que revende, o emitente proprio pode nunca existir: cada
       // cliente tem o seu certificado, cifrado no banco. Dizer "SEFAZ: variavel
       // ausente" em vermelho descreve um defeito que nao existe.
-      el.textContent = 'Ponte de revenda (sem emitente proprio)';
+      el.textContent = 'Ponte de revenda (sem emitente próprio)';
       el.className = 'sefaz-status';
     } else {
       el.textContent = 'SEFAZ: ' + (data.xMotivo || 'Indisponivel').substring(0, 60);
@@ -5292,11 +5581,11 @@ function setModo(modo) {
   var badge = document.getElementById('modoBadge');
   if (modo === 'operador') {
     document.body.classList.add('modo-operador');
-    badge.textContent = 'OPERADOR';
+    badge.textContent = 'Operador';
     badge.className = 'modo-badge operador';
   } else {
     document.body.classList.remove('modo-operador');
-    badge.textContent = 'CONTADOR';
+    badge.textContent = 'Contador';
     badge.className = 'modo-badge contador';
   }
 }
@@ -6639,25 +6928,30 @@ async function loadClientesApi() {
     _clientesApiCache = list.clients || [];
     renderClientesLista(_clientesApiCache, list.total);
   } catch (e) {
-    document.getElementById('clientesApiLista').innerHTML = '<div class="hist-empty">Erro ao carregar: ' + e.message + '</div>';
+    document.getElementById('clientesApiLista').innerHTML = '<div class="hist-empty">Não foi possível carregar: ' + e.message + '</div>';
   }
 }
 
 function renderClientesDashboard(d) {
   var el = document.getElementById('clientesApiDashboard');
   el.innerHTML = [
-    cardMini('Ativos', d.ativos || 0, '#10b981'),
-    cardMini('Sandbox', d.sandbox || 0, '#f59e0b'),
-    cardMini('Suspensos', d.suspensos || 0, '#ef4444'),
-    cardMini('Total', d.total || 0, '#6366f1'),
-    cardMini('White-Label', d.whiteLabelAtivas || 0, '#8b5cf6')
+    cardMini('Ativos', d.ativos || 0, 'success'),
+    // `sandbox` e `white-label` sao os valores internos; na tela eles se leem
+    // em portugues, porque quem opera nao precisa saber o nome do campo.
+    cardMini('Ambiente de testes', d.sandbox || 0, 'warn'),
+    cardMini('Suspensos', d.suspensos || 0, 'danger'),
+    cardMini('Total', d.total || 0, ''),
+    cardMini('Marca própria', d.whiteLabelAtivas || 0, '')
   ].join('');
 }
 
-function cardMini(label, val, color) {
-  return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 20px;min-width:110px;text-align:center">' +
-    '<div style="font-size:24px;font-weight:700;color:' + color + '">' + val + '</div>' +
-    '<div style="font-size:12px;color:#6b7280;margin-top:2px">' + label + '</div></div>';
+function cardMini(label, val, tom) {
+  // `tom` e o SENTIDO do numero (bom, atencao, ruim), nao a cor: a cor sai do
+  // token da folha. Antes cada cartao trazia o hexadecimal dentro do HTML, e
+  // trocar a paleta obrigava a achar cada um deles.
+  return '<div class="dash-card' + (tom ? ' ' + tom : '') + '">' +
+    '<div class="dash-num">' + val + '</div>' +
+    '<div class="dash-label">' + label + '</div></div>';
 }
 
 function renderClientesLista(clients, total) {

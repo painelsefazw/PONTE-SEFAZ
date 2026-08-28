@@ -116,8 +116,8 @@ export const criarCliente = createServerFn({ method: "POST" })
     const cnpj = soDigitos(c["empresaCnpj"] ?? "");
     // Conferir aqui poupa uma ida a ponte so para receber de volta o que a tela
     // ja sabia — e um CNPJ de 13 digitos e erro de digitacao, nao de negocio.
-    if (cnpj.length !== 14) return { ok: false, error: "O CNPJ precisa ter 14 digitos." };
-    if (!c["razaoSocial"]?.trim()) return { ok: false, error: "Informe a razao social." };
+    if (cnpj.length !== 14) return { ok: false, error: "O CNPJ precisa ter 14 dígitos." };
+    if (!c["razaoSocial"]?.trim()) return { ok: false, error: "Informe a razão social." };
     return pedir("/api/admin/clients", { method: "POST", body: { ...c, empresaCnpj: cnpj } });
   });
 
@@ -235,7 +235,7 @@ export const testarRepositorio = createServerFn({ method: "POST" })
     estado: string; podePublicar: boolean; mensagem: string; comoResolver?: string;
   }>> => {
     await requireAuth();
-    if (!data.repositoryUrl.trim()) return { ok: false, error: "Cole a URL do repositorio." };
+    if (!data.repositoryUrl.trim()) return { ok: false, error: "Cole a URL do repositório." };
     return pedir("/api/admin/github/verificar", {
       method: "POST",
       body: { repositoryUrl: data.repositoryUrl.trim() },
@@ -248,7 +248,7 @@ export const publicarPlataforma = createServerFn({ method: "POST" })
     sucesso?: boolean; commit?: string; branch?: string; arquivos?: number;
   }>> => {
     await requireAuth();
-    if (!data.repositoryUrl.trim()) return { ok: false, error: "Cole a URL do repositorio." };
+    if (!data.repositoryUrl.trim()) return { ok: false, error: "Cole a URL do repositório." };
     return pedir(`/api/admin/clients/${soDigitos(data.cnpj)}/publicar-repositorio`, {
       method: "POST",
       body: { repositoryUrl: data.repositoryUrl.trim() },

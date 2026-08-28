@@ -7,11 +7,13 @@ import { LoadingState, ErrorState } from "@/components/app/states";
 import { listarClientes, type Cliente } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { marca, tituloDaPagina } from "@/lib/manifest";
+import { cn } from "@/lib/utils";
+import { CAPS } from "@/lib/tipografia";
 
 export const Route = createFileRoute("/_painel/dashboard")({
   head: () => ({
     meta: [
-      { title: tituloDaPagina("Visao geral") },
+      { title: tituloDaPagina("Visão geral") },
       { name: "description", content: `Clientes que emitem pela ponte ${marca}.` },
     ],
   }),
@@ -35,15 +37,17 @@ function Dashboard() {
 
   if (query.isLoading) {
     return (
-      <PainelLayout title="Visao geral">
+      <PainelLayout title="Visão geral">
         <LoadingState label="Carregando..." />
       </PainelLayout>
     );
   }
   if (query.isError || (query.data && !query.data.ok)) {
-    const msg = query.data && !query.data.ok ? query.data.error : "Falha ao carregar.";
+    const msg = query.data && !query.data.ok
+      ? query.data.error
+      : "Não foi possível carregar os clientes.";
     return (
-      <PainelLayout title="Visao geral">
+      <PainelLayout title="Visão geral">
         <ErrorState message={msg} onRetry={() => query.refetch()} />
       </PainelLayout>
     );
@@ -57,14 +61,14 @@ function Dashboard() {
   const cartao = (rotulo: string, valor: number, cor: string) => (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className={`text-2xl font-semibold ${cor}`}>{valor}</div>
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{rotulo}</div>
+      <div className={cn("text-xs text-muted-foreground", CAPS)}>{rotulo}</div>
     </div>
   );
 
   return (
     <PainelLayout
-      title="Visao geral"
-      description="O que precisa de acao hoje"
+      title="Visão geral"
+      description="O que precisa de ação hoje."
       actions={
         <Button asChild size="sm">
           <Link to="/clientes/novo"><Plus className="size-4" /> Novo cliente</Link>
@@ -83,8 +87,8 @@ function Dashboard() {
             <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" />
               <span>
-                <strong>{semCertificado.length} cliente(s) sem certificado A1.</strong> Eles nao
-                emitem nada ate o .pfx ser enviado — e costumam estar esperando sem avisar.
+                <strong>{semCertificado.length} cliente(s) sem certificado A1.</strong> Eles não
+                emitem nada até o .pfx ser enviado — e costumam estar esperando sem avisar.
               </span>
             </p>
             <ul className="mt-3 space-y-1">
@@ -111,7 +115,7 @@ function Dashboard() {
               <KeyRound className="mt-0.5 size-4 shrink-0" />
               <span>
                 <strong className="text-foreground">{nuncaUsaram.length} ativo(s) nunca chamaram a API.</strong>{" "}
-                Ou estao implantando, ou travaram em algum ponto. Vale ligar.
+                Ou estão implantando, ou travaram em algum ponto. Vale ligar.
               </span>
             </p>
           </section>
@@ -120,7 +124,9 @@ function Dashboard() {
         <section className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2 text-sm">
             <Users className="size-4 text-muted-foreground" />
-            <Link to="/clientes" className="underline underline-offset-2">Ver todos os clientes</Link>
+            <Link to="/clientes" className={cn("underline underline-offset-2", CAPS)}>
+              Ver todos os clientes
+            </Link>
           </div>
         </section>
       </div>

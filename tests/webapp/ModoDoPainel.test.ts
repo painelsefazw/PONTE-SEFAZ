@@ -61,19 +61,28 @@ describe('o painel esconde as telas certas', () => {
 
   test('o seletor de empresa e o selo de modo somem tambem', () => {
     // A ponte nao tem empresa propria: o seletor fica vazio e o selo CONTADOR
-    // nao descreve nada. Alem de inuteis, eram os dois que espremiam o topo —
-    // numa janela estreita o titulo quebrava em duas linhas e o selo montava
-    // em cima do seletor.
-    const topo = html.slice(html.indexOf('<div class="topbar">'), html.indexOf('id="mainTabBar"'));
+    // nao descreve nada.
+    //
+    // Eles moraram no `.topbar` ate a navegacao virar barra lateral. Numa
+    // coluna de 248px nao cabem, e nao sao navegacao: sao o CONTEXTO do que se
+    // opera. Passaram para a `.appbar`, no alto do conteudo — e e la que este
+    // teste os procura agora. O que ele garante nao mudou: no modo revenda os
+    // dois somem.
+    const barra = html.slice(html.indexOf('<div class="appbar">'), html.indexOf('id="subTabBar"'));
+    expect(barra).toBeTruthy();
     for (const marca of ['empresaSelWrap', 'modoBadge']) {
-      const linha = topo.split(String.fromCharCode(10)).find(l => l.includes(marca));
+      const linha = barra.split(String.fromCharCode(10)).find(l => l.includes(marca));
       expect(linha).toBeDefined();
       expect(linha).toContain('escondido-na-revenda');
     }
   });
 
-  test('o titulo nao quebra em duas linhas', () => {
-    expect(html).toMatch(/\.topbar h1 \{[^}]*white-space: nowrap/);
+  test('na barra lateral o titulo PODE quebrar — e a coluna que e estreita', () => {
+    // O `nowrap` original existia porque o titulo dividia uma faixa horizontal
+    // com seletor, selo e botao: quebrar ali empurrava tudo. Na barra lateral
+    // ele tem a coluna inteira e mais nada ao lado, entao quebrar e o certo —
+    // cortar o nome da instalacao com reticencias seria pior.
+    expect(html).toMatch(/\.topbar h1 \{[^}]*white-space: normal/);
   });
 
   test('a sub-aba Templates some — ela duplica a de Clientes', () => {
@@ -98,6 +107,6 @@ describe('o painel esconde as telas certas', () => {
   test('o indicador da SEFAZ nao alarma no modo revenda', () => {
     // "Variavel de ambiente obrigatoria ausente: NFE_PFX_PATH" em vermelho
     // descreve um defeito que, numa ponte, nao existe.
-    expect(html).toMatch(/modoDoPainel === 'revenda'[\s\S]{0,400}sem emitente proprio/);
+    expect(html).toMatch(/modoDoPainel === 'revenda'[\s\S]{0,400}sem emitente próprio/);
   });
 });

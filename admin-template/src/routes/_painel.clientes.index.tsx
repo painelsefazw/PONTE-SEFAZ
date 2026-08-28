@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_painel/clientes/")({
   component: () => (
     <PainelLayout
       title="Clientes"
-      description="Empresas que emitem pela sua ponte"
+      description="Empresas que emitem documentos fiscais pela sua ponte."
       actions={
         <Button asChild size="sm">
           <Link to="/clientes/novo">

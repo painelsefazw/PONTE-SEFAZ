@@ -18,15 +18,15 @@
 export const VARIAVEIS_OBRIGATORIAS = [
   {
     nome: "EMISSOR_API_URL",
-    para: "Endereco da ponte fiscal que este console administra. Ex.: https://sua-ponte.vercel.app",
+    para: "Endereço da ponte fiscal que este console administra. Ex.: https://sua-ponte.vercel.app",
   },
   {
     nome: "EMISSOR_ADMIN_KEY",
-    para: "A WEBAPP_SENHA da ponte. E a credencial de administrador dela — nunca vai para o navegador.",
+    para: "A WEBAPP_SENHA da ponte. É a credencial de administrador dela — nunca vai para o navegador.",
   },
   {
     nome: "APP_ACCESS_PASSWORD",
-    para: "Senha para entrar NESTE console. Separada da chave da ponte de proposito.",
+    para: "Senha para entrar NESTE console. Separada da chave da ponte de propósito.",
   },
 ] as const;
 
@@ -40,11 +40,11 @@ export const VARIAVEIS_OBRIGATORIAS = [
 export const VARIAVEIS_OPCIONAIS = [
   {
     nome: "APP_USER",
-    para: "Usuario do console. Sem cadastrar, e `admin`.",
+    para: "Usuário do console. Sem cadastrar, é `admin`.",
   },
   {
     nome: "SESSION_SECRET",
-    para: "Assina o cookie. Sem cadastrar, e derivado da chave da ponte.",
+    para: "Assina o cookie. Sem cadastrar, é derivado da chave da ponte.",
   },
 ] as const;
 

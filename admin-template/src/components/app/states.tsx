@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { AlertCircle, Inbox, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CAPS } from "@/lib/tipografia";
 
 export function LoadingState({ label = "Carregando..." }: { label?: string }) {
   return (
@@ -23,7 +25,7 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-6 py-16 text-center">
       <Inbox className="size-7 text-muted-foreground" />
-      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className={cn("text-sm text-foreground", CAPS)}>{title}</p>
       {description && <p className="max-w-sm text-sm text-muted-foreground">{description}</p>}
       {action && <div className="mt-3">{action}</div>}
     </div>
@@ -34,7 +36,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-6 py-16 text-center">
       <AlertCircle className="size-7 text-destructive" />
-      <p className="text-sm font-medium text-foreground">Algo deu errado</p>
+      <p className={cn("text-sm text-foreground", CAPS)}>Algo deu errado</p>
       <p className="max-w-md text-sm text-muted-foreground">{message}</p>
       {onRetry && (
         <Button variant="outline" size="sm" className="mt-3" onClick={onRetry}>
@@ -72,7 +74,7 @@ export function Selo({
   }[tom];
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ring-1 ${cores}`}
+      className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs ring-1", CAPS, cores)}
     >
       {children}
     </span>

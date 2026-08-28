@@ -15,10 +15,14 @@ export const Route = createFileRoute("/_painel/clientes/novo")({
   component: NovoCliente,
 });
 
+/**
+ * Os planos como o usuário os lê. O `id` é o que vai para o servidor e não
+ * muda — a caixa alta e o texto aqui são apresentação.
+ */
 const PLANOS = [
-  { id: "pro", nome: "PRO — um documento, volume baixo" },
-  { id: "max", nome: "MAX — NF-e e NFS-e" },
-  { id: "premium", nome: "PREMIUM — com balcao (NFC-e), sem teto" },
+  { id: "pro", nome: "PRO — UM DOCUMENTO, BAIXO VOLUME" },
+  { id: "max", nome: "MAX — NF-e E NFS-e" },
+  { id: "premium", nome: "PREMIUM — COM BALCÃO (NFC-e), SEM TETO" },
 ];
 
 function NovoCliente() {
@@ -33,7 +37,7 @@ function NovoCliente() {
     const r = await criar({ data: { cliente: form } });
     setSalvando(false);
     if (!r.ok) { toast.error(r.error); return; }
-    toast.success("Cliente criado.");
+    toast.success("Cliente criado com sucesso.");
     // O cadastro sozinho nao emite nada: faltam dados fiscais, certificado,
     // servico e chave. Levar direto ao detalhe e onde esses passos estao.
     await router.navigate({
@@ -56,11 +60,14 @@ function NovoCliente() {
   );
 
   return (
-    <PainelLayout title="Novo cliente" description="A empresa que vai emitir pela sua ponte">
+    <PainelLayout title="Novo cliente" description="Cadastre a empresa que emitirá documentos fiscais por meio da sua ponte.">
       <form onSubmit={enviar} className="max-w-2xl space-y-5 rounded-xl border border-border bg-card p-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          {campo("empresaCnpj", "CNPJ", { obrigatorio: true, dica: "So os digitos ou com pontuacao." })}
-          {campo("razaoSocial", "Razao social", { obrigatorio: true })}
+          {campo("empresaCnpj", "CNPJ", {
+            obrigatorio: true,
+            dica: "Informe somente os números, com ou sem pontuação.",
+          })}
+          {campo("razaoSocial", "Razão social", { obrigatorio: true })}
           {campo("fantasia", "Nome fantasia")}
           <div className="space-y-2">
             <Label htmlFor="plano">Plano</Label>
@@ -73,13 +80,17 @@ function NovoCliente() {
               {PLANOS.map((p) => <option key={p.id} value={p.id}>{p.nome}</option>)}
             </select>
           </div>
-          {campo("responsavel", "Responsavel")}
-          {campo("emailTecnico", "E-mail tecnico", { dica: "Quem recebe aviso de integracao." })}
+          {campo("responsavel", "Responsável")}
+          {campo("emailTecnico", "E-mail técnico", {
+            dica: "Informe o e-mail da pessoa que receberá os avisos de integração.",
+          })}
         </div>
 
         <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-          Depois de criar faltam quatro passos, todos na tela do cliente: dados fiscais,
-          certificado A1, servicos contratados e a chave de API. Sem os quatro ele nao emite.
+          Após criar o cliente, conclua quatro etapas na tela do cliente: cadastre os dados
+          fiscais, envie o certificado A1, informe os serviços contratados e gere a chave de
+          API. Sem concluir essas quatro etapas, o cliente não poderá emitir documentos
+          fiscais.
         </p>
 
         <Button type="submit" disabled={salvando}>

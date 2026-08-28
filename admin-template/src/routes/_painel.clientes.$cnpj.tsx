@@ -17,7 +17,7 @@ function Detalhe() {
   return (
     <PainelLayout
       title="Cliente"
-      description="Cadastro, servicos, chaves e plataforma"
+      description="Cadastro, serviços, chaves e plataforma."
       actions={
         <Button asChild variant="outline" size="sm">
           <Link to="/clientes">

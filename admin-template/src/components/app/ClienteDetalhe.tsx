@@ -16,15 +16,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCnpj } from "@/lib/manifest";
+import { cn } from "@/lib/utils";
+import { CAPS, SEM_CAPS } from "@/lib/tipografia";
 
 const SERVICOS: { id: "nfe" | "nfce" | "nfse"; nome: string }[] = [
   { id: "nfe", nome: "NF-e" },
-  { id: "nfce", nome: "NFC-e (balcao)" },
+  { id: "nfce", nome: "NFC-e (balcão)" },
   { id: "nfse", nome: "NFS-e" },
 ];
 
 const PROXIMOS_STATUS: { valor: StatusCliente; texto: string }[] = [
-  { valor: "sandbox", texto: "Sandbox" },
+  { valor: "sandbox", texto: "Ambiente de testes" },
   { valor: "active", texto: "Ativar" },
   { valor: "suspended", texto: "Suspender" },
   { valor: "cancelled", texto: "Cancelar" },
@@ -61,13 +63,19 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
   const qChaves = useQuery({ queryKey: ["chaves", cnpj], queryFn: () => chaves({ data: { cnpj } }) });
 
   if (qCliente.isLoading) return <LoadingState label="Carregando cliente..." />;
-  if (qCliente.isError) return <ErrorState message="Falha ao carregar." onRetry={() => qCliente.refetch()} />;
+  if (qCliente.isError)
+    return (
+      <ErrorState
+        message="Não foi possível carregar o cliente."
+        onRetry={() => qCliente.refetch()}
+      />
+    );
   if (qCliente.data && !qCliente.data.ok)
     return <ErrorState message={qCliente.data.error} onRetry={() => qCliente.refetch()} />;
 
   const resposta = qCliente.data;
   const c = resposta && resposta.ok ? resposta.data : null;
-  if (!c) return <ErrorState message="Cliente nao encontrado." onRetry={() => qCliente.refetch()} />;
+  if (!c) return <ErrorState message="Cliente não encontrado." onRetry={() => qCliente.refetch()} />;
 
   const listaChaves = qChaves.data?.ok ? qChaves.data.data : [];
   const ativos = new Set((c.servicos ?? []).map((s) => String(s.service ?? s)));
@@ -89,14 +97,14 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
       <section className="rounded-xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold">{c.razaoSocial || c.fantasia}</h2>
+            <h2 className={cn("text-lg", CAPS)}>{c.razaoSocial || c.fantasia}</h2>
             <p className="text-sm text-muted-foreground">
               {formatCnpj(c.empresaCnpj)}
               {c.codigoInterno ? ` · ${c.codigoInterno}` : ""} · plano{" "}
               <span className="uppercase">{c.plano}</span>
             </p>
           </div>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${st.classe}`}>{st.texto}</span>
+          <span className={cn("rounded-full px-3 py-1 text-xs", CAPS, st.classe)}>{st.texto}</span>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -116,7 +124,7 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
                 ) return;
                 const r = await comOcupado(s.valor, () => mudarStatus({ data: { cnpj, status: s.valor } }));
                 if (r && !r.ok) { toast.error(r.error); return; }
-                toast.success(`Cliente agora esta ${s.texto.toLowerCase()}.`);
+                toast.success(`Cliente agora está ${s.texto.toLowerCase()}.`);
                 recarregar();
               }}
             >
@@ -132,13 +140,13 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
           <p className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
             <span>
-              <strong>Plano e servicos nao batem.</strong>{" "}
+              <strong>Plano e serviços não batem.</strong>{" "}
               {c.divergenciaPlano.faltam.length > 0 && (
-                <>O plano inclui <b>{c.divergenciaPlano.faltam.join(", ").toUpperCase()}</b>, mas ninguem ativou —
-                  a plataforma nasce sem essa aba e o cliente paga sem receber. </>
+                <>O plano inclui <b>{c.divergenciaPlano.faltam.join(", ").toUpperCase()}</b>, mas ninguém
+                  ativou — a plataforma nasce sem essa aba e o cliente paga sem receber. </>
               )}
               {c.divergenciaPlano.sobram.length > 0 && (
-                <><b>{c.divergenciaPlano.sobram.join(", ").toUpperCase()}</b> esta ativado e o plano nao cobre.</>
+                <><b>{c.divergenciaPlano.sobram.join(", ").toUpperCase()}</b> está ativado e o plano não cobre.</>
               )}
             </span>
           </p>
@@ -147,9 +155,9 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
 
       {/* Servicos */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold">Servicos contratados</h3>
+        <h3 className={cn("text-sm", CAPS)}>Serviços contratados</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          E desta lista que saem as abas da plataforma do cliente.
+          É desta lista que saem as abas da plataforma do cliente.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {SERVICOS.map((s) => {
@@ -160,6 +168,8 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
                 type="button"
                 variant={ligado ? "default" : "outline"}
                 size="sm"
+                // O rótulo é o nome oficial do documento (NF-e, NFC-e, NFS-e).
+                className={SEM_CAPS}
                 disabled={ocupado !== null}
                 onClick={async () => {
                   const r = await comOcupado(s.id, () => (ligado
@@ -180,14 +190,14 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
 
       {/* Chaves */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold">Chaves de API</h3>
+        <h3 className={cn("text-sm", CAPS)}>Chaves de API</h3>
 
         {chaveNova && (
           // A ponte guarda so o hash: se esta tela perder o valor, nao ha como
           // recuperar. Por isso a chave fica FIXA aqui, e nao num aviso que some.
           <div className="mt-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3">
-            <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              Copie agora — esta chave nao aparece de novo
+            <p className={cn("text-xs text-emerald-700 dark:text-emerald-400", CAPS)}>
+              Copie agora — esta chave não aparece de novo
             </p>
             <div className="mt-2 flex items-center gap-2">
               <code className="flex-1 overflow-x-auto rounded bg-background px-2 py-1 font-mono text-xs">
@@ -211,7 +221,7 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
         <div className="mt-3 space-y-2">
           {listaChaves.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Nenhuma chave ativa. Sem ela o cliente nao chama a API.
+              Nenhuma chave ativa. Sem ela o cliente não consegue chamar a API.
             </p>
           )}
           {listaChaves.filter((k) => k.ativa !== false).map((k) => (
@@ -220,14 +230,14 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
               className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
             >
               <div>
-                <div className="text-sm font-medium">{k.nome || "Integracao"}</div>
+                <div className={cn("text-sm", CAPS)}>{k.nome || "Integração"}</div>
                 <div className="font-mono text-xs text-muted-foreground">{k.prefixo}…</div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-                  {k.ambientePermitido === "producao" ? "Producao"
-                    : k.ambientePermitido === "ambos" ? "Producao + Homologacao"
-                      : "Homologacao"}
+                <span className={cn("rounded-full bg-muted px-2 py-0.5 text-xs", CAPS)}>
+                  {k.ambientePermitido === "producao" ? "Produção"
+                    : k.ambientePermitido === "ambos" ? "Produção + Homologação"
+                      : "Homologação"}
                 </span>
                 <Button
                   type="button"
@@ -258,9 +268,9 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
               onChange={(e) => setAmbienteDaChave(e.target.value)}
               className="mt-1 flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm outline-none focus-visible:border-ring"
             >
-              <option value="homologacao">Homologacao — sem valor fiscal</option>
-              <option value="producao">Producao — nota real</option>
-              <option value="ambos">Ambos</option>
+              <option value="homologacao">HOMOLOGAÇÃO — SEM VALOR FISCAL</option>
+              <option value="producao">PRODUÇÃO — NOTA REAL</option>
+              <option value="ambos">AMBOS</option>
             </select>
           </div>
           <Button
@@ -286,14 +296,14 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
 
       {/* Plataforma */}
       <section className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold">Plataforma do cliente</h3>
+        <h3 className={cn("text-sm", CAPS)}>Plataforma do cliente</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          O repositorio pronto, com a marca dele. So aparecem as abas dos servicos contratados.
+          O repositório pronto, com a marca dele. Só aparecem as abas dos serviços contratados.
         </p>
 
         {c.ultimaPublicacaoCommit && (
           <p className="mt-3 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            Ultima publicacao: <code>{c.ultimaPublicacaoCommit.slice(0, 7)}</code>
+            Última publicação: <code>{c.ultimaPublicacaoCommit.slice(0, 7)}</code>
             {c.ultimaPublicacaoEm ? ` · ${new Date(c.ultimaPublicacaoEm).toLocaleString("pt-BR")}` : ""}
           </p>
         )}
@@ -327,7 +337,7 @@ export function ClienteDetalhe({ cnpj }: { cnpj: string }) {
             }}
           >
             {ocupado === "kit" ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
-            Baixar repositorio (.zip)
+            Baixar repositório (.zip)
           </Button>
         </div>
 

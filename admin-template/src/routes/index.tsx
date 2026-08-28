@@ -8,6 +8,8 @@ import { VARIAVEIS_OBRIGATORIAS, VARIAVEIS_OPCIONAIS } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { CAPS } from "@/lib/tipografia";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -47,7 +49,7 @@ function ConfiguracaoPendente({ faltando }: { faltando: string[] }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h1 className="text-xl font-semibold tracking-tight">Falta configurar o servidor</h1>
+        <h1 className={cn("text-xl", CAPS)}>Falta configurar o servidor</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           A plataforma está publicada, mas ainda não tem as credenciais. Cadastre
           as variáveis abaixo no seu provedor e recarregue esta página.
@@ -148,11 +150,11 @@ function Login() {
                 <ShieldCheck className="size-6" />
               </div>
             )}
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className={cn("text-2xl", CAPS)}>
               {mensagemDeLogin}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {manifest.company.brandName} &middot; Console administrativo
+            <p className={cn("mt-1 text-sm text-muted-foreground", CAPS)}>
+              {manifest.company.brandName} &bull; Console administrativo
             </p>
           </div>
 
@@ -195,7 +197,8 @@ function Login() {
               Entrar
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              Usuário: <code>admin</code>, salvo se APP_USER estiver cadastrada.
+              Usuário padrão: <code>admin</code>, salvo se a variável APP_USER
+              estiver configurada.
             </p>
           </form>
         </div>

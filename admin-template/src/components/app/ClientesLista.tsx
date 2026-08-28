@@ -8,11 +8,17 @@ import { LoadingState, EmptyState, ErrorState } from "@/components/app/states";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatCnpj } from "@/lib/manifest";
+import { cn } from "@/lib/utils";
+import { CAPS } from "@/lib/tipografia";
 
 /** Cor e rotulo de cada status, no vocabulario de quem opera. */
 export const STATUS: Record<StatusCliente, { texto: string; classe: string }> = {
   draft: { texto: "Rascunho", classe: "bg-muted text-muted-foreground" },
-  sandbox: { texto: "Sandbox", classe: "bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  sandbox: {
+    // O valor interno continua `sandbox`; o que muda é só como se lê.
+    texto: "Ambiente de testes",
+    classe: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  },
   active: { texto: "Ativo", classe: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
   past_due: { texto: "Inadimplente", classe: "bg-orange-500/15 text-orange-700 dark:text-orange-400" },
   suspended: { texto: "Suspenso", classe: "bg-red-500/15 text-red-700 dark:text-red-400" },
@@ -22,7 +28,7 @@ export const STATUS: Record<StatusCliente, { texto: string; classe: string }> = 
 const FILTROS: { valor: string; texto: string }[] = [
   { valor: "todos", texto: "Todos" },
   { valor: "active", texto: "Ativos" },
-  { valor: "sandbox", texto: "Sandbox" },
+  { valor: "sandbox", texto: "Ambiente de testes" },
   { valor: "draft", texto: "Rascunho" },
   { valor: "suspended", texto: "Suspensos" },
 ];
@@ -45,7 +51,13 @@ export function ClientesLista() {
   });
 
   if (query.isLoading) return <LoadingState label="Carregando clientes..." />;
-  if (query.isError) return <ErrorState message="Falha ao carregar." onRetry={() => query.refetch()} />;
+  if (query.isError)
+    return (
+      <ErrorState
+        message="Não foi possível carregar os clientes."
+        onRetry={() => query.refetch()}
+      />
+    );
   if (query.data && !query.data.ok)
     return <ErrorState message={query.data.error} onRetry={() => query.refetch()} />;
 
@@ -69,11 +81,13 @@ export function ClientesLista() {
               key={f.valor}
               type="button"
               onClick={() => setStatus(f.valor)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm transition",
+                CAPS,
                 status === f.valor
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
               {f.texto}
             </button>
@@ -83,8 +97,8 @@ export function ClientesLista() {
 
       {clientes.length === 0 ? (
         <EmptyState
-          title="Nenhum cliente"
-          description="Cadastre a primeira empresa que vai emitir pela sua ponte."
+          title="Nenhum cliente encontrado"
+          description="Cadastre a primeira empresa que emitirá documentos fiscais pela sua ponte."
           action={
             <Button asChild size="sm">
               <Link to="/clientes/novo">Novo cliente</Link>
@@ -94,12 +108,12 @@ export function ClientesLista() {
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border bg-card">
           <table className="w-full min-w-[720px] text-sm">
-            <thead className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+            <thead className="border-b border-border text-left text-xs text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 font-medium">Empresa</th>
-                <th className="px-4 py-3 font-medium">Plano</th>
-                <th className="px-4 py-3 font-medium">Certificado</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className={cn("px-4 py-3", CAPS)}>Empresa</th>
+                <th className={cn("px-4 py-3", CAPS)}>Plano</th>
+                <th className={cn("px-4 py-3", CAPS)}>Certificado</th>
+                <th className={cn("px-4 py-3", CAPS)}>Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -118,15 +132,15 @@ export function ClientesLista() {
                     <td className="px-4 py-3 uppercase text-muted-foreground">{c.plano}</td>
                     <td className="px-4 py-3">
                       {c.temCertificado ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">Enviado</span>
+                        <span className={cn("text-emerald-600 dark:text-emerald-400", CAPS)}>Enviado</span>
                       ) : (
                         // Sem certificado o cliente nao emite nada. Dizer isso na
                         // lista evita abrir o cadastro para descobrir.
-                        <span className="text-amber-600 dark:text-amber-400">Falta</span>
+                        <span className={cn("text-amber-600 dark:text-amber-400", CAPS)}>Falta</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${s.classe}`}>
+                      <span className={cn("rounded-full px-2.5 py-1 text-xs", CAPS, s.classe)}>
                         {s.texto}
                       </span>
                     </td>

@@ -6,6 +6,7 @@ import { manifest, logoEscura, marca, rodape } from "@/lib/manifest";
 import { sair } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { CAPS, CAPS_SUAVE } from "@/lib/tipografia";
 import { BotaoTema } from "@/components/app/BotaoTema";
 
 const nav = [
@@ -61,13 +62,13 @@ export function PainelLayout({
                 className="h-7 w-auto max-w-[150px] object-contain"
               />
             ) : (
-              <p className="truncate text-sm font-semibold tracking-tight">
+              <p className={cn("truncate text-sm", CAPS)}>
                 {manifest.company.brandName}
               </p>
             )}
-            <p className="text-xs text-sidebar-foreground/60">Console de clientes</p>
+            <p className={cn("text-xs text-sidebar-foreground/60", CAPS_SUAVE)}>Console de clientes</p>
           </div>
-          <button className="lg:hidden" aria-label="Fechar" onClick={() => setOpen(false)}>
+          <button className="lg:hidden" aria-label="Fechar menu" onClick={() => setOpen(false)}>
             <X className="size-5" />
           </button>
         </div>
@@ -77,10 +78,10 @@ export function PainelLayout({
               key={item.to}
               to={item.to}
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground", CAPS)}
               activeProps={{
                 className:
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm bg-sidebar-accent text-sidebar-accent-foreground font-medium",
+                  cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm bg-sidebar-accent text-sidebar-accent-foreground", CAPS),
               }}
               activeOptions={{ exact: item.to === "/dashboard" }}
             >
@@ -90,7 +91,7 @@ export function PainelLayout({
           ))}
         </nav>
         <div className="border-t border-sidebar-border px-5 py-4 text-xs text-sidebar-foreground/60">
-          <p className="truncate">{manifest.company.name}</p>
+          <p className={cn("truncate", CAPS_SUAVE)}>{manifest.company.name}</p>
         </div>
       </aside>
 
@@ -100,7 +101,7 @@ export function PainelLayout({
             <Menu className="size-5" />
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
+            <h1 className={cn("truncate text-lg", CAPS)}>{title}</h1>
             {description && (
               <p className="truncate text-xs text-muted-foreground">{description}</p>
             )}

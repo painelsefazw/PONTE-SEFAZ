@@ -3,12 +3,14 @@ import { Mail, MessageCircle } from "lucide-react";
 import { PainelLayout } from "@/components/app/PainelLayout";
 import { manifest, tituloDaPagina, whatsappDoSuporte } from "@/lib/manifest";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { CAPS } from "@/lib/tipografia";
 
 export const Route = createFileRoute("/_painel/suporte")({
   head: () => ({
     meta: [
       { title: tituloDaPagina("Suporte") },
-      { name: "description", content: "Fale com o suporte tecnico da plataforma fiscal." },
+      { name: "description", content: "Fale com o suporte técnico da plataforma fiscal." },
       { property: "og:title", content: tituloDaPagina("Suporte") },
       { property: "og:description", content: "Canais de atendimento da plataforma fiscal." },
     ],
@@ -31,7 +33,7 @@ function Suporte() {
   const whatsapp = whatsappDoSuporte() ?? "";
 
   return (
-    <PainelLayout title="Suporte" description="Estamos aqui para ajudar">
+    <PainelLayout title="Ajuda" description="Estamos aqui para ajudar.">
       <div className="max-w-xl space-y-6">
         {/* O WhatsApp vem PRIMEIRO quando existe: quem está com a nota travada
             no meio de uma venda não espera "até 1 dia útil". */}
@@ -42,9 +44,9 @@ function Suporte() {
                 <MessageCircle className="size-5" />
               </div>
               <div className="min-w-0">
-                <h2 className="text-sm font-semibold">Suporte por WhatsApp</h2>
+                <h2 className={cn("text-sm", CAPS)}>Suporte por WhatsApp</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Para nota travada ou rejeicao no meio de uma venda. Resposta em horario comercial.
+                  Para nota travada ou rejeição no meio de uma venda. Resposta em horário comercial.
                 </p>
                 <p className="mt-3 text-sm font-medium">{formatarTelefone(whatsapp)}</p>
                 <Button asChild className="mt-4" size="sm">
@@ -52,7 +54,7 @@ function Suporte() {
                       de onde veio, e a gente sabe qual plataforma abriu. */}
                   <a
                     href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(
-                      `Ola! Preciso de ajuda com a plataforma fiscal ${manifest.company.brandName}.`,
+                      `Olá! Preciso de ajuda com a plataforma fiscal ${manifest.company.brandName}.`,
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -71,9 +73,9 @@ function Suporte() {
               <Mail className="size-5" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold">Suporte por e-mail</h2>
+              <h2 className={cn("text-sm", CAPS)}>Suporte por e-mail</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Envie sua duvida ou ocorrencia e responderemos em ate 1 dia util.
+                Envie sua dúvida ou ocorrência e responderemos em até 1 dia útil.
               </p>
               <p className="mt-3 break-all text-sm font-medium">{manifest.support.email}</p>
               <Button asChild variant={whatsapp ? "outline" : "default"} className="mt-4" size="sm">
@@ -84,10 +86,10 @@ function Suporte() {
         </section>
 
         <section className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
-          <h2 className="mb-2 text-sm font-semibold text-foreground">Ao abrir um chamado</h2>
+          <h2 className={cn("mb-2 text-sm text-foreground", CAPS)}>Ao abrir um chamado</h2>
           <ul className="list-disc space-y-1 pl-5">
             <li>Informe o tipo de documento (NF-e ou NFS-e).</li>
-            <li>Inclua o numero, serie ou chave de acesso.</li>
+            <li>Inclua o número, a série ou a chave de acesso.</li>
             <li>Descreva a mensagem de erro exibida.</li>
           </ul>
         </section>

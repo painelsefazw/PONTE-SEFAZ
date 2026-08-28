@@ -24,7 +24,7 @@ export type ApiResult<T> =
  */
 export async function requireAuth(): Promise<void> {
   const session = await getPainelSession();
-  if (!session.data.authenticated) throw new Error("Nao autorizado. Entre no console.");
+  if (!session.data.authenticated) throw new Error("Acesso não autorizado. Entre no console.");
 }
 
 /**
@@ -35,17 +35,17 @@ export async function requireAuth(): Promise<void> {
  */
 function mensagemPorStatus(status: number, doCorpo: string | null): string {
   // Credencial recusada e a unica em que a frase da ponte ATRAPALHA: ela responde
-  // "Informe a senha de acesso", pensando em quem usa o painel dela. Quem opera
+  // "Informe a senha de acesso.", pensando em quem usa o painel dela. Quem opera
   // este console nao tem senha nenhuma para informar — o que ele precisa saber e
   // qual variavel esta errada.
   if (status === 401 || status === 403) {
     return "A ponte recusou a credencial. Confira EMISSOR_ADMIN_KEY — "
-      + "ela precisa ser exatamente a WEBAPP_SENHA da instalacao."
+      + "ela precisa ser exatamente a WEBAPP_SENHA da instalação."
       + (doCorpo ? ` (a ponte disse: ${doCorpo})` : "");
   }
   if (doCorpo) return doCorpo;
-  if (status === 404) return "Rota nao encontrada na ponte. Confira EMISSOR_API_URL.";
-  if (status === 429) return "A ponte limitou as requisicoes. Espere um instante.";
+  if (status === 404) return "Rota não encontrada na ponte. Confira EMISSOR_API_URL.";
+  if (status === 429) return "A ponte limitou as requisições. Aguarde um instante e tente novamente.";
   if (status >= 500) return `A ponte respondeu com erro ${status}.`;
   return `A ponte respondeu ${status}.`;
 }
@@ -67,8 +67,8 @@ export async function pedir<T>(
 ): Promise<ApiResult<T>> {
   const base = urlDaPonte();
   const chave = chaveDaPonte();
-  if (!base) return { ok: false, error: "EMISSOR_API_URL nao configurada no servidor." };
-  if (!chave) return { ok: false, error: "EMISSOR_ADMIN_KEY nao configurada no servidor." };
+  if (!base) return { ok: false, error: "EMISSOR_API_URL não configurada no servidor." };
+  if (!chave) return { ok: false, error: "EMISSOR_ADMIN_KEY não configurada no servidor." };
 
   try {
     const res = await fetch(`${base}${caminho}`, {
@@ -94,7 +94,7 @@ export async function pedir<T>(
       ok: false,
       error: erro instanceof Error
         ? `Nao foi possivel falar com a ponte: ${erro.message}`
-        : "Nao foi possivel falar com a ponte.",
+        : "Não foi possível falar com a ponte.",
     };
   }
 }
@@ -105,7 +105,7 @@ export async function pedirArquivo(
 ): Promise<ApiResult<{ base64: string; tipo: string }>> {
   const base = urlDaPonte();
   const chave = chaveDaPonte();
-  if (!base || !chave) return { ok: false, error: "Console nao configurado no servidor." };
+  if (!base || !chave) return { ok: false, error: "Console não configurado no servidor." };
 
   try {
     const res = await fetch(`${base}${caminho}`, {
@@ -129,7 +129,7 @@ export async function pedirArquivo(
   } catch (erro) {
     return {
       ok: false,
-      error: erro instanceof Error ? erro.message : "Falha ao baixar o arquivo.",
+      error: erro instanceof Error ? erro.message : "Não foi possível baixar o arquivo.",
     };
   }
 }
