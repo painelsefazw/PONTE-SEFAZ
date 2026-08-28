@@ -1463,7 +1463,10 @@ body {
     <div class="section-title">Ações de todas as empresas</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button type="button" class="btn btn-outline" onclick="exportarXmls()">Exportar XMLs</button>
-      <button type="button" class="btn btn-danger" onclick="limparHomologacao()">Limpar notas de homologação</button>
+      <button type="button" class="btn btn-danger" onclick="limparHomologacao()">Limpar NF-e de homologação</button>
+      <!-- A da NF-e existia; a da NFS-e nao, e a rota estava pronta no backend.
+           Quem testava nota de servico nao tinha como limpar o que emitiu. -->
+      <button type="button" class="btn btn-danger" onclick="limparHomologacaoNfse()">Limpar NFS-e de homologação</button>
       <span id="limparMsg" style="font-size:12px;color:var(--suave-texto)"></span>
     </div>
     <div style="font-size:12px;color:var(--suave-texto);margin-top:10px">
@@ -3023,7 +3026,13 @@ async function carregarHistoricoNfse() {
         + '<button class="btn btn-outline btn-sm" onclick="baixarNfse(\'' + n.chaveAcesso + '\',\'xml\')">XML</button> '
         + '<button class="btn btn-outline btn-sm" onclick="enviarEmailNfse(\'' + n.chaveAcesso + '\')">Email</button> '
         + (n.status === 'CANCELADA' ? ''
-          : '<button class="btn btn-outline btn-sm" onclick="cancelarNfse(\'' + n.chaveAcesso + '\')">Cancelar</button>')
+          : '<button class="btn btn-outline btn-sm" onclick="cancelarNfse(\'' + n.chaveAcesso + '\')">Cancelar</button> '
+          // O ultimo recurso, quando o cancelamento comum ja nao cabe: o prazo
+          // do municipio venceu e substituir nao serve, porque nao ha nota
+          // certa para por no lugar — o servico simplesmente nao foi prestado.
+          // A rota existia inteira no backend e nenhuma tela chamava.
+          + '<button class="btn btn-outline btn-sm" onclick="analiseFiscalNfse(\'' + n.chaveAcesso + '\')" '
+          + 'title="Pedir ao fisco autorização para cancelar, quando o prazo do município já venceu">Análise fiscal</button>')
         + '</td></tr>';
     }).join('');
   } catch (e) {
@@ -3076,6 +3085,39 @@ async function cancelarNfse(chave) {
     alert('Nao foi cancelada:\n' + (j.erros || []).map(function(e) {
       return (e.codigo || '') + ' ' + (e.descricao || '');
     }).join('\n'));
+  }
+}
+
+/**
+ * Pede analise fiscal para cancelar uma NFS-e.
+ *
+ * E o recurso de ultima instancia: quando o prazo de cancelamento do municipio
+ * venceu e a substituicao nao serve — o servico nao foi prestado, entao nao ha
+ * nota correta para colocar no lugar. O fisco responde deferindo ou
+ * indeferindo, e a resposta aparece na consulta de eventos da nota; nao e
+ * imediata.
+ *
+ * Por isso o aviso antes: quem clica esperando cancelar na hora acha que
+ * falhou.
+ */
+async function analiseFiscalNfse(chave) {
+  var motivo = prompt('Pedir análise fiscal para cancelar esta NFS-e.\n\n'
+    + 'Use quando o prazo de cancelamento do município já venceu e não há nota '
+    + 'correta para substituir. O fisco defere ou indefere — a resposta não é '
+    + 'imediata e aparece nos eventos da nota.\n\nMotivo:');
+  if (!motivo || !motivo.trim()) return;
+  try {
+    var r = await apiFetch('/api/nfse/analise-fiscal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chaveAcesso: chave, motivo: motivo.trim() }),
+    });
+    var d = await r.json();
+    if (!r.ok || d.sucesso === false) throw new Error(d.erro || 'não foi possível pedir');
+    alert('Pedido enviado. O fisco responde nos eventos da nota — consulte mais tarde.');
+    loadNfse();
+  } catch (e) {
+    alert('Não foi possível pedir a análise fiscal: ' + e.message);
   }
 }
 
@@ -6266,6 +6308,30 @@ async function limparHomologacao() {
 // ---------------------------------------------------------------------------
 // Inutilizacao de numeracao
 // ---------------------------------------------------------------------------
+/**
+ * Apaga as NFS-e de teste.
+ *
+ * A limpeza da NF-e existia desde sempre; a da NFS-e nao, embora a rota
+ * estivesse pronta. Quem testava nota de servico ficava com o historico
+ * poluido e sem como limpar — e historico de teste misturado com o de verdade
+ * e o comeco de alguem consultar a nota errada.
+ */
+async function limparHomologacaoNfse() {
+  if (!confirm('Apagar TODAS as NFS-e de homologação (teste)?\n\n'
+    + 'Notas de produção NÃO são afetadas.')) return;
+  var msg = document.getElementById('limparMsg');
+  msg.textContent = 'Removendo...';
+  try {
+    var r = await apiFetch('/api/nfse/homologacao', { method: 'DELETE' });
+    var d = await r.json();
+    msg.style.color = d.sucesso ? 'var(--sucesso-tinta)' : 'var(--perigo-tinta)';
+    msg.textContent = d.mensagem || d.erro || 'Pronto.';
+  } catch (e) {
+    msg.style.color = 'var(--perigo-tinta)';
+    msg.textContent = e.message;
+  }
+}
+
 async function inutilizar() {
   var serie = document.getElementById('inutSerie').value;
   var ini = document.getElementById('inutNFIni').value;
