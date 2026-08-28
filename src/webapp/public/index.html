@@ -179,16 +179,25 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 /* Login overlay */
 .login-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, var(--marca-tinta) 0%, var(--marca-tinta) 50%, var(--marca-tinta) 100%); z-index: 400; justify-content: center; align-items: center; }
 .login-overlay.active { display: flex; }
-.login-box { background: var(--cartao); border-radius: 16px; max-width: 400px; width: 90%; padding: 40px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+.login-box { background: var(--cartao); border-radius: 16px; max-width: 380px; width: 90%; padding: 36px 32px 32px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
 .login-box h2 { font-size: 24px; color: var(--marca-tinta); margin-bottom: 4px; }
-.login-box .login-sub { color: var(--suave-texto); font-size: 13px; margin-bottom: 24px; }
-.login-box input { width: 100%; padding: 12px 14px; border: 1px solid var(--borda); border-radius: 8px; font-size: 14px; font-family: inherit; margin-bottom: 12px; }
+.login-box .login-sub { color: var(--suave-texto); font-size: 13px; margin-bottom: 26px; }
+.login-box input { width: 100%; padding: 12px 14px; border: 1px solid var(--borda); border-radius: 8px; font-size: 14px; font-family: inherit; margin-bottom: 0; }
 .login-box input:focus { outline: none; border-color: var(--marca); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
 .login-box .login-err { color: var(--perigo); font-size: 12px; margin-bottom: 8px; display: none; }
 .login-box .login-btn { width: 100%; padding: 12px; background: var(--marca); color: var(--cartao); border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .login-box .login-btn:hover { background: var(--marca); }
 .login-box .login-btn:disabled { background: var(--marca-borda); cursor: not-allowed; }
-.login-remember { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--suave-texto); margin-bottom: 16px; justify-content: flex-start; }
+/* A linha do "lembrar" e a unica da caixa que nao e centrada — e por isso ela
+   parecia jogada: a caixa de marcar ficava no meio e o texto se espremia na
+   direita, quebrando em duas linhas. Centrada e sem quebra, ela vira mais uma
+   linha da pilha. */
+.login-remember {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 12px; color: var(--suave-texto);
+  margin: 14px 0 18px; white-space: nowrap; cursor: pointer;
+}
+.login-remember input { margin: 0; width: 15px; height: 15px; accent-color: var(--marca); }
 .topbar .btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: var(--cartao); padding: 3px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; font-family: inherit; }
 .topbar .btn-logout:hover { background: rgba(255,255,255,0.1); }
 
@@ -579,6 +588,12 @@ body {
 .topbar { display: none !important; }
 
 /* --- Navegacao ---------------------------------------------------------- */
+@media (min-width: 721px) {
+  /* Sem barra de rolagem no topo: quatro abas cabem, e a caixa de rolagem que
+     sobrou do tempo de dez desenhava setinhas no meio da faixa, sem nada para
+     rolar. */
+  .tab-bar { overflow: visible; }
+}
 .tab-bar {
   background: var(--cartao);
   border-bottom: 1px solid var(--borda);
@@ -588,6 +603,12 @@ body {
 .tab-bar button {
   padding: 13px 16px; font-size: 12.5px; color: var(--suave-texto);
   border-bottom: 2px solid transparent;
+  /* O `-2px` original existia para o sublinhado da aba cobrir a borda de 2px
+     da faixa. Essa borda saiu quando a navegacao passou a dividir a linha com
+     o contexto — e o que sobrou foi conteudo vazando 2px para fora da caixa,
+     que e o suficiente para o navegador desenhar uma barra de rolagem vertical
+     no meio do topo. Era essa a "setinha" que aparecia. */
+  margin-bottom: 0;
 }
 .tab-bar button:hover { color: var(--texto); }
 .tab-bar button.active { color: var(--marca-tinta); border-bottom-color: var(--marca); }
@@ -612,7 +633,12 @@ body {
   background: var(--cartao);
   box-shadow: 0 1px 0 var(--borda);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  /* `minmax(max-content, 1fr)` e nao `minmax(0, 1fr)`: com zero de minimo, a
+     coluna da navegacao encolhe ABAIXO das proprias abas, elas estouram a
+     celula e o navegador desenha uma barra de rolagem no meio do topo. Com
+     `max-content` a navegacao nunca fica menor do que precisa; quem cede
+     espaco e o contexto, que e `auto`. */
+  grid-template-columns: minmax(max-content, 1fr) auto;
   grid-template-areas: 'nav contexto' 'sub sub';
   align-items: center;
 }
