@@ -866,27 +866,27 @@ body {
 
   <!-- Operacao -->
   <div class="section">
-    <div class="section-title">Dados da Operacao</div>
+    <div class="section-title">Dados da Operação</div>
     <div class="form-row cols-5">
       <div class="form-group">
         <label>Tipo de Nota</label>
         <select id="tpNota" onchange="onTpNotaChange()">
-          <option value="1" selected>Saida (venda)</option>
+          <option value="1" selected>Saída (venda)</option>
           <option value="0">Entrada (compra)</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Nat. Operacao</label>
+        <label>Nat. Operação</label>
         <select id="natOp">
           <option value="VENDA">VENDA</option>
           <option value="VENDA DE MERCADORIA">VENDA DE MERCADORIA</option>
-          <option value="DEVOLUCAO">DEVOLUCAO</option>
+          <option value="DEVOLUCAO">DEVOLUÇÃO</option>
           <option value="REMESSA">REMESSA</option>
-          <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+          <option value="TRANSFERENCIA">TRANSFERÊNCIA</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Tipo Operacao Fiscal</label>
+        <label>Tipo Operação Fiscal</label>
         <select id="tipoOpFiscal" onchange="onTipoOpEmissaoChange()">
           <option value="venda_revenda" selected>Venda / Revenda</option>
           <option value="venda_producao">Venda produção própria</option>
@@ -899,11 +899,11 @@ body {
         </select>
       </div>
       <div class="form-group">
-        <label>Serie</label>
+        <label>Série</label>
         <input type="text" id="serie" value="800" onchange="loadProximoNumero()" title="Serie 800: serie dedicada deste sistema. Incomum de proposito (nao colide com a serie que as empresas ja usam), e dentro da faixa VALIDA 0-889 (as series 900-999 sao reservadas pela SEFAZ p/ emissao com aplicativo do Fisco e seriam rejeitadas). Cada empresa comeca na nota 1 nesta serie.">
       </div>
       <div class="form-group">
-        <label>Numero</label>
+        <label>Número</label>
         <input type="text" id="numero" value="1" placeholder="Auto">
       </div>
       <div class="form-group">
@@ -911,7 +911,7 @@ body {
         <select id="modFrete">
           <option value="9">Sem frete</option>
           <option value="0">Emitente</option>
-          <option value="1">Destinatario</option>
+          <option value="1">Destinatário</option>
           <option value="2">Terceiros</option>
         </select>
       </div>
@@ -941,19 +941,19 @@ body {
       <div class="form-group">
         <label>Ambiente</label>
         <select id="ambiente" onchange="onAmbienteChange()">
-          <option value="2" selected>Homologacao (teste)</option>
-          <option value="1">PRODUCAO (valor fiscal real)</option>
+          <option value="2" selected>Homologação (teste)</option>
+          <option value="1">PRODUÇÃO (valor fiscal real)</option>
         </select>
       </div>
       <div class="form-group">
         <label>Consumidor Final</label>
         <select id="indFinal">
           <option value="1" selected>Sim</option>
-          <option value="0">Nao (revenda/industrializacao)</option>
+          <option value="0">Não (revenda/industrialização)</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Tipo de Operacao</label>
+        <label>Tipo de Operação</label>
         <input type="text" id="opTipo" value="Interna" readonly style="background:var(--suave);color:var(--marca);font-weight:600">
       </div>
       <div class="form-group" id="difalWrap" style="display:none">
@@ -968,7 +968,7 @@ body {
 
   <!-- Destinatario -->
   <div class="section">
-    <div class="section-title" id="destTitle">Destinatario</div>
+    <div class="section-title" id="destTitle">Destinatário</div>
     <div class="form-row cols-2">
       <div class="form-group">
         <label>Tipo Documento</label>
@@ -984,22 +984,22 @@ body {
     </div>
     <div class="form-row cols-2-1">
       <div class="form-group">
-        <label>Razao Social</label>
-        <input type="text" id="destRazao" placeholder="Razao social do destinatario">
+        <label>Razão Social</label>
+        <input type="text" id="destRazao" placeholder="Razão social do destinatário">
       </div>
       <div class="form-group">
         <label>Ind. IE Dest.</label>
         <select id="destIndIE">
           <option value="1">Contribuinte</option>
           <option value="2">Isento</option>
-          <option value="9" selected>Nao contribuinte</option>
+          <option value="9" selected>Não contribuinte</option>
         </select>
       </div>
     </div>
     <div class="form-row cols-2">
       <div class="form-group">
         <label>IE (se contribuinte)</label>
-        <input type="text" id="destIE" placeholder="Inscricao Estadual">
+        <input type="text" id="destIE" placeholder="Inscrição Estadual">
       </div>
       <div class="form-group">
         <label>Email</label>
@@ -1012,7 +1012,7 @@ body {
         <input type="text" id="destLogr" placeholder="Rua, Avenida, etc">
       </div>
       <div class="form-group">
-        <label>Numero</label>
+        <label>Número</label>
         <input type="text" id="destNro" placeholder="S/N">
       </div>
     </div>
@@ -1022,11 +1022,11 @@ body {
         <input type="text" id="destBairro">
       </div>
       <div class="form-group">
-        <label>Municipio</label>
-        <input type="text" id="destMunNome" placeholder="Nome do municipio">
+        <label>Município</label>
+        <input type="text" id="destMunNome" placeholder="Nome do município">
       </div>
       <div class="form-group">
-        <label>Cod. Municipio (IBGE)</label>
+        <label>Cod. Município (IBGE)</label>
         <input type="text" id="destMunCod" placeholder="0000000" maxlength="7">
       </div>
     </div>
@@ -1069,8 +1069,8 @@ body {
       <thead>
         <tr>
           <th>#</th>
-          <th>Codigo</th>
-          <th>Descricao</th>
+          <th>Código</th>
+          <th>Descrição</th>
           <th>NCM <span class="tip" data-tip="Nomenclatura Comum do Mercosul — codigo de 8 digitos que identifica o produto. Ex: 08031000 = banana-da-terra. Cada produto tem um NCM especifico.">?</span></th>
           <th>CFOP <span class="tip" data-tip="Codigo Fiscal de Operacoes. Identifica o tipo de operacao. 5xxx = venda interna, 6xxx = interestadual, 1xxx = compra interna, 2xxx = compra interestadual.">?</span></th>
           <th>Un</th>
@@ -1169,11 +1169,11 @@ body {
         <select id="pagTipo" onchange="calcTotal()">
           <option value="01">Dinheiro</option>
           <option value="02">Cheque</option>
-          <option value="03">Cartao Credito</option>
-          <option value="04">Cartao Debito</option>
-          <option value="05">Credito Loja</option>
+          <option value="03">Cartão Crédito</option>
+          <option value="04">Cartão Débito</option>
+          <option value="05">Crédito Loja</option>
           <option value="15">Boleto</option>
-          <option value="16">Deposito</option>
+          <option value="16">Depósito</option>
           <option value="17">PIX</option>
           <option value="90">Sem Pagamento (entrada)</option>
           <option value="99">Outros</option>
@@ -1185,7 +1185,7 @@ body {
       </div>
       <div class="form-group">
         <label>Info. Complementar</label>
-        <input type="text" id="infCpl" placeholder="Observacoes na nota">
+        <input type="text" id="infCpl" placeholder="Observações na nota">
       </div>
     </div>
   </div>
@@ -1226,12 +1226,12 @@ body {
     <div class="section-title">Cadastrar / Atualizar Empresa</div>
     <div class="form-row cols-2">
       <div class="form-group"><label>CNPJ</label><input type="text" id="empCnpj" placeholder="00.000.000/0000-00" maxlength="18"></div>
-      <div class="form-group"><label>Razao Social</label><input type="text" id="empRazao"></div>
+      <div class="form-group"><label>Razão Social</label><input type="text" id="empRazao"></div>
     </div>
     <div class="form-row cols-3">
       <div class="form-group"><label>Nome Fantasia (opcional)</label><input type="text" id="empFantasia"></div>
-      <div class="form-group"><label>Inscricao Estadual</label><input type="text" id="empIe"></div>
-      <div class="form-group"><label>Inscricao Municipal (opcional) <span class="tip" data-tip="Numero emitido pela prefeitura, diferente da Inscricao Estadual. Obrigatorio apenas para emitir nota fiscal de servico (NFS-e). Empresa que so vende mercadoria nao precisa.">?</span></label><input type="text" id="empIm" placeholder="so para nota de servico"></div>
+      <div class="form-group"><label>Inscrição Estadual</label><input type="text" id="empIe"></div>
+      <div class="form-group"><label>Inscrição Municipal (opcional) <span class="tip" data-tip="Numero emitido pela prefeitura, diferente da Inscricao Estadual. Obrigatorio apenas para emitir nota fiscal de servico (NFS-e). Empresa que so vende mercadoria nao precisa.">?</span></label><input type="text" id="empIm" placeholder="so para nota de serviço"></div>
       <div class="form-group">
         <label>Regime (CRT)</label>
         <select id="empCrt">
@@ -1243,12 +1243,12 @@ body {
     </div>
     <div class="form-row cols-2-1">
       <div class="form-group"><label>Logradouro</label><input type="text" id="empLogr"></div>
-      <div class="form-group"><label>Numero</label><input type="text" id="empNro"></div>
+      <div class="form-group"><label>Número</label><input type="text" id="empNro"></div>
     </div>
     <div class="form-row cols-3">
       <div class="form-group"><label>Bairro</label><input type="text" id="empBairro"></div>
-      <div class="form-group"><label>Municipio</label><input type="text" id="empMunNome"></div>
-      <div class="form-group"><label>Cod. Municipio (IBGE)</label><input type="text" id="empMunCod" maxlength="7"></div>
+      <div class="form-group"><label>Município</label><input type="text" id="empMunNome"></div>
+      <div class="form-group"><label>Cod. Município (IBGE)</label><input type="text" id="empMunCod" maxlength="7"></div>
     </div>
     <div class="form-row cols-4">
       <div class="form-group">
@@ -1268,10 +1268,10 @@ body {
       <div class="form-group"><label>CEP</label><input type="text" id="empCep" maxlength="9"></div>
       <div class="form-group"><label>Telefone (opcional)</label><input type="text" id="empFone"></div>
       <div class="form-group">
-        <label>Ambiente Padrao</label>
+        <label>Ambiente Padrão</label>
         <select id="empAmbiente">
-          <option value="2" selected>Homologacao</option>
-          <option value="1">Producao</option>
+          <option value="2" selected>Homologação</option>
+          <option value="1">Produção</option>
         </select>
       </div>
     </div>
@@ -1369,8 +1369,8 @@ body {
           CST 200, classificação 200014, redução 100.
         </div>
         <div class="form-row cols-4">
-          <div class="form-group"><label>CST IBS/CBS <span class="tip" data-tip="Codigo de Situacao Tributaria do IBS/CBS. Em branco = 000 (tributacao integral), que serve para produto normal. Outros: 200 (aliquota reduzida), 400 (isencao), 410 (imunidade), 620 (monofasia). Pergunte ao contador.">?</span></label><input type="text" id="pIbsCst" maxlength="3" placeholder="000 (padrao)"></div>
-          <div class="form-group"><label>CLASSIF. TRIBUTÁRIA <span class="tip" data-tip="cClassTrib — classificacao que detalha o CST, com 6 digitos. Comeca sempre pelos 3 digitos do CST: CST 200 pede classificacao 200xxx. Em branco = 000001 (tributacao integral). Cada par corresponde a um dispositivo da LC 214/2025. Pergunte ao contador.">?</span></label><input type="text" id="pIbsClass" maxlength="6" placeholder="000001 (padrao)"></div>
+          <div class="form-group"><label>CST IBS/CBS <span class="tip" data-tip="Codigo de Situacao Tributaria do IBS/CBS. Em branco = 000 (tributacao integral), que serve para produto normal. Outros: 200 (aliquota reduzida), 400 (isencao), 410 (imunidade), 620 (monofasia). Pergunte ao contador.">?</span></label><input type="text" id="pIbsCst" maxlength="3" placeholder="000 (padrão)"></div>
+          <div class="form-group"><label>CLASSIF. TRIBUTÁRIA <span class="tip" data-tip="cClassTrib — classificacao que detalha o CST, com 6 digitos. Comeca sempre pelos 3 digitos do CST: CST 200 pede classificacao 200xxx. Em branco = 000001 (tributacao integral). Cada par corresponde a um dispositivo da LC 214/2025. Pergunte ao contador.">?</span></label><input type="text" id="pIbsClass" maxlength="6" placeholder="000001 (padrão)"></div>
           <div class="form-group"><label>REDUÇÃO (%) <span class="tip" data-tip="So para CST 200. Percentual de reducao da aliquota: 100 = aliquota zero. O sistema ja conhece a classificacao 200014 (frutas, horticolas e ovos) e dispensa este campo nela; para as demais, o percentual sai da tabela oficial e tem de ser informado — o sistema recusa emitir chutando.">?</span></label><input type="text" id="pIbsRed" maxlength="6" placeholder="so com CST 200"></div>
         </div>
       </div>
@@ -1400,7 +1400,7 @@ body {
   </div>
   <div class="section" style="text-align:right">
     <button type="button" class="btn btn-success" style="font-size:12px;padding:6px 16px;margin-right:8px" onclick="exportarXmls()">Exportar XMLs</button>
-    <button type="button" class="btn" style="background:var(--perigo);color:var(--cartao);font-size:12px;padding:6px 16px" onclick="limparHomologacao()">Limpar notas de homologacao</button>
+    <button type="button" class="btn" style="background:var(--perigo);color:var(--cartao);font-size:12px;padding:6px 16px" onclick="limparHomologacao()">Limpar notas de homologação</button>
     <span id="limparMsg" style="font-size:12px;color:var(--suave-texto);margin-left:8px"></span>
   </div>
   <div class="section">
@@ -1461,14 +1461,14 @@ body {
 <div class="tab-content somente-contador" id="tab-relatorios">
 <div class="container">
   <div class="section">
-    <div class="section-title">Relatorio Fiscal Mensal</div>
+    <div class="section-title">Relatório Fiscal Mensal</div>
     <div class="form-row cols-3">
       <div class="form-group">
-        <label>Mes</label>
+        <label>Mês</label>
         <input type="month" id="relMes" onchange="loadRelatorio()">
       </div>
       <div class="form-group" style="align-self:end">
-        <button type="button" class="btn btn-primary" onclick="loadRelatorio()">Gerar Relatorio</button>
+        <button type="button" class="btn btn-primary" onclick="loadRelatorio()">Gerar Relatório</button>
       </div>
       <div class="form-group" style="align-self:end">
         <button type="button" class="btn btn-success" onclick="exportarXmls()">Exportar todos os XMLs</button>
@@ -1480,7 +1480,7 @@ body {
   </div>
   <div class="section">
     <div class="section-title">Resultado</div>
-    <div id="relResultado"><div class="hist-empty">Selecione um mes e clique em Gerar</div></div>
+    <div id="relResultado"><div class="hist-empty">Selecione um mês e clique em Gerar</div></div>
   </div>
 </div>
 </div>
@@ -1489,24 +1489,24 @@ body {
 <div class="tab-content somente-contador" id="tab-inutilizar">
 <div class="container">
   <div class="section">
-    <div class="section-title">Inutilizacao de Numeracao NF-e</div>
+    <div class="section-title">Inutilização de Numeração NF-e</div>
     <div style="font-size:12px;color:var(--suave-texto);margin-bottom:16px">
-      Use quando numeros de NF-e foram pulados na sequencia. A SEFAZ exige a inutilizacao dos numeros nao utilizados. <strong>Acao irreversivel.</strong>
+      Use quando numeros de NF-e foram pulados na sequencia. A SEFAZ exige a inutilizacao dos numeros nao utilizados. <strong>Ação irreversivel.</strong>
     </div>
     <div class="form-row cols-4">
-      <div class="form-group"><label>Serie</label><input type="text" id="inutSerie" value="800"></div>
-      <div class="form-group"><label>Numero Inicial</label><input type="text" id="inutNFIni" placeholder="1"></div>
-      <div class="form-group"><label>Numero Final</label><input type="text" id="inutNFFin" placeholder="5"></div>
+      <div class="form-group"><label>Série</label><input type="text" id="inutSerie" value="800"></div>
+      <div class="form-group"><label>Número Inicial</label><input type="text" id="inutNFIni" placeholder="1"></div>
+      <div class="form-group"><label>Número Final</label><input type="text" id="inutNFFin" placeholder="5"></div>
       <div class="form-group">
         <label>Ambiente</label>
-        <select id="inutAmb"><option value="2">Homologacao</option><option value="1">PRODUCAO</option></select>
+        <select id="inutAmb"><option value="2">Homologação</option><option value="1">PRODUÇÃO</option></select>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Justificativa (min. 15 caracteres)</label><input type="text" id="inutJust" placeholder="Numeracao pulada por erro de sistema"></div>
+      <div class="form-group"><label>Justificativa (min. 15 caracteres)</label><input type="text" id="inutJust" placeholder="Numeração pulada por erro de sistema"></div>
     </div>
     <div style="text-align:center;margin-top:12px">
-      <button type="button" class="btn btn-danger btn-lg" onclick="inutilizar()">Inutilizar Numeracao</button>
+      <button type="button" class="btn btn-danger btn-lg" onclick="inutilizar()">Inutilizar Numeração</button>
     </div>
     <div id="inutResultado" class="result-box" style="margin-top:16px"></div>
   </div>
@@ -1517,31 +1517,31 @@ body {
 <div class="tab-content somente-contador" id="tab-manifestacao">
 <div class="container">
   <div class="section">
-    <div class="section-title">Manifestacao do Destinatario</div>
+    <div class="section-title">Manifestação do Destinatário</div>
     <div style="font-size:12px;color:var(--suave-texto);margin-bottom:16px">
       Registre na SEFAZ a ciencia, confirmacao, desconhecimento ou nao-realizacao de uma NF-e recebida pela empresa.
     </div>
     <div class="form-row cols-2">
-      <div class="form-group"><label>Chave de Acesso (44 digitos)</label><input type="text" id="manChave" maxlength="44" placeholder="Chave da NF-e recebida"></div>
+      <div class="form-group"><label>Chave de Acesso (44 dígitos)</label><input type="text" id="manChave" maxlength="44" placeholder="Chave da NF-e recebida"></div>
       <div class="form-group">
-        <label>Tipo de Manifestacao</label>
+        <label>Tipo de Manifestação</label>
         <select id="manTipo">
-          <option value="210210">Ciencia da Operacao</option>
-          <option value="210200">Confirmacao da Operacao</option>
-          <option value="210220">Desconhecimento da Operacao</option>
-          <option value="210240">Operacao nao Realizada</option>
+          <option value="210210">Ciência da Operação</option>
+          <option value="210200">Confirmação da Operação</option>
+          <option value="210220">Desconhecimento da Operação</option>
+          <option value="210240">Operação não Realizada</option>
         </select>
       </div>
     </div>
     <div class="form-row cols-2">
       <div class="form-group">
         <label>Ambiente</label>
-        <select id="manAmb"><option value="1">PRODUCAO</option><option value="2">Homologacao</option></select>
+        <select id="manAmb"><option value="1">PRODUÇÃO</option><option value="2">Homologação</option></select>
       </div>
       <div class="form-group"><label>Justificativa (obrigatoria p/ "nao realizada")</label><input type="text" id="manJust" placeholder="Min. 15 caracteres"></div>
     </div>
     <div style="text-align:center;margin-top:12px">
-      <button type="button" class="btn btn-primary btn-lg" onclick="manifestar()">Enviar Manifestacao</button>
+      <button type="button" class="btn btn-primary btn-lg" onclick="manifestar()">Enviar Manifestação</button>
     </div>
     <div id="manResultado" class="result-box" style="margin-top:16px"></div>
   </div>
@@ -1552,7 +1552,7 @@ body {
 <div class="tab-content somente-contador" id="tab-importar">
 <div class="container">
   <div class="section">
-    <div class="section-title">Importacao em Lote (XLSX)</div>
+    <div class="section-title">Importação em Lote (XLSX)</div>
     <div style="font-size:12px;color:var(--suave-texto);margin-bottom:16px">
       Importe produtos em massa via planilha Excel (.xlsx).<br>
       <strong>Colunas:</strong> codigo, descricao, ncm, cfop, unidade, valorUnitario, cstCsosn, aliqIcms, cest, mva, aliqIcmsSt, origem
@@ -1578,13 +1578,13 @@ body {
 <div class="tab-content somente-contador" id="tab-api">
 <div class="container">
   <div class="section">
-    <div class="section-title">Documentacao da API — Integracao ERP</div>
+    <div class="section-title">Documentação da API — Integração ERP</div>
     <div style="margin-bottom:20px">
       <button onclick="downloadApiDocs()" style="padding:10px 20px;background:var(--marca-tinta);color:var(--marca-fundo);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px">
         <span style="font-size:16px">&#11015;</span> Baixar Documentacao Completa
       </button>
     </div>
-    <div id="apiDocsContent"><div class="hist-empty">Carregando documentacao...</div></div>
+    <div id="apiDocsContent"><div class="hist-empty">Carregando documentação...</div></div>
   </div>
 </div>
 </div>
@@ -1599,16 +1599,16 @@ body {
     </div>
     <div class="form-row cols-3" style="margin-bottom:16px">
       <div class="form-group">
-        <label>Ultimo NSU consultado</label>
+        <label>Último NSU consultado</label>
         <input type="text" id="dfeUltNsu" value="0" placeholder="0">
       </div>
       <div class="form-group">
-        <label>NSU especifico (opcional)</label>
+        <label>NSU específico (opcional)</label>
         <input type="text" id="dfeNsu" placeholder="Deixe vazio para buscar novos">
       </div>
       <div class="form-group">
         <label>Ambiente</label>
-        <select id="dfeAmbiente"><option value="1">Producao</option><option value="2">Homologacao</option></select>
+        <select id="dfeAmbiente"><option value="1">Produção</option><option value="2">Homologação</option></select>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -1627,19 +1627,19 @@ body {
 <div class="container">
   <div class="emitente-bar">
     <div><span class="label">NFC-e — Cupom Fiscal</span> <span class="value">Modelo 65</span></div>
-    <div><span class="label">Serie</span> <input type="text" id="nfceSerie" value="1" style="width:60px;padding:4px 8px;border:1px solid var(--borda);border-radius:4px;font-size:13px"></div>
+    <div><span class="label">Série</span> <input type="text" id="nfceSerie" value="1" style="width:60px;padding:4px 8px;border:1px solid var(--borda);border-radius:4px;font-size:13px"></div>
   </div>
 
   <!-- CSC Config -->
   <div class="section" id="nfceCscSection">
-    <div class="section-title">CSC — Codigo de Seguranca do Contribuinte</div>
+    <div class="section-title">CSC — Código de Segurança do Contribuinte</div>
     <div style="font-size:13px;color:var(--suave-texto);margin-bottom:12px">
       O CSC e obrigatorio para emissao de NFC-e. Voce obtem no portal da SEFAZ do seu estado.
     </div>
     <div id="nfceCscStatus" style="padding:10px 16px;border-radius:6px;margin-bottom:12px;font-size:13px;background:var(--alerta-fundo);color:var(--alerta-tinta)">Verificando...</div>
     <div class="form-row cols-3">
       <div class="form-group">
-        <label>ID do CSC (numero)</label>
+        <label>ID do CSC (número)</label>
         <input type="text" id="nfceCscId" placeholder="1">
       </div>
       <div class="form-group">
@@ -1658,8 +1658,8 @@ body {
     <div style="overflow-x:auto">
       <table class="items-table" id="nfceItensTable">
         <thead><tr>
-          <th style="width:80px">Codigo</th>
-          <th>Descricao</th>
+          <th style="width:80px">Código</th>
+          <th>Descrição</th>
           <th style="width:90px">NCM</th>
           <th style="width:60px">CFOP</th>
           <th style="width:50px">UN</th>
@@ -1686,13 +1686,13 @@ body {
         <select id="nfceTpag">
           <option value="01">Dinheiro</option>
           <option value="02">Cheque</option>
-          <option value="03">Cartao Credito</option>
-          <option value="04">Cartao Debito</option>
-          <option value="05">Credito Loja</option>
-          <option value="10">Vale Alimentacao</option>
+          <option value="03">Cartão Crédito</option>
+          <option value="04">Cartão Débito</option>
+          <option value="05">Crédito Loja</option>
+          <option value="10">Vale Alimentação</option>
           <option value="11">Vale Refeicao</option>
           <option value="15">Boleto</option>
-          <option value="16">Deposito Bancario</option>
+          <option value="16">Depósito Bancario</option>
           <option value="17">PIX</option>
           <option value="99">Outros</option>
         </select>
@@ -1710,8 +1710,8 @@ body {
 
   <!-- Destinatario (opcional) -->
   <div class="section">
-    <div class="section-title">Destinatario (opcional)</div>
-    <div style="font-size:12px;color:var(--suave-texto);margin-bottom:8px">NFC-e nao exige identificacao do comprador. Preencha apenas se necessario (acima de R$200 exige CPF).</div>
+    <div class="section-title">Destinatário (opcional)</div>
+    <div style="font-size:12px;color:var(--suave-texto);margin-bottom:8px">NFC-e não exige identificação do comprador. Preencha apenas se necessário (acima de R$200 exige CPF).</div>
     <div class="form-row cols-2">
       <div class="form-group">
         <label>CPF</label>
@@ -1745,9 +1745,9 @@ body {
 <div class="tab-content" id="tab-nfse">
 <div class="container">
   <div class="emitente-bar">
-    <div><span class="label">NFS-e — Nota de Servico</span> <span class="value">Sistema Nacional</span></div>
-    <div><span class="label">Serie</span> <input type="text" id="nfseSerie" value="1" style="width:60px;padding:4px 8px;border:1px solid var(--borda);border-radius:4px;font-size:13px"></div>
-    <div><span class="label">Numero</span> <span class="value" id="nfseProxNumero">—</span></div>
+    <div><span class="label">NFS-e — Nota de Serviço</span> <span class="value">Sistema Nacional</span></div>
+    <div><span class="label">Série</span> <input type="text" id="nfseSerie" value="1" style="width:60px;padding:4px 8px;border:1px solid var(--borda);border-radius:4px;font-size:13px"></div>
+    <div><span class="label">Número</span> <span class="value" id="nfseProxNumero">—</span></div>
   </div>
 
   <!-- Habilitacao do municipio. A emissao depende de credenciamento, e sem
@@ -1757,15 +1757,15 @@ body {
   </div>
 
   <div class="section">
-    <div class="section-title">Tomador do servico</div>
+    <div class="section-title">Tomador do serviço</div>
     <div class="form-row cols-3">
       <div class="form-group">
         <label>CNPJ ou CPF</label>
-        <input type="text" id="nfseTomDoc" placeholder="Somente numeros">
+        <input type="text" id="nfseTomDoc" placeholder="Somente números">
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>Nome / Razao social</label>
-        <input type="text" id="nfseTomNome" placeholder="Nome de quem contratou o servico">
+        <label>Nome / Razão social</label>
+        <input type="text" id="nfseTomNome" placeholder="Nome de quem contratou o serviço">
       </div>
     </div>
     <div class="form-row cols-4">
@@ -1778,7 +1778,7 @@ body {
         <input type="text" id="nfseTomLgr" placeholder="Opcional">
       </div>
       <div class="form-group">
-        <label>Numero</label>
+        <label>Número</label>
         <input type="text" id="nfseTomNro" placeholder="Opcional">
       </div>
     </div>
@@ -1788,8 +1788,8 @@ body {
         <input type="text" id="nfseTomBairro" placeholder="Opcional">
       </div>
       <div class="form-group">
-        <label>Cod. municipio (IBGE)</label>
-        <input type="text" id="nfseTomMun" placeholder="7 digitos">
+        <label>Cod. município (IBGE)</label>
+        <input type="text" id="nfseTomMun" placeholder="7 dígitos">
       </div>
       <div class="form-group">
         <label>UF</label>
@@ -1799,7 +1799,7 @@ body {
   </div>
 
   <div class="section">
-    <div class="section-title">Servico prestado</div>
+    <div class="section-title">Serviço prestado</div>
     <div class="form-row cols-3">
       <div class="form-group">
         <label>Do catalogo</label>
@@ -1808,17 +1808,17 @@ body {
         </select>
       </div>
       <div class="form-group">
-        <label>Cod. tributacao nacional</label>
+        <label>Cod. tributação nacional</label>
         <input type="text" id="nfseCtribNac" placeholder="010101" maxlength="6">
-        <div style="font-size:11px;color:var(--suave-texto);margin-top:3px">6 digitos: item + subitem + desdobro. O desdobro comeca em 01.</div>
+        <div style="font-size:11px;color:var(--suave-texto);margin-top:3px">6 dígitos: item + subitem + desdobro. O desdobro comeca em 01.</div>
       </div>
       <div class="form-group">
-        <label>Competencia</label>
+        <label>Competência</label>
         <input type="date" id="nfseCompetencia">
       </div>
     </div>
     <div class="form-group">
-      <label>Descricao do servico</label>
+      <label>Descrição do serviço</label>
       <textarea id="nfseDescricao" rows="2" placeholder="O que foi prestado"></textarea>
     </div>
 
@@ -1834,7 +1834,7 @@ body {
         </div>
         <div class="form-group">
           <label>CEP da obra</label>
-          <input type="text" id="nfseObraCep" placeholder="Use se nao tiver CNO">
+          <input type="text" id="nfseObraCep" placeholder="Use se não tiver CNO">
         </div>
       </div>
       <div class="form-row cols-3">
@@ -1843,7 +1843,7 @@ body {
           <input type="text" id="nfseObraLgr">
         </div>
         <div class="form-group">
-          <label>Numero</label>
+          <label>Número</label>
           <input type="text" id="nfseObraNro">
         </div>
       </div>
@@ -1858,30 +1858,30 @@ body {
     <div class="section-title">Valores</div>
     <div class="form-row cols-4">
       <div class="form-group">
-        <label>Valor do servico (R$)</label>
+        <label>Valor do serviço (R$)</label>
         <input type="text" id="nfseValor" placeholder="0,00" oninput="recalcNfse()">
       </div>
       <div class="form-group">
-        <label>Aliquota ISS (%)</label>
+        <label>Alíquota ISS (%)</label>
         <input type="text" id="nfseAliqIss" placeholder="Ex: 2,90" oninput="recalcNfse()">
       </div>
       <div class="form-group">
-        <label>Retencao do ISS</label>
+        <label>Retenção do ISS</label>
         <!-- tpRetISSQN: 1 = nao retido, 2 = tomador, 3 = intermediario. A
              polaridade e o contrario da intuicao — nao trocar os valores. -->
         <select id="nfseIssRetido" onchange="recalcNfse()">
-          <option value="1">Nao retido</option>
+          <option value="1">Não retido</option>
           <option value="2">Retido pelo tomador</option>
           <option value="3">Retido pelo intermediario</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Tributacao do ISSQN</label>
+        <label>Tributação do ISSQN</label>
         <select id="nfseTribIssqn" onchange="ajustarTributacaoNfse()">
-          <option value="1">Operacao tributavel</option>
+          <option value="1">Operação tributável</option>
           <option value="2">Imunidade</option>
-          <option value="3">Exportacao de servico</option>
-          <option value="4">Nao incidencia</option>
+          <option value="3">Exportação de serviço</option>
+          <option value="4">Não incidência</option>
         </select>
       </div>
     </div>
@@ -1894,12 +1894,12 @@ body {
       <div class="form-group">
         <label>Fundamento (art. 150, VI da Constituicao)</label>
         <select id="nfseTipoImunidade">
-          <option value="1">a) Patrimonio, renda ou servicos, uns dos outros</option>
+          <option value="1">a) Patrimonio, renda ou serviços, uns dos outros</option>
           <option value="2">b) Templos de qualquer culto</option>
           <option value="3">c) Partidos, sindicatos, educacao e assistencia social</option>
           <option value="4">d) Livros, jornais, periodicos e papel de impressao</option>
           <option value="5">e) Fonogramas e videofonogramas musicais brasileiros</option>
-          <option value="0">Nao informado</option>
+          <option value="0">Não informado</option>
         </select>
       </div>
     </div>
@@ -1919,7 +1919,7 @@ body {
           <select id="nfseCeModo">
             <option value="1">Transfronteirico</option>
             <option value="2">Consumo no Brasil</option>
-            <option value="3">Presenca comercial no exterior</option>
+            <option value="3">Presença comercial no exterior</option>
             <option value="4">Movimento temporario de pessoas</option>
             <option value="0">Desconhecido</option>
           </select>
@@ -1940,16 +1940,16 @@ body {
         <div class="form-group">
           <label>Movimentacao temporaria de bens</label>
           <select id="nfseCeMovTemp">
-            <option value="1">Nao</option>
-            <option value="2">Vinculada a Decl. de Importacao</option>
-            <option value="3">Vinculada a Decl. de Exportacao</option>
+            <option value="1">Não</option>
+            <option value="2">Vinculada a Decl. de Importação</option>
+            <option value="3">Vinculada a Decl. de Exportação</option>
             <option value="0">Desconhecido</option>
           </select>
         </div>
       </div>
       <div class="form-row cols-3">
         <div class="form-group">
-          <label>Moeda (codigo BACEN)</label>
+          <label>Moeda (código BACEN)</label>
           <input type="text" id="nfseCeMoeda" placeholder="220 = dolar EUA" maxlength="3">
         </div>
         <div class="form-group">
@@ -1959,7 +1959,7 @@ body {
         <div class="form-group">
           <label>Enviar ao MDIC</label>
           <select id="nfseCeMdic">
-            <option value="0">Nao</option>
+            <option value="0">Não</option>
             <option value="1">Sim</option>
           </select>
         </div>
@@ -1979,9 +1979,9 @@ body {
          ISS. O XSD aceita percentual OU valor, nunca os dois. -->
     <div class="form-row cols-3" style="margin-top:4px">
       <div class="form-group">
-        <label>Deducao da base</label>
+        <label>Dedução da base</label>
         <select id="nfseDedTipo" onchange="recalcNfse()">
-          <option value="">Sem deducao</option>
+          <option value="">Sem dedução</option>
           <option value="valor">Por valor (R$)</option>
           <option value="percentual">Por percentual (%)</option>
         </select>
@@ -1989,7 +1989,7 @@ body {
       <div class="form-group">
         <label>Quanto deduzir</label>
         <input type="text" id="nfseDedValor" placeholder="0,00" oninput="recalcNfse()">
-        <div style="font-size:11px;color:var(--suave-texto);margin-top:3px">Subempreitada ja tributada, material aplicado.</div>
+        <div style="font-size:11px;color:var(--suave-texto);margin-top:3px">Subempreitada já tributada, material aplicado.</div>
       </div>
       <div class="form-group"></div>
     </div>
@@ -2049,12 +2049,12 @@ body {
   <div class="result-box" id="nfseResultado" style="display:none"></div>
 
   <div class="section">
-    <div class="section-title">Notas de servico emitidas</div>
+    <div class="section-title">Notas de serviço emitidas</div>
     <div style="overflow-x:auto">
       <table class="items-table">
         <thead><tr>
-          <th style="width:70px">Numero</th>
-          <th style="width:110px">Emissao</th>
+          <th style="width:70px">Número</th>
+          <th style="width:110px">Emissão</th>
           <th>Tomador</th>
           <th style="width:90px">Valor</th>
           <th style="width:90px">Status</th>
@@ -2081,10 +2081,10 @@ body {
       <div class="form-group" style="max-width:150px">
         <label>Lotes por vez</label>
         <input type="number" id="nfseDfeLotes" value="5" min="1" max="20">
-        <div style="font-size:11px;color:var(--suave-texto);margin-top:3px">Ate 50 notas por lote.</div>
+        <div style="font-size:11px;color:var(--suave-texto);margin-top:3px">Até 50 notas por lote.</div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="sincronizarNfseDfe(false)" id="btnSincNfseDfe">Buscar novas</button>
-      <button class="btn btn-outline btn-sm" onclick="sincronizarNfseDfe(true)">Recarregar desde o inicio</button>
+      <button class="btn btn-outline btn-sm" onclick="sincronizarNfseDfe(true)">Recarregar desde o início</button>
       <div style="margin-left:auto;font-size:13px;color:var(--suave-texto)">
         Ultimo NSU lido: <b id="nfseDfeNsu">—</b>
       </div>
@@ -2097,12 +2097,12 @@ body {
     <div style="overflow-x:auto">
       <table class="items-table">
         <thead><tr>
-          <th style="width:90px">Numero</th>
-          <th style="width:95px">Emissao</th>
+          <th style="width:90px">Número</th>
+          <th style="width:95px">Emissão</th>
           <th>Prestador</th>
-          <th>Servico</th>
+          <th>Serviço</th>
           <th style="width:95px">Valor</th>
-          <th style="width:110px">Municipio</th>
+          <th style="width:110px">Município</th>
           <th style="width:60px"></th>
         </tr></thead>
         <tbody id="nfseDfeBody"><tr><td colspan="7" style="text-align:center;color:var(--suave-texto)">Carregando...</td></tr></tbody>
@@ -2116,24 +2116,24 @@ body {
 <div class="tab-content" id="tab-servicos">
 <div class="container">
   <div class="section">
-    <div class="section-title">Cadastrar servico</div>
+    <div class="section-title">Cadastrar serviço</div>
     <div style="font-size:13px;color:var(--suave-texto);margin-bottom:12px">
       Cadastre uma vez e a emissao so pede o valor. O codigo de tributacao nacional
       tem 6 digitos: 2 do item da LC 116, 2 do subitem e 2 do desdobro — e o desdobro comeca em 01.
     </div>
     <div class="form-row cols-3">
       <div class="form-group">
-        <label>Codigo interno</label>
+        <label>Código interno</label>
         <input type="text" id="svcCodigo" placeholder="SERV001">
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>Descricao</label>
+        <label>Descrição</label>
         <input type="text" id="svcDescricao" placeholder="Desenvolvimento de sistemas">
       </div>
     </div>
     <div class="form-row cols-4">
       <div class="form-group">
-        <label>Cod. tributacao nacional</label>
+        <label>Cod. tributação nacional</label>
         <input type="text" id="svcCtribNac" placeholder="010101" maxlength="6">
       </div>
       <div class="form-group">
@@ -2141,25 +2141,25 @@ body {
         <input type="text" id="svcCtribMun" placeholder="Opcional">
       </div>
       <div class="form-group">
-        <label>Valor padrao (R$)</label>
+        <label>Valor padrão (R$)</label>
         <input type="text" id="svcValor" placeholder="Opcional">
       </div>
       <div class="form-group">
-        <label>Aliquota ISS (%)</label>
+        <label>Alíquota ISS (%)</label>
         <input type="text" id="svcAliqIss" placeholder="Opcional">
       </div>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="salvarServico()">Salvar servico</button>
+    <button class="btn btn-primary btn-sm" onclick="salvarServico()">Salvar serviço</button>
     <div id="svcResultado" style="margin-top:10px"></div>
   </div>
 
   <div class="section">
-    <div class="section-title">Servicos cadastrados</div>
+    <div class="section-title">Serviços cadastrados</div>
     <div style="overflow-x:auto">
       <table class="items-table">
         <thead><tr>
-          <th style="width:100px">Codigo</th>
-          <th>Descricao</th>
+          <th style="width:100px">Código</th>
+          <th>Descrição</th>
           <th style="width:110px">Trib. nacional</th>
           <th style="width:90px">Valor</th>
           <th style="width:70px">ISS %</th>
@@ -2176,7 +2176,7 @@ body {
 <div class="tab-content somente-contador" id="tab-configuracoes">
 <div class="container">
   <div class="section">
-    <div class="section-title">Configuracoes de Email (SMTP)</div>
+    <div class="section-title">Configurações de Email (SMTP)</div>
     <div style="font-size:13px;color:var(--suave-texto);margin-bottom:20px">
       Configure o servidor SMTP para enviar DANFE e XML por email diretamente pelo sistema.
     </div>
@@ -2220,7 +2220,7 @@ body {
       </div>
       <div class="form-row cols-2" style="margin-bottom:12px">
         <div class="form-group">
-          <label>Email (usuario SMTP)</label>
+          <label>Email (usuário SMTP)</label>
           <input type="email" id="cfgSmtpUser" placeholder="seuemail@gmail.com">
         </div>
         <div class="form-group">
@@ -2231,10 +2231,10 @@ body {
       <div class="form-row cols-2" style="margin-bottom:16px">
         <div class="form-group">
           <label>Email remetente (From)</label>
-          <input type="email" id="cfgSmtpFrom" placeholder="seuemail@gmail.com (mesmo do usuario)">
+          <input type="email" id="cfgSmtpFrom" placeholder="seuemail@gmail.com (mesmo do usuário)">
         </div>
         <div class="form-group" style="justify-content:flex-end">
-          <button class="btn btn-primary" onclick="salvarSmtp()" id="btnSalvarSmtp">Salvar Configuracao</button>
+          <button class="btn btn-primary" onclick="salvarSmtp()" id="btnSalvarSmtp">Salvar Configuração</button>
         </div>
       </div>
     </div>
@@ -2287,11 +2287,11 @@ body {
       </div>
       <div class="onboarding-step">
         <div class="step-num" id="obStep4">4</div>
-        <div class="step-text"><strong>Emitir a primeira nota</strong><br>Na aba Emissao, selecione o produto, preencha o destinatario e clique Emitir. Comece em Homologacao (teste) para conferir.</div>
+        <div class="step-text"><strong>Emitir a primeira nota</strong><br>Na aba Emissão, selecione o produto, preencha o destinatário e clique Emitir. Comece em Homologação (teste) para conferir.</div>
       </div>
     </div>
     <button class="btn btn-primary btn-lg" onclick="fecharOnboarding()" style="min-width:200px">Comecar</button>
-    <div style="margin-top:12px"><label style="font-size:12px;color:var(--suave-texto);cursor:pointer"><input type="checkbox" id="obNaoMostrar" style="margin-right:4px">Nao mostrar novamente</label></div>
+    <div style="margin-top:12px"><label style="font-size:12px;color:var(--suave-texto);cursor:pointer"><input type="checkbox" id="obNaoMostrar" style="margin-right:4px">Não mostrar novamente</label></div>
   </div>
 </div>
 
@@ -2302,7 +2302,7 @@ body {
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
       <span>Clientes API</span>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="showCadastroClienteApi('api')" title="O cliente ja tem sistema e so quer credencial para integrar">+ Cliente por API</button>
+        <button class="btn" onclick="showCadastroClienteApi('api')" title="O cliente já tem sistema e so quer credencial para integrar">+ Cliente por API</button>
         <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Cliente com plataforma</button>
       </div>
     </div>
@@ -2352,7 +2352,7 @@ body {
 <div class="tab-content somente-contador" id="tab-clientesapi-instancia">
 <div class="container">
   <div class="section">
-    <div class="section-title">Nova instancia da ponte</div>
+    <div class="section-title">Nova instância da ponte</div>
     <p style="font-size:13px;color:var(--texto-medio);line-height:1.6;margin-bottom:14px">
       Empacota <b>este sistema inteiro</b> para virar outra instalacao independente:
       banco proprio, certificado proprio, clientes proprios. Vai o motor fiscal, o painel,
@@ -2370,7 +2370,7 @@ body {
     </div>
 
     <div style="background:var(--suave);border:1px solid var(--borda);border-radius:9px;padding:10px 13px;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:600;color:var(--suave-texto);text-transform:uppercase;margin-bottom:6px">Abrir onde voce vai precisar</div>
+      <div style="font-size:11px;font-weight:600;color:var(--suave-texto);text-transform:uppercase;margin-bottom:6px">Abrir onde você vai precisar</div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px">
         <a href="https://github.com/new" target="_blank" rel="noopener" style="color:var(--marca);text-decoration:underline;text-underline-offset:2px">Criar repositorio</a>
         <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--marca);text-decoration:underline;text-underline-offset:2px">Gerar token do GitHub</a>
@@ -2382,9 +2382,9 @@ body {
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
       <div style="flex:1;min-width:220px">
-        <label style="display:block;font-size:11px;font-weight:600;color:var(--suave-texto);text-transform:uppercase;margin-bottom:4px">Nome da instancia</label>
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--suave-texto);text-transform:uppercase;margin-bottom:4px">Nome da instância</label>
         <input id="instMarca" placeholder="Ponte Fiscal" style="width:100%;padding:9px 11px;border:1px solid var(--borda);border-radius:8px;font-size:13px">
-        <div style="font-size:11px;color:var(--suave-texto);margin-top:4px">So o titulo do README. O codigo e o mesmo.</div>
+        <div style="font-size:11px;color:var(--suave-texto);margin-top:4px">So o titulo do README. O código e o mesmo.</div>
       </div>
       <button class="btn btn-primary" onclick="baixarInstancia(this)">Baixar projeto (.zip)</button>
     </div>
@@ -2408,8 +2408,8 @@ body {
         <input id="instToken" type="password" autocomplete="off" placeholder="deixe vazio para usar o token do servidor"
           style="width:100%;padding:9px 11px;border:1px solid var(--borda);border-radius:8px;font-size:13px;font-family:ui-monospace,Consolas,monospace">
         <div style="font-size:11px;color:var(--suave-texto);margin-top:4px">
-          Token fine-grained so alcanca repositorios da <b>propria conta</b>. Para publicar num repositorio
-          de outra conta, cole aqui um token DELA — <b>ele vale so para esta publicacao e nao fica guardado</b>:
+          Token fine-grained so alcanca repositorios da <b>própria conta</b>. Para publicar num repositorio
+          de outra conta, cole aqui um token DELA — <b>ele vale so para esta publicacao e não fica guardado</b>:
           nao vai para banco, nem para log, nem para a auditoria. Vale tambem para o console, abaixo.
           <br><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener" style="color:var(--marca);text-decoration:underline;text-underline-offset:2px">Gerar um token</a>
           — entre na conta DONA do repositorio, escolha "Only select repositories" e marque
@@ -2422,14 +2422,14 @@ body {
     <div style="border-top:1px solid var(--borda);margin-top:20px;padding-top:14px">
       <div style="font-size:13px;font-weight:700;color:var(--texto);margin-bottom:4px">Console de clientes (front end separado)</div>
       <p style="font-size:12px;color:var(--texto-medio);line-height:1.6;margin-bottom:10px">
-        A ponte ja vem com este painel. O console e para quem quer <b>interface propria</b>,
+        A ponte ja vem com este painel. O console e para quem quer <b>interface própria</b>,
         hospedada a parte e evoluida no construtor: React + TypeScript, com lista de clientes,
         cadastro, servicos, chaves de API e publicacao das plataformas.
         A chave administrativa entra por variavel de ambiente e <b>nunca vai para o navegador</b> —
         toda chamada passa por funcao de servidor.
       </p>
       <div style="background:var(--info-fundo);border:1px solid var(--info-borda);border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12px;color:var(--info-tinta)">
-        <b>O console nao fala com o banco.</b> A corrente e: console &rarr; ponte &rarr; Supabase.
+        <b>O console não fala com o banco.</b> A corrente e: console &rarr; ponte &rarr; Supabase.
         Ele so precisa do endereco da ponte e da senha de admin dela — nunca da connection string,
         que num front end seria o banco inteiro exposto.
       </div>
@@ -2457,8 +2457,8 @@ body {
           vai no provedor da instancia nova, no passo 3 — o pacote nunca leva credencial.</span></li>
         <li><code>NFE_DB_URL="postgres://..." npx ts-node scripts/preparar-banco.ts</code> — cria as tabelas e mostra o que criou.</li>
         <li><a href="https://vercel.com/new" target="_blank" rel="noopener" style="color:var(--marca);text-decoration:underline;text-underline-offset:2px">Importe o repositorio na Vercel</a>, cadastre as variaveis do
-          <code>.env.example</code> e publique. <b>Cadastre antes de publicar</b>: variavel nao entra em deploy que ja existe.</li>
-        <li>Abra o painel, cadastre o primeiro cliente e emita <b>uma nota em homologacao</b> antes de qualquer coisa em producao.</li>
+          <code>.env.example</code> e publique. <b>Cadastre antes de publicar</b>: variável não entra em deploy que já existe.</li>
+        <li>Abra o painel, cadastre o primeiro cliente e emita <b>uma nota em homologação</b> antes de qualquer coisa em produção.</li>
       </ol>
       <div style="font-size:11px;color:var(--suave-texto);margin-top:8px">
         O contrato das rotas, para construir outro front end por fora, vai no pacote em <code>docs/API-CLIENTES.md</code>.
@@ -2741,7 +2741,7 @@ async function verificarHabilitacaoMunicipio(recarregar) {
       // Falha de consulta nao e "nao pode emitir" — o ADN pode estar fora do ar.
       box.style.background = 'var(--alerta-fundo)';
       box.style.color = 'var(--alerta-tinta)';
-      box.innerHTML = '<b>Nao foi possivel consultar</b> a adesao do municipio agora. '
+      box.innerHTML = '<b>Não foi possível consultar</b> a adesao do municipio agora. '
         + 'Isso nao quer dizer que a emissao esta bloqueada — pode ser indisponibilidade '
         + 'do ambiente nacional. Detalhe: ' + (j.erro || '—') + rodape;
       return;
@@ -2849,8 +2849,8 @@ function recalcNfse() {
   var liquido = valor - federais - (issRetido ? iss : 0);
   var fmt = function(n) { return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); };
 
-  var linhas = '<b>Servico:</b> ' + fmt(valor);
-  if (deducao) linhas += ' &nbsp;|&nbsp; <b>Deducao:</b> −' + fmt(deducao) + ' &nbsp;|&nbsp; <b>Base:</b> ' + fmt(base);
+  var linhas = '<b>Serviço:</b> ' + fmt(valor);
+  if (deducao) linhas += ' &nbsp;|&nbsp; <b>Dedução:</b> −' + fmt(deducao) + ' &nbsp;|&nbsp; <b>Base:</b> ' + fmt(base);
   linhas += ' &nbsp;|&nbsp; <b>ISS (' + aliq.toLocaleString('pt-BR') + '%):</b> ' + fmt(iss)
     + (issRetido ? ' <span style="color:var(--alerta-tinta)">retido</span>' : '');
   if (federais) linhas += '<br><b>Retencoes federais:</b> −' + fmt(federais);
@@ -2866,7 +2866,7 @@ async function carregarHistoricoNfse() {
     var j = await r.json();
     var notas = j.notas || [];
     if (!notas.length) {
-      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--suave-texto)">Nenhuma nota de servico emitida.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--suave-texto)">Nenhuma nota de serviço emitida.</td></tr>';
       return;
     }
     body.innerHTML = notas.map(function(n) {
@@ -3054,7 +3054,7 @@ async function emitirNfse() {
         return '<li><b>' + (e.codigo || '') + '</b> ' + (e.descricao || '')
           + (e.complemento ? '<br><small>' + e.complemento + '</small>' : '') + '</li>';
       }).join('');
-      box.innerHTML = '<b>Nao autorizada.</b>'
+      box.innerHTML = '<b>Não autorizada.</b>'
         + (msgs ? '<ul style="margin:8px 0 0 18px">' + msgs + '</ul>' : '<br>' + (j.erro || ''));
     }
   } catch (e) {
@@ -3158,7 +3158,7 @@ async function loadServicos() {
     var j = await r.json();
     var lista = j.servicos || [];
     if (!lista.length) {
-      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--suave-texto)">Nenhum servico cadastrado.</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--suave-texto)">Nenhum serviço cadastrado.</td></tr>';
       return;
     }
     body.innerHTML = lista.map(function(s) {
@@ -3192,7 +3192,7 @@ async function salvarServico() {
   });
   var j = await r.json();
   if (j.sucesso) {
-    box.innerHTML = '<span style="color:var(--sucesso)">Servico salvo.</span>';
+    box.innerHTML = '<span style="color:var(--sucesso)">Serviço salvo.</span>';
     ['svcCodigo', 'svcDescricao', 'svcCtribNac', 'svcCtribMun', 'svcValor', 'svcAliqIss']
       .forEach(function(id) { document.getElementById(id).value = ''; });
     loadServicos();
@@ -3612,7 +3612,7 @@ function addItem() {
     <td><input type="text" name="pIPI" class="num narrow" placeholder="0.00" disabled oninput="calcTotal()"></td>
     <td><input type="text" name="desconto" class="num mid" placeholder="0.00" oninput="calcTotal()"></td>
     <td style="white-space:nowrap">
-      <button type="button" class="btn btn-sm" style="background:var(--marca-fundo);color:var(--marca-tinta);margin-right:4px;padding:4px 7px" title="Mais campos fiscais: origem, reducao de base, cBenef e IBS/CBS" onclick="toggleFiscalItem(${itemCount})">+</button>
+      <button type="button" class="btn btn-sm" style="background:var(--marca-fundo);color:var(--marca-tinta);margin-right:4px;padding:4px 7px" title="Mais campos fiscais: origem, redução de base, cBenef e IBS/CBS" onclick="toggleFiscalItem(${itemCount})">+</button>
       <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(${itemCount})">X</button>
     </td>
   `;
@@ -3634,7 +3634,7 @@ function addItem() {
             <option value="1">1 - Importado direto</option>
             <option value="2">2 - Importado mercado interno</option>
             <option value="3">3 - Nacional +40% imp.</option>
-            <option value="4">4 - Nacional proc. basico</option>
+            <option value="4">4 - Nacional proc. básico</option>
             <option value="5">5 - Nacional -40% imp.</option>
             <option value="6">6 - Importado CAMEX</option>
             <option value="7">7 - Importado CAMEX merc. int.</option>
@@ -3649,19 +3649,19 @@ function addItem() {
         <span style="color:var(--roxo-tinta);font-weight:600;min-width:52px">PIS</span>
         <label>CST
           <select name="pisCst" style="width:190px" onchange="onPisCofinsChange(this)">
-            <option value="99" selected>99 - Outras operacoes</option>
-            <option value="01">01 - Tributavel aliquota basica</option>
-            <option value="02">02 - Tributavel aliquota diferenciada</option>
-            <option value="04">04 - Monofasica, aliquota zero</option>
-            <option value="05">05 - Substituicao tributaria</option>
-            <option value="06">06 - Aliquota zero</option>
+            <option value="99" selected>99 - Outras operações</option>
+            <option value="01">01 - Tributável alíquota basica</option>
+            <option value="02">02 - Tributável alíquota diferenciada</option>
+            <option value="04">04 - Monofasica, alíquota zero</option>
+            <option value="05">05 - Substituição tributaria</option>
+            <option value="06">06 - Alíquota zero</option>
             <option value="07">07 - Isenta</option>
-            <option value="08">08 - Sem incidencia</option>
-            <option value="49">49 - Outras operacoes de saida</option>
-            <option value="50">50 - Operacao com direito a credito</option>
+            <option value="08">08 - Sem incidência</option>
+            <option value="49">49 - Outras operações de saída</option>
+            <option value="50">50 - Operação com direito a crédito</option>
           </select>
         </label>
-        <label>Aliquota (%) <input type="text" name="pisAliq" class="num" style="width:80px" placeholder="0.0000" oninput="calcTotal()"></label>
+        <label>Alíquota (%) <input type="text" name="pisAliq" class="num" style="width:80px" placeholder="0.0000" oninput="calcTotal()"></label>
         <span style="color:var(--suave-texto)">Valor: R$ <span data-calc="vPIS">0.00</span></span>
       </div>
 
@@ -3669,19 +3669,19 @@ function addItem() {
         <span style="color:var(--roxo-tinta);font-weight:600;min-width:52px">COFINS</span>
         <label>CST
           <select name="cofinsCst" style="width:190px" onchange="onPisCofinsChange(this)">
-            <option value="99" selected>99 - Outras operacoes</option>
-            <option value="01">01 - Tributavel aliquota basica</option>
-            <option value="02">02 - Tributavel aliquota diferenciada</option>
-            <option value="04">04 - Monofasica, aliquota zero</option>
-            <option value="05">05 - Substituicao tributaria</option>
-            <option value="06">06 - Aliquota zero</option>
+            <option value="99" selected>99 - Outras operações</option>
+            <option value="01">01 - Tributável alíquota basica</option>
+            <option value="02">02 - Tributável alíquota diferenciada</option>
+            <option value="04">04 - Monofasica, alíquota zero</option>
+            <option value="05">05 - Substituição tributaria</option>
+            <option value="06">06 - Alíquota zero</option>
             <option value="07">07 - Isenta</option>
-            <option value="08">08 - Sem incidencia</option>
-            <option value="49">49 - Outras operacoes de saida</option>
-            <option value="50">50 - Operacao com direito a credito</option>
+            <option value="08">08 - Sem incidência</option>
+            <option value="49">49 - Outras operações de saída</option>
+            <option value="50">50 - Operação com direito a crédito</option>
           </select>
         </label>
-        <label>Aliquota (%) <input type="text" name="cofinsAliq" class="num" style="width:80px" placeholder="0.0000" oninput="calcTotal()"></label>
+        <label>Alíquota (%) <input type="text" name="cofinsAliq" class="num" style="width:80px" placeholder="0.0000" oninput="calcTotal()"></label>
         <span style="color:var(--suave-texto)">Valor: R$ <span data-calc="vCOFINS">0.00</span></span>
       </div>
 
@@ -3691,7 +3691,7 @@ function addItem() {
         <label>Classif. <input type="text" name="ibsClass" style="width:75px" maxlength="6" placeholder="000001"></label>
         <label>Red. % <input type="text" name="ibsRed" style="width:60px" maxlength="6" placeholder="so CST 200"></label>
         <span style="color:var(--suave-texto)">IBS R$ <span data-calc="vIBS">0.00</span> · CBS R$ <span data-calc="vCBS">0.00</span></span>
-        <span style="color:var(--suave-texto);font-size:11px">em branco = tributacao normal</span>
+        <span style="color:var(--suave-texto);font-size:11px">em branco = tributação normal</span>
       </div>
     </td>
   `;
@@ -3705,8 +3705,8 @@ function addItem() {
     <td></td>
     <td colspan="13" style="background:var(--alerta-fundo);border-radius:4px">
       <div style="display:flex;gap:16px;align-items:center;padding:4px 8px;font-size:12px">
-        <strong style="color:var(--alerta-tinta)">SUBSTITUICAO TRIBUTARIA:</strong>
-        <label>CEST <input type="text" name="cest" placeholder="0000000" maxlength="7" style="width:80px" title="Codigo Especificador da ST (obrigatorio) — consulte a tabela CEST do Convenio 142/2018"></label>
+        <strong style="color:var(--alerta-tinta)">SUBSTITUIÇÃO TRIBUTARIA:</strong>
+        <label>CEST <input type="text" name="cest" placeholder="0000000" maxlength="7" style="width:80px" title="Código Especificador da ST (obrigatório) — consulte a tabela CEST do Convenio 142/2018"></label>
         <label>MVA (%) <input type="text" name="pMVAST" value="40.00" class="num" style="width:70px" oninput="calcTotal()"></label>
         <label>Aliq. interna ST (%) <input type="text" name="pICMSST" value="18.00" class="num" style="width:70px" oninput="calcTotal()"></label>
         <span style="color:var(--alerta-tinta)">Base ST: R$ <span data-calc="vBCST">0.00</span> | ICMS-ST: R$ <span data-calc="vICMSST">0.00</span></span>
@@ -4482,7 +4482,7 @@ async function loadHistorico() {
       container.innerHTML = '<div class="hist-empty">Nenhuma nota emitida ainda</div>';
       return;
     }
-    let html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Numero</th><th>Amb</th><th>Status</th><th>Dest.</th><th>Valor</th><th>Chave</th><th>Data</th><th>Acoes</th></tr></thead><tbody>';
+    let html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Número</th><th>Amb</th><th>Status</th><th>Dest.</th><th>Valor</th><th>Chave</th><th>Data</th><th>Ações</th></tr></thead><tbody>';
     for (const h of data) {
       const chaveShort = h.chaveAcesso ? h.chaveAcesso.substring(0, 10) + '...' : '—';
       const dt = h.emitidaEm ? new Date(h.emitidaEm).toLocaleString('pt-BR') : '—';
@@ -4503,7 +4503,7 @@ async function loadHistorico() {
         <td style="white-space:nowrap">
           <button class="btn btn-primary btn-sm" onclick="baixarNota('${h.chaveAcesso}','danfe')" title="Baixar DANFE PDF">PDF</button>
           <button class="btn btn-outline btn-sm" onclick="baixarNota('${h.chaveAcesso}','xml')" title="Baixar XML">XML</button>
-          <button class="btn btn-outline btn-sm" onclick="consultarNota(${q})" title="Consultar situacao na SEFAZ">?</button>
+          <button class="btn btn-outline btn-sm" onclick="consultarNota(${q})" title="Consultar situação na SEFAZ">?</button>
           <button class="btn btn-outline btn-sm" onclick="enviarEmail('${h.chaveAcesso}')" title="Enviar por email">Email</button>
           <button class="btn btn-outline btn-sm" onclick="duplicarNotaHist('${h.chaveAcesso}')" title="Abrir uma nota nova com os mesmos dados">Copiar</button>
           ${cancelada ? '' : `<button class="btn btn-outline btn-sm" onclick="cceNota(${q})" title="Carta de Correcao">CC-e</button>
@@ -4514,7 +4514,7 @@ async function loadHistorico() {
     html += '</tbody></table></div>';
     container.innerHTML = html;
   } catch(e) {
-    container.innerHTML = '<div class="hist-empty">Erro ao carregar historico</div>';
+    container.innerHTML = '<div class="hist-empty">Erro ao carregar histórico</div>';
   }
 }
 
@@ -4738,10 +4738,10 @@ async function loadEmpresas() {
     empresasPorCnpj = {};
     for (const e of empresas) empresasPorCnpj[e.cnpj] = e;
     if (!empresas.length) {
-      container.innerHTML = '<div class="hist-empty">Nenhuma empresa cadastrada — use o formulario abaixo</div>';
+      container.innerHTML = '<div class="hist-empty">Nenhuma empresa cadastrada — use o formulário abaixo</div>';
       return;
     }
-    let html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>CNPJ</th><th>Razao Social</th><th>UF</th><th>IE</th><th>CRT</th><th>Ambiente</th><th>Status</th><th></th></tr></thead><tbody>';
+    let html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>CNPJ</th><th>Razão Social</th><th>UF</th><th>IE</th><th>CRT</th><th>Ambiente</th><th>Status</th><th></th></tr></thead><tbody>';
     for (const e of empresas) {
       html += `<tr>
         <td style="font-family:monospace;font-size:12px">${formatCnpj(e.cnpj)}</td>
@@ -4753,7 +4753,7 @@ async function loadEmpresas() {
         <td>${e.ativa ? '<span style="color:var(--sucesso)">Ativa</span>' : '<span style="color:var(--suave-texto)">Inativa</span>'}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-primary btn-sm" onclick="verificarCredenciamento('${e.cnpj}')" title="Consulta o cadastro oficial da SEFAZ">Credenciamento SEFAZ</button>
-          <button class="btn btn-secondary btn-sm" onclick="abrirApiKeys('${e.cnpj}')" title="Credenciais de integracao desta empresa">API Keys</button>
+          <button class="btn btn-secondary btn-sm" onclick="abrirApiKeys('${e.cnpj}')" title="Credenciais de integração desta empresa">API Keys</button>
           ${e.ativa ? `<button class="btn btn-danger btn-sm" onclick="desativarEmpresa('${e.cnpj}')">Desativar</button>` : ''}</td>
       </tr>
       <tr id="keys-${e.cnpj}" style="display:none"><td colspan="8" style="background:rgba(0,0,0,.03);padding:16px"><div id="keys-body-${e.cnpj}"></div></td></tr>`;
@@ -4885,8 +4885,8 @@ async function carregarApiKeys(cnpj) {
     if (!res.ok) { body.innerHTML = '<div style="color:var(--perigo);font-size:13px">' + escHtml(data.erro || 'Falha ao listar') + '</div>'; return; }
 
     let html = '<div style="font-weight:600;margin-bottom:4px">API Keys — ' + escHtml(empresa.razaoSocial || cnpj) + '</div>'
-      + '<div style="font-size:12px;color:var(--suave-texto);margin-bottom:6px">Cada chave da acesso APENAS a esta empresa. O CNPJ vem da propria chave: trocar o header nao permite acessar outro cliente.</div>'
-      + '<div style="font-size:12px;color:var(--suave-texto);margin-bottom:12px">A chave completa aparece <b>uma unica vez</b>, no momento em que e criada — o banco guarda so o hash, entao nem este painel consegue exibi-la depois. Perdeu? Use <b>Regenerar</b>: emite uma nova e revoga a antiga.</div>';
+      + '<div style="font-size:12px;color:var(--suave-texto);margin-bottom:6px">Cada chave da acesso APENAS a esta empresa. O CNPJ vem da própria chave: trocar o header não permite acessar outro cliente.</div>'
+      + '<div style="font-size:12px;color:var(--suave-texto);margin-bottom:12px">A chave completa aparece <b>uma única vez</b>, no momento em que e criada — o banco guarda so o hash, então nem este painel consegue exibi-la depois. Perdeu? Use <b>Regenerar</b>: emite uma nova e revoga a antiga.</div>';
 
     // Checklist em vez de select: o ambiente é naturalmente multi (marcar os dois
     // = "ambos"), e ver as opções todas de uma vez evita gerar chave de produção
@@ -4923,13 +4923,13 @@ async function carregarApiKeys(cnpj) {
     if (!data.length) {
       html += '<div style="font-size:13px;color:var(--suave-texto)">Nenhuma chave gerada ainda.</div>';
     } else {
-      html += '<table class="hist-table" style="font-size:12px"><thead><tr><th>Nome</th><th>Chave</th><th>Permissao</th><th>Ambiente</th><th>Ultimo uso</th><th>Status</th><th></th></tr></thead><tbody>';
+      html += '<table class="hist-table" style="font-size:12px"><thead><tr><th>Nome</th><th>Chave</th><th>Permissao</th><th>Ambiente</th><th>Último uso</th><th>Status</th><th></th></tr></thead><tbody>';
       for (const k of data) {
         const usada = k.ultimoUso ? new Date(k.ultimoUso).toLocaleString('pt-BR') : 'nunca';
         const nomeJs = (k.nome || '').replace(/'/g, "\\'");
         html += '<tr>'
           + '<td>' + escHtml(k.nome) + '</td>'
-          + '<td style="font-family:monospace;color:var(--suave-texto)" title="A chave completa nao fica armazenada — o banco guarda so o hash">' + escHtml(k.prefixo) + '&hellip;</td>'
+          + '<td style="font-family:monospace;color:var(--suave-texto)" title="A chave completa não fica armazenada — o banco guarda so o hash">' + escHtml(k.prefixo) + '&hellip;</td>'
           + '<td>' + (k.escopo === 'readonly' ? 'Leitura' : 'Total') + '</td>'
           + '<td>' + rotuloAmbienteKey(k.ambientePermitido) + '</td>'
           + '<td>' + usada + '</td>'
@@ -5005,7 +5005,7 @@ function mostrarChaveNova(cnpj, chave, escopo, ambientePermitido) {
   // precisa entrar no arquivo, e depois de recarregar a lista ela não existe mais.
   _chaveRecemGerada[cnpj] = { chave: chave, escopo: escopo || 'full', ambiente: ambientePermitido || 'producao' };
   alvo.innerHTML = '<div style="background:var(--alerta-fundo);border:2px solid var(--alerta);border-radius:8px;padding:14px;margin-bottom:14px">'
-    + '<div style="font-weight:700;color:var(--alerta-tinta);margin-bottom:8px">COPIE AGORA — esta chave nunca mais sera exibida</div>'
+    + '<div style="font-weight:700;color:var(--alerta-tinta);margin-bottom:8px">COPIE AGORA — esta chave nunca mais será exibida</div>'
     + '<div id="chaveNova-' + cnpj + '" onclick="copiarChave(this)" title="Clique para copiar"'
     + ' style="cursor:pointer;background:var(--cartao);border:1px solid var(--alerta-borda);border-radius:6px;padding:12px;'
     + 'font-family:monospace;font-size:13px;word-break:break-all;user-select:all;line-height:1.5">'
@@ -5065,9 +5065,9 @@ function copiarFallback(texto, feedback) {
  */
 /** Rótulo da permissão de ambiente da chave. */
 function rotuloAmbienteKey(v) {
-  if (v === 'homologacao') return '<span style="color:var(--info)">Homologacao</span>';
+  if (v === 'homologacao') return '<span style="color:var(--info)">Homologação</span>';
   if (v === 'ambos') return '<span style="color:var(--roxo)">Ambos</span>';
-  return '<span style="color:var(--alerta-tinta)">Producao</span>';
+  return '<span style="color:var(--alerta-tinta)">Produção</span>';
 }
 
 async function regenerarApiKey(id, cnpj, nome, escopo, ambientePermitido) {
@@ -5515,7 +5515,7 @@ async function buscarNcmPorDescricao(q) {
     const res = await apiFetch('/api/ncm/buscar?q=' + encodeURIComponent(q));
     const d = await res.json();
     _ncmResults = d.itens || [];
-    if (!d.disponivel) { box.innerHTML = '<div style="padding:8px 12px;color:var(--perigo-tinta);font-size:12px">Cerebro fiscal indisponivel — preencha o NCM manualmente.</div>'; box.style.display = 'block'; return; }
+    if (!d.disponivel) { box.innerHTML = '<div style="padding:8px 12px;color:var(--perigo-tinta);font-size:12px">Cerebro fiscal indisponível — preencha o NCM manualmente.</div>'; box.style.display = 'block'; return; }
     if (!_ncmResults.length) {
       box.innerHTML = '<div style="padding:8px 12px;font-size:12px;color:var(--suave-texto)">'
         + 'Nenhum NCM encontrado. Escreva o nome do produto — ex: <i>caneta de bisturi</i>, '
@@ -5612,7 +5612,7 @@ async function loadProdutos() {
     const res = await apiFetch('/api/produtos');
     const d = await res.json();
     if (!Array.isArray(d) || !d.length) { box.innerHTML = '<div class="hist-empty">Nenhum produto cadastrado ainda</div>'; return; }
-    let html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Codigo</th><th>Descricao</th><th>NCM</th><th>CFOP</th><th>CST</th><th>Valor</th><th></th></tr></thead><tbody>';
+    let html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Código</th><th>Descrição</th><th>NCM</th><th>CFOP</th><th>CST</th><th>Valor</th><th></th></tr></thead><tbody>';
     for (const p of d) {
       html += '<tr><td>' + (p.codigo||'') + '</td><td>' + (p.descricao||'') + '</td><td>' + (p.ncm||'') + '</td><td>' + (p.cfop||'') + '</td><td>' + (p.cstCsosn||'') + '</td><td style="text-align:right">R$ ' + (p.valorUnitario||'0.00') + '</td><td><button class="btn btn-danger btn-sm" onclick="removerProduto(' + p.id + ')">X</button></td></tr>';
     }
@@ -5929,9 +5929,9 @@ async function loadDashboard() {
           if (cert.vencido) {
             certHtml = '<span style="color:var(--perigo);font-weight:600" title="Vencido em ' + dtFmt + '">VENCIDO</span>';
           } else if (cert.alerta) {
-            certHtml = '<span style="color:var(--alerta);font-weight:600" title="Valido ate ' + dtFmt + '">' + cert.diasRestantes + ' dias</span>';
+            certHtml = '<span style="color:var(--alerta);font-weight:600" title="Válido até ' + dtFmt + '">' + cert.diasRestantes + ' dias</span>';
           } else {
-            certHtml = '<span style="color:var(--sucesso)" title="Valido ate ' + dtFmt + '">' + cert.diasRestantes + ' dias</span>';
+            certHtml = '<span style="color:var(--sucesso)" title="Válido até ' + dtFmt + '">' + cert.diasRestantes + ' dias</span>';
           }
         }
 
@@ -6010,7 +6010,7 @@ async function inutilizar() {
     var data = await r.json();
     if (data.sucesso) {
       box.className = 'result-box success';
-      box.innerHTML = '<h3>Inutilizacao aceita</h3><div class="detail"><strong>cStat:</strong> ' + data.cStat + '<br><strong>Motivo:</strong> ' + data.xMotivo + '<br><strong>Protocolo:</strong> ' + (data.nProt || '-') + '</div>';
+      box.innerHTML = '<h3>Inutilização aceita</h3><div class="detail"><strong>cStat:</strong> ' + data.cStat + '<br><strong>Motivo:</strong> ' + data.xMotivo + '<br><strong>Protocolo:</strong> ' + (data.nProt || '-') + '</div>';
     } else {
       box.className = 'result-box error';
       box.innerHTML = '<h3>Rejeitada</h3><div class="detail"><strong>cStat:</strong> ' + (data.cStat || '-') + '<br><strong>Motivo:</strong> ' + (data.xMotivo || data.erro) + '</div>';
@@ -6113,7 +6113,7 @@ async function loadRelatorio() {
     var nfse = (rel.nfse && rel.nfse.empresas) || {};
     var keysNfse = Object.keys(nfse);
     if (!keys.length && !keysNfse.length) {
-      box.innerHTML = '<div class="hist-empty">Nenhuma nota de producao neste mes</div>';
+      box.innerHTML = '<div class="hist-empty">Nenhuma nota de produção neste mês</div>';
       return;
     }
 
@@ -6146,7 +6146,7 @@ async function loadRelatorio() {
     // tributos diferentes. Um total unico esconderia de qual imposto se fala.
     if (keysNfse.length) {
       var tAut = 0, tCanc = 0, tVal = 0, tValCanc = 0;
-      html += '<div style="margin-top:22px;font-weight:600;font-size:14px">Notas de servico (NFS-e) — ISSQN</div>';
+      html += '<div style="margin-top:22px;font-weight:600;font-size:14px">Notas de serviço (NFS-e) — ISSQN</div>';
       html += '<div style="overflow-x:auto;margin-top:8px"><table class="hist-table"><thead><tr>' +
         '<th>Empresa</th><th style="text-align:right">Autorizadas</th><th style="text-align:right">Canceladas</th>' +
         '<th style="text-align:right">Valor Autorizado</th><th style="text-align:right">Valor Cancelado</th></tr></thead><tbody>';
@@ -6227,7 +6227,7 @@ async function manifestar() {
     var data = await r.json();
     if (data.sucesso) {
       box.className = 'result-box success';
-      box.innerHTML = '<h3>Manifestacao registrada</h3><div class="detail"><strong>Evento:</strong> ' + (data.descEvento || '') + '<br><strong>cStat:</strong> ' + data.cStat + '<br><strong>Motivo:</strong> ' + data.xMotivo + '<br><strong>Protocolo:</strong> ' + (data.protocoloEvento || '-') + '</div>';
+      box.innerHTML = '<h3>Manifestação registrada</h3><div class="detail"><strong>Evento:</strong> ' + (data.descEvento || '') + '<br><strong>cStat:</strong> ' + data.cStat + '<br><strong>Motivo:</strong> ' + data.xMotivo + '<br><strong>Protocolo:</strong> ' + (data.protocoloEvento || '-') + '</div>';
     } else {
       box.className = 'result-box error';
       box.innerHTML = '<h3>Rejeitada</h3><div class="detail"><strong>cStat:</strong> ' + (data.cStat || '-') + '<br><strong>Motivo:</strong> ' + (data.xMotivo || data.erro) + '</div>';
@@ -6269,7 +6269,7 @@ async function importarXlsx() {
     });
     var data = await r.json();
     if (data.sucesso) {
-      var html = '<h3>Importacao concluida</h3><div class="detail"><strong>' + data.importados + '</strong> de ' + data.total + ' produto(s) importado(s).</div>';
+      var html = '<h3>Importação concluída</h3><div class="detail"><strong>' + data.importados + '</strong> de ' + data.total + ' produto(s) importado(s).</div>';
       if (data.erros && data.erros.length) {
         html += '<div style="margin-top:8px;font-size:12px;color:var(--perigo-tinta)"><strong>Erros:</strong><br>' + data.erros.join('<br>') + '</div>';
       }
@@ -6300,10 +6300,10 @@ function copyToClip(btn) {
 function renderFieldTable(campos, titulo) {
   var h = '<div style="margin:10px 0"><strong style="color:var(--texto-medio);font-size:12px">' + titulo + ':</strong>';
   h += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">';
-  h += '<tr style="background:var(--suave);text-align:left"><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Campo</th><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Tipo</th><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Obrig.</th><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Descricao</th></tr>';
+  h += '<tr style="background:var(--suave);text-align:left"><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Campo</th><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Tipo</th><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Obrig.</th><th style="padding:6px 8px;border:1px solid var(--borda);font-weight:600">Descrição</th></tr>';
   for (var i = 0; i < campos.length; i++) {
     var f = campos[i];
-    var obr = f.obrigatorio === true ? '<span style="color:var(--perigo);font-weight:700">SIM</span>' : f.obrigatorio === false ? '<span style="color:var(--suave-texto)">nao</span>' : '<span style="color:var(--alerta)">' + escHtml(String(f.obrigatorio)) + '</span>';
+    var obr = f.obrigatorio === true ? '<span style="color:var(--perigo);font-weight:700">SIM</span>' : f.obrigatorio === false ? '<span style="color:var(--suave-texto)">não</span>' : '<span style="color:var(--alerta)">' + escHtml(String(f.obrigatorio)) + '</span>';
     var desc = escHtml(f.descricao || f.valores || '');
     if (f.padrao) desc += ' <span style="color:var(--marca)">(padrao: ' + escHtml(f.padrao) + ')</span>';
     h += '<tr><td style="padding:5px 8px;border:1px solid var(--borda);font-family:monospace;white-space:nowrap;color:var(--marca-tinta);font-weight:600">' + escHtml(f.nome) + '</td>';
@@ -6349,11 +6349,11 @@ async function downloadApiDocs() {
 
     // Indice
     h += '<h2>Indice</h2><ol>';
-    h += '<li><a href="#auth">Autenticacao</a></li>';
-    h += '<li><a href="#fluxo">Fluxo de Integracao ERP</a></li>';
+    h += '<li><a href="#auth">Autenticação</a></li>';
+    h += '<li><a href="#fluxo">Fluxo de Integração ERP</a></li>';
     (d.categorias || []).forEach(function(c, i) { h += '<li><a href="#cat' + i + '">' + escHtml(c.nome) + '</a></li>'; });
     h += '<li><a href="#erros">Erros Comuns e Solucoes</a></li>';
-    h += '<li><a href="#status">Codigos de Status SEFAZ</a></li>';
+    h += '<li><a href="#status">Códigos de Status SEFAZ</a></li>';
     h += '<li><a href="#pagamento">Formas de Pagamento</a></li>';
     h += '<li><a href="#notas">Notas Importantes</a></li>';
     h += '</ol>';
@@ -6361,10 +6361,10 @@ async function downloadApiDocs() {
     // Autenticacao
     if (d.autenticacao) {
       var au = d.autenticacao;
-      h += '<h2 id="auth">1. Autenticacao</h2>';
+      h += '<h2 id="auth">1. Autenticação</h2>';
       h += '<p>' + escHtml(au.descricao) + '</p>';
       if (au.headers_obrigatorios) {
-        h += '<table><tr><th>Header</th><th>Tipo</th><th>Descricao</th></tr>';
+        h += '<table><tr><th>Header</th><th>Tipo</th><th>Descrição</th></tr>';
         au.headers_obrigatorios.forEach(function(hd) { h += '<tr><td><code>' + escHtml(hd.nome) + '</code></td><td>' + escHtml(hd.tipo) + '</td><td>' + escHtml(hd.descricao) + '</td></tr>'; });
         h += '</table>';
       }
@@ -6376,7 +6376,7 @@ async function downloadApiDocs() {
     if (d.fluxo_tipico_erp && d.fluxo_tipico_erp.passos) {
       var fl = d.fluxo_tipico_erp;
       h += '<h2 id="fluxo">2. ' + escHtml(fl.titulo) + '</h2>';
-      h += '<table><tr><th>#</th><th>Endpoint</th><th>Descricao</th></tr>';
+      h += '<table><tr><th>#</th><th>Endpoint</th><th>Descrição</th></tr>';
       fl.passos.forEach(function(p) { h += '<tr><td>' + p.passo + '</td><td><code>' + escHtml(p.endpoint || p.acao || '') + '</code></td><td>' + escHtml(p.descricao) + '</td></tr>'; });
       h += '</table>';
       if (fl.fluxo_cancelamento) { h += '<p><strong>Cancelamento:</strong> <code>' + escHtml(fl.fluxo_cancelamento[0].endpoint) + '</code> &mdash; ' + escHtml(fl.fluxo_cancelamento[0].descricao) + '</p>'; }
@@ -6385,7 +6385,7 @@ async function downloadApiDocs() {
 
     // Categorias
     function renderCamposTable(campos, titulo) {
-      var t = '<h3>' + escHtml(titulo) + '</h3><table><tr><th>Campo</th><th>Tipo</th><th>Obrig.</th><th>Descricao</th></tr>';
+      var t = '<h3>' + escHtml(titulo) + '</h3><table><tr><th>Campo</th><th>Tipo</th><th>Obrig.</th><th>Descrição</th></tr>';
       campos.forEach(function(f) {
         var obr = f.obrigatorio === true ? 'SIM' : f.obrigatorio === false ? 'nao' : String(f.obrigatorio);
         var desc = f.descricao || f.valores || '';
@@ -6434,14 +6434,14 @@ async function downloadApiDocs() {
 
     // Status codes
     if (d.codigos_status) {
-      h += '<h2 id="status">Codigos de Status SEFAZ</h2><table><tr><th>Codigo</th><th>Descricao</th></tr>';
+      h += '<h2 id="status">Códigos de Status SEFAZ</h2><table><tr><th>Código</th><th>Descrição</th></tr>';
       Object.keys(d.codigos_status).forEach(function(c) { h += '<tr><td><code>' + c + '</code></td><td>' + escHtml(d.codigos_status[c]) + '</td></tr>'; });
       h += '</table>';
     }
 
     // Formas pagamento
     if (d.formas_pagamento) {
-      h += '<h2 id="pagamento">Formas de Pagamento</h2><table><tr><th>Codigo</th><th>Descricao</th></tr>';
+      h += '<h2 id="pagamento">Formas de Pagamento</h2><table><tr><th>Código</th><th>Descrição</th></tr>';
       Object.keys(d.formas_pagamento).forEach(function(c) { h += '<tr><td><code>' + c + '</code></td><td>' + escHtml(d.formas_pagamento[c]) + '</td></tr>'; });
       h += '</table>';
     }
@@ -6483,7 +6483,7 @@ async function loadApiDocs() {
     if (data.autenticacao) {
       var auth = data.autenticacao;
       html += '<div style="border:2px solid var(--marca);border-radius:10px;padding:16px 20px;margin-bottom:20px">';
-      html += '<div style="font-size:14px;font-weight:700;color:var(--marca-tinta);margin-bottom:8px">Autenticacao</div>';
+      html += '<div style="font-size:14px;font-weight:700;color:var(--marca-tinta);margin-bottom:8px">Autenticação</div>';
       html += '<div style="font-size:12px;color:var(--texto-medio);margin-bottom:10px">' + escHtml(auth.descricao) + '</div>';
       if (auth.headers_obrigatorios) {
         html += renderFieldTable(auth.headers_obrigatorios.map(function(h2) { return { nome: h2.nome, tipo: h2.tipo, obrigatorio: true, descricao: h2.descricao }; }), 'Headers obrigatorios');
@@ -6611,7 +6611,7 @@ async function loadApiDocs() {
 
     // Codigos de status
     if (data.codigos_status) {
-      html += '<div style="margin-bottom:24px"><h3 style="font-size:15px;font-weight:700;color:var(--marca-tinta);margin:0 0 12px;border-bottom:2px solid var(--borda);padding-bottom:8px">Codigos de Status SEFAZ</h3>';
+      html += '<div style="margin-bottom:24px"><h3 style="font-size:15px;font-weight:700;color:var(--marca-tinta);margin:0 0 12px;border-bottom:2px solid var(--borda);padding-bottom:8px">Códigos de Status SEFAZ</h3>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:4px">';
       Object.keys(data.codigos_status).forEach(function(code) {
         var isSuccess = code === '100' || code === '101' || code === '102' || code === '107' || code === '135' || code === '155';
@@ -6678,7 +6678,7 @@ async function consultarDfe() {
 
       if (data.documentos && data.documentos.length > 0) {
         var html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr>' +
-          '<th>NSU</th><th>Chave</th><th>Emitente</th><th>CNPJ Emit</th><th>Valor</th><th>Data</th><th>Tipo</th><th>Acao</th>' +
+          '<th>NSU</th><th>Chave</th><th>Emitente</th><th>CNPJ Emit</th><th>Valor</th><th>Data</th><th>Tipo</th><th>Ação</th>' +
           '</tr></thead><tbody>';
         for (var i = 0; i < data.documentos.length; i++) {
           var d = data.documentos[i];
@@ -6773,7 +6773,7 @@ function addNfceItem() {
   tr.id = 'nfce-item-' + n;
   tr.innerHTML =
     '<td><input type="text" id="nfceCode'+n+'" placeholder="COD"></td>' +
-    '<td><input type="text" id="nfceDesc'+n+'" placeholder="Descricao do produto"></td>' +
+    '<td><input type="text" id="nfceDesc'+n+'" placeholder="Descrição do produto"></td>' +
     '<td><input type="text" id="nfceNcm'+n+'" placeholder="00000000"></td>' +
     '<td><input type="text" id="nfceCfop'+n+'" value="5102"></td>' +
     '<td><input type="text" id="nfceUn'+n+'" value="UN"></td>' +
@@ -7120,8 +7120,11 @@ async function testarSmtp() {
 var _clientesApiCache = [];
 var _clienteDetalhe = null;
 
+// O status como o cliente LE. A chave e o valor interno, que continua sendo o
+// que vai e volta da API — `sandbox` nao vira "ambiente de testes" no banco,
+// so na tela.
 var STATUS_LABELS = {
-  draft: 'Rascunho', sandbox: 'Sandbox', active: 'Ativo',
+  draft: 'Rascunho', sandbox: 'Ambiente de testes', active: 'Ativo',
   past_due: 'Inadimplente', suspended: 'Suspenso', cancelled: 'Cancelado'
 };
 var STATUS_COLORS = {
@@ -7371,7 +7374,7 @@ function wzCardEmpresa() {
   '</div>' +
   // Unico dado fiscal que a Receita nao devolve: e estadual, nao federal.
   '<div style="margin-top:14px;display:grid;grid-template-columns:2fr 1fr;gap:12px">' +
-    '<div><label class="fld-lbl">Inscricao Estadual</label>' +
+    '<div><label class="fld-lbl">Inscrição Estadual</label>' +
       '<input class="fld" id="wzIe" autocomplete="off" placeholder="Digite ou ISENTO" value="' + escapeHtml(c.ie) + '"></div>' +
     '<div><label class="fld-lbl">Regime tributario</label>' +
       '<select class="fld" id="wzCrt">' +
@@ -7380,7 +7383,7 @@ function wzCardEmpresa() {
         '<option value="3"' + (c.crt === '3' ? ' selected' : '') + '>Regime Normal</option>' +
       '</select></div>' +
   '</div>' +
-  '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">Sem a Inscricao Estadual o cliente recebe a chave, mas nao consegue emitir NF-e.</div>';
+  '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">Sem a Inscrição Estadual o cliente recebe a chave, mas não consegue emitir NF-e.</div>';
 }
 
 async function wzBuscarCnpj() {
@@ -7398,7 +7401,7 @@ async function wzBuscarCnpj() {
     var j = await r.json();
     if (!r.ok) {
       alvo.innerHTML = '<div class="found-card warn">' +
-        '<div class="found-name">Nao foi possivel buscar</div>' +
+        '<div class="found-name">Não foi possível buscar</div>' +
         '<div class="found-row">' + escapeHtml(j.erro || 'Tente novamente.') + '</div>' +
         '<div style="margin-top:8px"><button class="wz-skip" onclick="wzManual()">Preencher manualmente</button></div>' +
       '</div>';
@@ -7418,7 +7421,7 @@ async function wzBuscarCnpj() {
     alvo.innerHTML = wzCardEmpresa() + (j.ativa ? '' :
       '<div class="found-card warn" style="margin-top:10px">' +
         '<div class="found-name">Situacao cadastral: ' + escapeHtml(j.situacao || '?') + '</div>' +
-        '<div class="found-row">A empresa nao consta como ativa na Receita.</div></div>');
+        '<div class="found-row">A empresa não consta como ativa na Receita.</div></div>');
     var b = document.getElementById('wzNext1');
     if (b) b.disabled = false;
   } catch (e) {
@@ -7433,7 +7436,7 @@ function wzManual() {
   wzCliente.manual = true;
   document.getElementById('wzResultado').innerHTML =
     '<div style="margin-top:16px;display:grid;gap:12px">' +
-      '<div><label class="fld-lbl">Razao Social</label>' +
+      '<div><label class="fld-lbl">Razão Social</label>' +
         '<input class="fld" id="wzRazao" autocomplete="off" placeholder="Nome da empresa" value="' + escapeHtml(wzCliente.razaoSocial) +
         '" oninput="wzCliente.razaoSocial=this.value;document.getElementById(\'wzNext1\').disabled=!this.value.trim()"></div>' +
       '<div><label class="fld-lbl">Nome Fantasia <span class="fld-opt">(opcional)</span></label>' +
@@ -7456,7 +7459,7 @@ function wzPasso2() {
   }).join('');
   var svcs = WZ_SERVICOS.map(function (s) {
     if (s.indisponivel) {
-      return '<div class="pick" style="opacity:.5;cursor:not-allowed" title="Ainda nao disponivel">' +
+      return '<div class="pick" style="opacity:.5;cursor:not-allowed" title="Ainda não disponível">' +
         '<div class="pick-t">' + s.nome + '</div><div class="pick-s">' + s.desc + '</div></div>';
     }
     return '<button type="button" class="pick' + (wzCliente.servicos.indexOf(s.id) >= 0 ? ' on' : '') + '" data-svc="' + s.id +
@@ -7465,7 +7468,7 @@ function wzPasso2() {
   }).join('');
   return '<div class="wz-pane on">' +
     '<div class="wz-h">Plano contratado</div>' +
-    '<div class="wz-sub">Define o limite de emissoes por mes e a velocidade liberada na API.</div>' +
+    '<div class="wz-sub">Define o limite de emissoes por mês e a velocidade liberada na API.</div>' +
     '<div class="pick-grid">' + planos + '</div>' +
     '<div class="wz-h" style="margin-top:28px">Quais notas ele vai emitir?</div>' +
     '<div class="wz-sub">Pode marcar mais de uma. So o que estiver marcado aqui e liberado na API.</div>' +
@@ -7505,13 +7508,13 @@ function wzPasso3() {
     '<div class="wz-h">Contato e certificado</div>' +
     '<div class="wz-sub">Tudo nesta etapa e opcional — da para completar depois no detalhe do cliente.</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-      '<div><label class="fld-lbl">Responsavel</label>' +
+      '<div><label class="fld-lbl">Responsável</label>' +
         '<input class="fld" id="wzResp" autocomplete="off" placeholder="Nome do contato" value="' + escapeHtml(c.responsavel) + '"></div>' +
-      '<div><label class="fld-lbl">E-mail tecnico</label>' +
+      '<div><label class="fld-lbl">E-mail técnico</label>' +
         '<input class="fld" id="wzEmail" autocomplete="off" type="email" placeholder="email@empresa.com" value="' + escapeHtml(c.email) + '"></div>' +
     '</div>' +
     '<div style="margin-top:22px">' +
-      '<label class="fld-lbl">Certificado digital A1 <span class="fld-opt">(.pfx — necessario para emitir)</span></label>' +
+      '<label class="fld-lbl">Certificado digital A1 <span class="fld-opt">(.pfx — necessário para emitir)</span></label>' +
       '<div class="drop" onclick="document.getElementById(\'wzCertFile\').click()" ' +
         'ondragover="event.preventDefault();this.classList.add(\'over\')" ' +
         'ondragleave="this.classList.remove(\'over\')" ondrop="wzDropCert(event,this)">' +
@@ -7690,7 +7693,7 @@ function dadosCadastroHtml(c) {
       '</div>';
   };
 
-  var cert = '<span style="color:var(--perigo)">Nao enviado</span>';
+  var cert = '<span style="color:var(--perigo)">Não enviado</span>';
   if (c.temCertificado) {
     var extra = '';
     if (c.certificadoVencimento) {
@@ -7704,10 +7707,10 @@ function dadosCadastroHtml(c) {
   }
 
   return '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px 20px;margin-bottom:20px">' +
-    item('Responsavel', escapeHtml(c.responsavel || '—')) +
-    item('E-mail tecnico', escapeHtml(c.emailTecnico || '—')) +
+    item('Responsável', escapeHtml(c.responsavel || '—')) +
+    item('E-mail técnico', escapeHtml(c.emailTecnico || '—')) +
     item('Certificado A1', cert) +
-    item('White-label', c.whiteLabelAtiva ? 'Sim' : 'Nao') +
+    item('Marca própria', c.whiteLabelAtiva ? 'Sim' : 'Não') +
     '</div>';
 }
 
@@ -7774,7 +7777,7 @@ function painelSuporteHtml(p, cnpj, stats) {
   };
   var alerta = '';
   if (e.producao.autorizadas === 0) {
-    alerta = avisar('<strong>Nunca emitiu em producao.</strong> Ou esta implantando, ou travou em algum ponto. Vale ligar.');
+    alerta = avisar('<strong>Nunca emitiu em produção.</strong> Ou esta implantando, ou travou em algum ponto. Vale ligar.');
   } else if (e.ultimos30Dias === 0) {
     alerta = avisar('<strong>Sem emitir ha mais de 30 dias.</strong> Ultima nota ' + quando(e.ultimaEmissao) + '.');
   }
@@ -7784,7 +7787,7 @@ function painelSuporteHtml(p, cnpj, stats) {
         return '<span style="display:inline-block;background:var(--suave);color:var(--texto-medio);padding:4px 10px;border-radius:6px;font-size:12px;margin:0 6px 6px 0">' +
           '<strong>serie ' + x.serie + '</strong> &middot; ' + num(x.quantidade) + ' nota(s) &middot; ultima n. ' + x.ultimoNumero + '</span>';
       }).join('')
-    : '<span style="color:var(--suave-texto);font-size:12px">Nenhuma serie em uso</span>';
+    : '<span style="color:var(--suave-texto);font-size:12px">Nenhuma série em uso</span>';
 
   var botao = function(rotulo, acao, titulo) {
     return '<button onclick="' + acao + '" title="' + titulo + '" style="border:1px solid var(--borda);background:var(--cartao);border-radius:6px;padding:5px 9px;font-size:11px;font-weight:600;cursor:pointer;color:var(--texto-medio)">' + rotulo + '</button>';
@@ -7989,17 +7992,17 @@ function divergenciaPlanoHtml(div, cnpj) {
   if ((div.faltam || []).length) {
     linhas += '<div style="font-size:12px;color:var(--alerta-tinta);margin-top:6px">' +
       'O plano inclui <b>' + div.faltam.map(function (d) { return NOME_DO_DOCUMENTO[d] || d.toUpperCase(); }).join(', ') +
-      '</b>, mas ninguem ativou. A plataforma vai nascer sem essa aba — o cliente paga e nao recebe.</div>';
+      '</b>, mas ninguém ativou. A plataforma vai nascer sem essa aba — o cliente paga e não recebe.</div>';
   }
   if ((div.sobram || []).length) {
     linhas += '<div style="font-size:12px;color:var(--alerta-tinta);margin-top:6px">' +
       '<b>' + div.sobram.map(function (d) { return NOME_DO_DOCUMENTO[d] || d.toUpperCase(); }).join(', ') +
-      '</b> esta ativado e o plano nao cobre. O cliente recebe e nao paga.</div>';
+      '</b> esta ativado e o plano não cobre. O cliente recebe e não paga.</div>';
   }
   return '<div style="background:var(--alerta-fundo);border:1px solid var(--alerta-borda);border-radius:9px;padding:11px 13px;margin-top:10px">' +
-    '<div style="font-size:12px;font-weight:700;color:var(--alerta-tinta)">Plano e servicos nao batem</div>' + linhas +
+    '<div style="font-size:12px;font-weight:700;color:var(--alerta-tinta)">Plano e serviços não batem</div>' + linhas +
     '<div style="margin-top:8px"><button onclick="showAdicionarServico(\'' + cnpj + '\')" ' +
-      'style="font-size:12px;color:var(--alerta-tinta);background:none;border:none;cursor:pointer;font-weight:600;padding:0">Ajustar servicos</button></div>' +
+      'style="font-size:12px;color:var(--alerta-tinta);background:none;border:none;cursor:pointer;font-weight:600;padding:0">Ajustar serviços</button></div>' +
   '</div>';
 }
 
@@ -8028,7 +8031,7 @@ async function carregarParametrosDanfe(cnpj) {
     var res = await apiFetch('/api/danfe/marca', { headers: cabecalhoDaEmpresa(cnpj) });
     m = await res.json();
   } catch (e) {
-    el.innerHTML = '<span style="color:var(--perigo)">Nao foi possivel ler os parametros.</span>';
+    el.innerHTML = '<span style="color:var(--perigo)">Não foi possível ler os parâmetros.</span>';
     return;
   }
   if (m && m.erro) {
@@ -8057,20 +8060,20 @@ async function carregarParametrosDanfe(cnpj) {
         '</div>' +
       '</div>' +
       '<div style="flex:1 1 260px;min-width:240px">' +
-        '<label style="font-size:12px;color:var(--suave-texto);display:block;margin-bottom:4px">Posicao no quadro do emitente</label>' +
+        '<label style="font-size:12px;color:var(--suave-texto);display:block;margin-bottom:4px">Posição no quadro do emitente</label>' +
         '<select id="danfePos-' + cnpj + '" style="padding:7px;border:1px solid var(--borda);border-radius:6px;font-size:13px;width:100%">' +
           POSICOES_DA_LOGO.map(function (o) {
             return '<option value="' + o[0] + '"' + (o[0] === pos ? ' selected' : '') + '>' + o[1] + '</option>';
           }).join('') +
         '</select>' +
         '<label style="font-size:12px;color:var(--suave-texto);display:block;margin:10px 0 4px">' +
-          'Texto fixo (sai em Informacoes complementares, somado ao texto da emissao)</label>' +
+          'Texto fixo (sai em Informações complementares, somado ao texto da emissão)</label>' +
         '<textarea id="danfeTexto-' + cnpj + '" rows="4" maxlength="' + LIMITE_DO_TEXTO_DANFE + '" ' +
           'placeholder="Ex.: Pagamento via PIX CNPJ ' + formatarCnpj(cnpj) + '" ' +
           'style="width:100%;padding:8px;border:1px solid var(--borda);border-radius:6px;font-size:13px;font-family:inherit;resize:vertical">' +
           escapeHtml(m.textoPadrao || '') + '</textarea>' +
         '<div style="margin-top:8px;display:flex;gap:10px;align-items:center">' +
-          '<button class="btn btn-sm btn-primary" onclick="salvarParametrosDanfe(\'' + cnpj + '\')">Salvar parametros</button>' +
+          '<button class="btn btn-sm btn-primary" onclick="salvarParametrosDanfe(\'' + cnpj + '\')">Salvar parâmetros</button>' +
           '<span id="danfeMsg-' + cnpj + '" style="font-size:12px;color:var(--suave-texto)"></span>' +
         '</div>' +
       '</div>' +
@@ -8199,7 +8202,7 @@ function renderDetalheCliente(cnpj) {
 
   var svcsHtml = (d.servicos || []).map(function(s) {
     return '<span style="display:inline-block;background:var(--sucesso-fundo);color:var(--sucesso);padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;margin-right:4px">' + (s.service || s).toUpperCase() + '</span>';
-  }).join('') || '<span style="color:var(--suave-texto);font-size:12px">Nenhum servico ativado</span>';
+  }).join('') || '<span style="color:var(--suave-texto);font-size:12px">Nenhum serviço ativado</span>';
 
   // O plano promete uma coisa, os servicos ativados dizem outra. Como as abas da
   // plataforma nascem dos servicos ATIVADOS, essa diferenca vira sistema entregue
@@ -8265,7 +8268,7 @@ function renderDetalheCliente(cnpj) {
   var ativas = keys.filter(function (k) { return k.ativa; });
   var keysHtml = '';
   if (!ativas.length) {
-    keysHtml = '<div style="font-size:13px;color:var(--suave-texto)">Nenhuma chave ativa. Sem ela o cliente nao consegue chamar a API.</div>';
+    keysHtml = '<div style="font-size:13px;color:var(--suave-texto)">Nenhuma chave ativa. Sem ela o cliente não consegue chamar a API.</div>';
   } else {
     keysHtml = ativas.map(function (k) {
       var amb = k.ambientePermitido === 'producao' ? ['Producao', 'var(--sucesso)']
@@ -8311,15 +8314,15 @@ function renderDetalheCliente(cnpj) {
       // Tudo o que o desenvolvedor do cliente precisa, visivel e copiavel, sem
       // depender de gerar plataforma nem de baixar manual. Era a pergunta mais
       // repetida no suporte e a resposta estava espalhada em tres telas.
-      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Dados de integracao</h4>' +
+      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Dados de integração</h4>' +
         credLinha('URL base', location.origin) +
-        credLinha('Header de autenticacao', 'x-api-key: ' + (ativas.length ? (ativas[0].prefixo || '') + '…' : 'SUA_CHAVE')) +
+        credLinha('Header de autenticação', 'x-api-key: ' + (ativas.length ? (ativas[0].prefixo || '') + '…' : 'SUA_CHAVE')) +
         credLinha('CNPJ emitente', cnpj) +
-        credLinha('Documentacao', location.origin + '/api/docs') +
+        credLinha('Documentação', location.origin + '/api/docs') +
         credLinha('Primeiro comando', 'curl -H "x-api-key: SUA_CHAVE" ' + location.origin + '/api/me') +
         // A chave inteira nao existe aqui: guardamos so o hash. Dizer isso e
         // melhor que exibir um pedaco e deixar a pessoa procurar o resto.
-        '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">A chave completa so aparece no momento em que e criada — aqui fica o prefixo, para conferir qual e. Se o cliente perdeu, gere outra: a antiga continua valendo ate ser revogada.</div>' +
+        '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">A chave completa só aparece no momento em que é criada — aqui fica o prefixo, para conferir qual é. Se o cliente perdeu, gere outra: a antiga continua valendo até ser revogada.</div>' +
         '<div style="margin-top:8px;display:flex;gap:12px">' +
           '<button onclick="copiarEnvCliente(\'' + cnpj + '\')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">Copiar bloco .env</button>' +
           '<button onclick="baixarDocIntegracao(\'' + cnpj + '\')" style="font-size:12px;color:var(--sucesso);background:none;border:none;cursor:pointer;font-weight:600">Baixar manual completo</button>' +
@@ -8327,21 +8330,21 @@ function renderDetalheCliente(cnpj) {
       '</div>' +
 
       '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Acesso ao painel do template</h4>' +
-        '<div style="font-size:12px;color:var(--suave-texto)">Usuario e senha que o cliente usa para entrar no site dele. Sorteados por CNPJ — nao existe senha padrao.</div>' +
+        '<div style="font-size:12px;color:var(--suave-texto)">Usuário e senha que o cliente usa para entrar no site dele. Sorteados por CNPJ — não existe senha padrão.</div>' +
         '<div style="margin-top:8px;display:flex;gap:12px">' +
           '<button onclick="verSenhaPainel(\'' + cnpj + '\')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">Ver senha</button>' +
           '<button onclick="rotacionarSenhaPainel(\'' + cnpj + '\')" style="font-size:12px;color:var(--alerta-tinta);background:none;border:none;cursor:pointer;font-weight:600">Gerar outra</button>' +
         '</div>' +
       '</div>' +
 
-      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Servicos Contratados</h4>' + svcsHtml +
-        '<div style="margin-top:8px"><button onclick="showAdicionarServico(\'' + cnpj + '\')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">+ Adicionar servico</button></div>' +
+      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Serviços Contratados</h4>' + svcsHtml +
+        '<div style="margin-top:8px"><button onclick="showAdicionarServico(\'' + cnpj + '\')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">+ Adicionar serviço</button></div>' +
       '</div>' +
 
       // O que sai impresso no papel. O XML da NF-e nao carrega logo nem o
       // recado fixo da empresa, entao o DANFE de todo cliente saia com o quadro
       // do emitente vazio — no documento que o cliente entrega ao cliente DELE.
-      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Parametros do DANFE</h4>' +
+      '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Parâmetros do DANFE</h4>' +
         '<div id="danfeParams-' + cnpj + '" style="font-size:13px;color:var(--suave-texto)">Carregando...</div>' +
       '</div>' +
 
@@ -8350,19 +8353,19 @@ function renderDetalheCliente(cnpj) {
       '</div>' +
 
       '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--borda);display:flex;gap:8px;flex-wrap:wrap">' +
-        statusBtn(cnpj, c.status, 'sandbox', 'Sandbox') +
+        statusBtn(cnpj, c.status, 'sandbox', 'Ambiente de testes') +
         statusBtn(cnpj, c.status, 'active', 'Ativar') +
         statusBtn(cnpj, c.status, 'suspended', 'Suspender') +
         statusBtn(cnpj, c.status, 'cancelled', 'Cancelar') +
         '<button onclick="showCadastroFiscal(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--info);color:var(--info);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Cadastro fiscal</button>' +
         '<button onclick="showEnviarCertificado(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--sucesso);color:var(--sucesso);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Certificado A1</button>' +
-        '<button onclick="showWhiteLabelConfig(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--roxo);color:var(--roxo);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">White-Label</button>' +
+        '<button onclick="showWhiteLabelConfig(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--roxo);color:var(--roxo);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Marca própria</button>' +
         '<button onclick="showGerarKit(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--marca);color:var(--cartao);background:var(--marca);border-radius:6px;font-size:12px;cursor:pointer">Gerar plataforma</button>' +
         // Cliente que ja tem sistema proprio nao quer plataforma nenhuma: quer o
         // manual para plugar no ERP dele. O manual existia e so aparecia no
         // instante em que a chave era criada — quem precisava depois, que e a
         // maioria, nao alcancava.
-        '<button onclick="baixarDocIntegracao(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--sucesso);color:var(--sucesso);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Manual de integracao</button>' +
+        '<button onclick="baixarDocIntegracao(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--sucesso);color:var(--sucesso);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Manual de integração</button>' +
         '<button onclick="showLogsCliente(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--borda);color:var(--texto-medio);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Ver Logs</button>' +
         '<button onclick="excluirClienteApi(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--perigo);color:var(--cartao);background:var(--perigo);border-radius:6px;font-size:12px;cursor:pointer;margin-left:auto">Excluir Cliente</button>' +
       '</div>' +
@@ -8481,7 +8484,7 @@ function fiscalCampo(id, label, val, ph, opcional) {
 }
 
 function buildFiscalForm(cnpj, f) {
-  return '<div class="wz-sub" style="margin-top:0">Estes sao os dados do emitente que entram na nota. O botao abaixo puxa o endereco direto da Receita.</div>' +
+  return '<div class="wz-sub" style="margin-top:0">Estes são os dados do emitente que entram na nota. O botao abaixo puxa o endereço direto da Receita.</div>' +
     '<button class="wz-btn wz-btn-g" style="margin-bottom:18px" onclick="preencherFiscalPelaReceita(\'' + cnpj + '\')">Preencher pela Receita</button>' +
     '<div id="fiscalAviso"></div>' +
     '<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">' +
@@ -8534,7 +8537,7 @@ async function preencherFiscalPelaReceita(cnpj) {
     por('fNomeMunicipio', e.nomeMunicipio); por('fCodMunicipio', e.codMunicipio);
     por('fCep', e.cep); por('fUf', j.uf); por('fFone', j.telefone);
     if (j.crt) document.getElementById('fCrt').value = j.crt;
-    aviso.innerHTML = '<div class="found-card" style="margin-bottom:14px"><div class="found-row">Endereco preenchido. Falta so a Inscricao Estadual.</div></div>';
+    aviso.innerHTML = '<div class="found-card" style="margin-bottom:14px"><div class="found-row">Endereço preenchido. Falta so a Inscrição Estadual.</div></div>';
     var ie = document.getElementById('fIe');
     if (ie && !ie.value) ie.focus();
   } catch (e2) {
@@ -8631,16 +8634,16 @@ function mostrarChaveGerada(cnpj, j) {
                  '  -H "Content-Type: application/json" \\\n' +
                  '  ' + location.origin + '/api/emitir -d @nota.json') +
     '</pre>' +
-    '<div style="margin-top:10px;font-size:12px;color:var(--suave-texto)">A chave ja fixa o CNPJ — nao e preciso mandar <code>x-empresa-cnpj</code>, a API ignora esse header quando se usa API Key. Ela vale so para este CNPJ e so para os servicos contratados. Nunca coloque a chave no codigo do navegador: ela fica no servidor do cliente.</div>' +
-    '<div style="margin-top:8px;font-size:12px;color:var(--suave-texto)">Documentacao completa: <code>' + location.origin + '/api/docs</code> (a propria chave do cliente abre).</div>' +
+    '<div style="margin-top:10px;font-size:12px;color:var(--suave-texto)">A chave já fixa o CNPJ — não e preciso mandar <code>x-empresa-cnpj</code>, a API ignora esse header quando se usa API Key. Ela vale so para este CNPJ e so para os serviços contratados. Nunca coloque a chave no código do navegador: ela fica no servidor do cliente.</div>' +
+    '<div style="margin-top:8px;font-size:12px;color:var(--suave-texto)">Documentação completa: <code>' + location.origin + '/api/docs</code> (a própria chave do cliente abre).</div>' +
 
     '<div class="wz-foot">' +
       '<button class="wz-btn wz-btn-g" onclick="copiarTexto(document.getElementById(\'chaveGerada\').value)">Copiar chave</button>' +
       // O manual completo ja existia e so era alcancavel pela aba Empresas.
       // Justamente quem contrata a API — cliente com ERP proprio — nao tinha
       // como baixar. Ele sai com a chave dentro, e a chave so existe agora.
-      '<button class="wz-btn wz-btn-g" style="background:var(--sucesso);color:var(--cartao);border-color:var(--sucesso)" onclick="baixarDocIntegracao(\'' + cnpj + '\')">Baixar manual de integracao</button>' +
-      '<button class="wz-btn wz-btn-p" onclick="document.getElementById(\'modalClienteApi\').style.display=\'none\';abrirDetalheCliente(\'' + cnpj + '\')">Ja copiei, fechar</button>' +
+      '<button class="wz-btn wz-btn-g" style="background:var(--sucesso);color:var(--cartao);border-color:var(--sucesso)" onclick="baixarDocIntegracao(\'' + cnpj + '\')">Baixar manual de integração</button>' +
+      '<button class="wz-btn wz-btn-p" onclick="document.getElementById(\'modalClienteApi\').style.display=\'none\';abrirDetalheCliente(\'' + cnpj + '\')">Já copiei, fechar</button>' +
     '</div>';
   document.getElementById('modalClienteApi').style.display = 'block';
   var i = document.getElementById('chaveGerada');
@@ -8870,7 +8873,7 @@ function buildWhiteLabelForm(cnpj, wl) {
         '<span id="wlPrevNome">' + escapeHtml(wl.nomePlataforma || 'Plataforma') + '</span>' +
         '<span id="wlPrevAcc" style="background:' + acc + ';color:var(--cartao);font-size:11px;padding:3px 10px;border-radius:99px">Emitir</span>' +
       '</div>' +
-      '<div style="padding:12px 16px;background:var(--suave);font-size:11px;color:var(--suave-texto)">Previa do cabecalho</div>' +
+      '<div style="padding:12px 16px;background:var(--suave);font-size:11px;color:var(--suave-texto)">Prévia do cabeçalho</div>' +
     '</div>' +
 
     '<div class="wz-h" style="margin-top:26px">Tema</div>' +
@@ -8884,7 +8887,7 @@ function buildWhiteLabelForm(cnpj, wl) {
       '<img id="wlLogoPreview" style="max-height:52px;max-width:100%;margin-bottom:8px;' +
         (wl.logoBase64 ? '' : 'display:none;') + '" src="' + escapeHtml(wl.logoBase64 || '') + '">' +
       '<div class="drop-t" id="wlLogoT">' + (wl.logoBase64 ? 'Clique para trocar' : 'Arraste a imagem aqui') + '</div>' +
-      '<div class="drop-s">PNG, JPG ou SVG — ate 2 MB</div>' +
+      '<div class="drop-s">PNG, JPG ou SVG — até 2 MB</div>' +
     '</div>' +
     '<input type="file" id="wlLogoFile" accept="image/*" style="display:none" onchange="wlLerLogo(this.files[0])">' +
     '<input type="hidden" id="wlLogo" value="' + escapeHtml(wl.logoBase64 || '') + '">' +
@@ -8914,7 +8917,7 @@ function buildWhiteLabelForm(cnpj, wl) {
       '<div class="drop" id="wlFavDrop" onclick="document.getElementById(\'wlFavFile\').click()">' +
         '<img id="wlFavPreview" src="' + escapeHtml(wl.faviconBase64 || '') + '" style="max-height:48px;' + (wl.faviconBase64 ? '' : 'display:none') + '">' +
         '<div class="drop-t" id="wlFavT">' + (wl.faviconBase64 ? 'Clique para trocar' : 'Arraste o icone aqui') + '</div>' +
-        '<div class="drop-s">PNG ou SVG quadrado — ate 2 MB</div>' +
+        '<div class="drop-s">PNG ou SVG quadrado — até 2 MB</div>' +
       '</div>' +
       '<input type="file" id="wlFavFile" accept="image/*" style="display:none" onchange="wlLerFavicon(this.files[0])">' +
       '<input type="hidden" id="wlFav" value="' + escapeHtml(wl.faviconBase64 || '') + '">' +
@@ -8944,7 +8947,7 @@ function buildWhiteLabelForm(cnpj, wl) {
         '<div><label class="fld-lbl">URL da politica de privacidade</label>' +
           '<input class="fld" id="wlPriv" autocomplete="off" value="' + escapeHtml(wl.privacidadeUrl || '') + '"></div>' +
       '</div>' +
-      '<div style="margin-top:12px"><label class="fld-lbl">Dominio de producao <span class="fld-opt">(opcional)</span></label>' +
+      '<div style="margin-top:12px"><label class="fld-lbl">Dominio de produção <span class="fld-opt">(opcional)</span></label>' +
         '<input class="fld" id="wlDom" autocomplete="off" value="' + escapeHtml(wl.dominioProducao || '') + '" placeholder="fiscal.empresa.com.br"></div>' +
     '</details>' +
 
@@ -9142,7 +9145,7 @@ async function showGerarKit(cnpj) {
   document.getElementById('modalClienteTitulo').textContent = 'Plataforma do cliente';
   document.getElementById('modalClienteApiContent').innerHTML =
     '<div class="wz-h">Especificacoes da plataforma</div>' +
-    '<div class="wz-sub">Um bloco unico para colar no construtor. A marca deste cliente ja vai dentro — cores, logo, favicon e contatos, do cadastro de marca.</div>' +
+    '<div class="wz-sub">Um bloco único para colar no construtor. A marca deste cliente já vai dentro — cores, logo, favicon e contatos, do cadastro de marca.</div>' +
     '<div id="kitResultado" style="margin-top:16px"></div>';
   modal.style.display = 'block';
   gerarKitLovable(cnpj);
@@ -9183,7 +9186,7 @@ async function gerarKitLovable(cnpj) {
         '<div class="found-row">Geracao #' + escapeHtml(String(j.geracaoId || j.generationId || '—')) + '</div></div>' +
 
       '<div class="wz-h" style="margin-top:22px">1. O repositorio do cliente</div>' +
-      '<div class="wz-sub">O modelo + a marca desta empresa, pronto. As abas ja nascem certas: so aparece o que ela contratou.</div>' +
+      '<div class="wz-sub">O modelo + a marca desta empresa, pronto. As abas já nascem certas: so aparece o que ela contratou.</div>' +
       '<div style="margin-top:10px">' +
         '<button class="wz-btn wz-btn-p" style="width:100%" onclick="baixarKit(this)">Baixar repositorio pronto (.zip)</button>' +
       '</div>' +
@@ -9197,7 +9200,7 @@ async function gerarKitLovable(cnpj) {
           '<button class="wz-btn wz-btn-g" onclick="testarTokenRepo(this)">Testar</button>' +
           '<button class="wz-btn wz-btn-g" onclick="publicarRepo(this)">Publicar</button>' +
         '</div>' +
-        '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">Crie o projeto em branco no construtor, cole aqui o repositorio que ele criou, e o Emissor acrescenta um commit com a plataforma. O construtor sincroniza sozinho.<br><b>Testar</b> so pergunta ao GitHub se o token alcanca o repositorio — nao escreve nada.<br>Sem GITHUB_TOKEN configurado, use o script <code>Publicar plataforma.cmd</code> na sua maquina: ele faz o mesmo usando a credencial do Git que voce ja tem.</div>' +
+        '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">Crie o projeto em branco no construtor, cole aqui o repositorio que ele criou, e o Emissor acrescenta um commit com a plataforma. O construtor sincroniza sozinho.<br><b>Testar</b> so pergunta ao GitHub se o token alcanca o repositorio — não escreve nada.<br>Sem GITHUB_TOKEN configurado, use o script <code>Publicar plataforma.cmd</code> na sua maquina: ele faz o mesmo usando a credencial do Git que você já tem.</div>' +
         kitUltimaPublicacaoHtml(j.ultimaPublicacao) +
         '<input id="kitRepoToken" type="password" autocomplete="off" placeholder="Token do GitHub (so para repositorio de outra conta)" ' +
           'style="width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--borda);border-radius:8px;font-size:12px;font-family:ui-monospace,Consolas,monospace">' +
@@ -9216,7 +9219,7 @@ async function gerarKitLovable(cnpj) {
       '</details>' +
 
       '<div class="wz-h" style="margin-top:26px">2. Os dois secrets</div>' +
-      '<div class="wz-sub">Cadastre no provedor do cliente. Nenhum dos dois entra no repositorio — se entrassem, ficariam no historico do Git dele para sempre.</div>' +
+      '<div class="wz-sub">Cadastre no provedor do cliente. Nenhum dos dois entra no repositorio — se entrassem, ficariam no histórico do Git dele para sempre.</div>' +
       kitCredLinha('FISCAL_API_KEY', c.FISCAL_API_KEY, 'Chave de API deste cliente. Se nao anotou, gere uma nova em "Chaves de API".') +
       kitCredLinha('APP_ACCESS_PASSWORD', c.APP_ACCESS_PASSWORD, 'Senha do painel. Troque por dentro do sistema do cliente depois de revisar.') +
       '<div style="font-size:11px;color:var(--suave-texto);margin-top:6px">' +
@@ -9231,7 +9234,7 @@ async function gerarKitLovable(cnpj) {
       // A especificacao continua existindo, mas deixou de ser o caminho: ela so
       // serve para recriar a plataforma do zero, que e o que gastava os creditos.
       '<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--suave-texto)">Especificacao completa (so para recriar do zero)</summary>' +
-        '<div style="font-size:11px;color:var(--suave-texto);margin:8px 0">Nao e mais necessaria no fluxo normal. Construir a plataforma inteira por IA e o que esgota os creditos do construtor — o remix do modelo faz o mesmo de graca.</div>' +
+        '<div style="font-size:11px;color:var(--suave-texto);margin:8px 0">Não e mais necessaria no fluxo normal. Construir a plataforma inteira por IA e o que esgota os creditos do construtor — o remix do modelo faz o mesmo de graca.</div>' +
         '<div style="display:flex;gap:10px">' +
           '<button class="wz-btn wz-btn-g" style="flex:1" onclick="copiarTexto(_kitTudo)">Copiar especificacao</button>' +
           '<button class="wz-btn wz-btn-g" onclick="baixarTexto(\'plataforma.md\', _kitTudo)">Baixar .md</button>' +
@@ -9346,8 +9349,8 @@ async function testarTokenRepo(btn) {
  */
 function kitAlternativaZipHtml() {
   return '<div style="margin-top:10px;background:var(--info-fundo);border:1px solid var(--info-borda);border-radius:8px;padding:10px 12px">' +
-    '<div style="font-size:12px;color:var(--info-tinta);font-weight:600;margin-bottom:6px">Nao precisa esperar: da para publicar pela sua maquina</div>' +
-    '<div style="font-size:11px;color:var(--info);margin-bottom:8px">Baixe o repositorio pronto e rode <code>Publicar plataforma.cmd</code> — ele usa a credencial do Git que ja esta ai, sem token nenhum.</div>' +
+    '<div style="font-size:12px;color:var(--info-tinta);font-weight:600;margin-bottom:6px">Não precisa esperar: da para publicar pela sua maquina</div>' +
+    '<div style="font-size:11px;color:var(--info);margin-bottom:8px">Baixe o repositorio pronto e rode <code>Publicar plataforma.cmd</code> — ele usa a credencial do Git que já esta ai, sem token nenhum.</div>' +
     '<button class="wz-btn wz-btn-p" style="width:100%" onclick="baixarKit(this)">Baixar repositorio pronto (.zip)</button>' +
   '</div>';
 }
@@ -9482,7 +9485,7 @@ async function baixarInstancia(btn) {
   var texto = btn.textContent;
   var msg = document.getElementById('instMsg');
   btn.disabled = true; btn.textContent = 'Montando...';
-  msg.innerHTML = '<span style="color:var(--suave-texto)">Empacotando o codigo e o modelo das plataformas...</span>';
+  msg.innerHTML = '<span style="color:var(--suave-texto)">Empacotando o código e o modelo das plataformas...</span>';
   try {
     var marca = (document.getElementById('instMarca').value || '').trim();
     var r = await apiFetch('/api/admin/instancia/kit.zip' + (marca ? '?marca=' + encodeURIComponent(marca) : ''));
@@ -9536,7 +9539,7 @@ async function publicarInstancia(btn) {
   if (!url) { msg.innerHTML = '<span style="color:var(--perigo)">Cole a URL do repositorio.</span>'; return; }
   var texto = btn.textContent;
   btn.disabled = true; btn.textContent = 'Publicando...';
-  msg.innerHTML = '<span style="color:var(--suave-texto)">Montando o pacote e enviando ao GitHub. Demora mais que o do cliente: sao milhares de arquivos.</span>';
+  msg.innerHTML = '<span style="color:var(--suave-texto)">Montando o pacote e enviando ao GitHub. Demora mais que o do cliente: são milhares de arquivos.</span>';
   try {
     var r = await apiFetch('/api/admin/instancia/publicar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -9744,20 +9747,20 @@ async function showCriarTemplate() {
   document.getElementById('modalClienteTitulo').textContent = 'Novo Template';
   document.getElementById('modalClienteApiContent').innerHTML =
     '<div class="wz-h">Nome do template</div>' +
-    '<div class="wz-sub">Como voce vai reconhecer este modelo na hora de gerar um kit.</div>' +
+    '<div class="wz-sub">Como você vai reconhecer este modelo na hora de gerar um kit.</div>' +
     '<input class="fld" id="tplNome" placeholder="Ex: Plataforma para distribuidoras" autocomplete="off">' +
     '<div class="wz-h" style="margin-top:26px">Quais notas ele cobre?</div>' +
     '<div class="wz-sub">O kit gerado so monta as telas dos tipos marcados aqui.</div>' +
     '<div class="pick-grid">' + cards + '</div>' +
     '<div style="margin-top:24px">' +
-      '<label class="fld-lbl">Descricao <span class="fld-opt">(opcional)</span></label>' +
+      '<label class="fld-lbl">Descrição <span class="fld-opt">(opcional)</span></label>' +
       '<input class="fld" id="tplDesc" autocomplete="off" placeholder="Para que serve este template">' +
     '</div>' +
     '<details style="margin-top:18px">' +
       '<summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--suave-texto)">Instrucoes personalizadas (opcional)</summary>' +
-      '<div class="wz-sub" style="margin-top:10px;margin-bottom:8px">Em branco, usamos o roteiro padrao de plataforma fiscal.</div>' +
+      '<div class="wz-sub" style="margin-top:10px;margin-bottom:8px">Em branco, usamos o roteiro padrão de plataforma fiscal.</div>' +
       '<textarea id="tplContent" autocomplete="off" rows="7" class="fld" style="font-family:ui-monospace,Consolas,monospace;font-size:12px;resize:vertical" ' +
-        'placeholder="Ex: usar layout com menu lateral fixo, tema escuro por padrao..."></textarea>' +
+        'placeholder="Ex: usar layout com menu lateral fixo, tema escuro por padrão..."></textarea>' +
     '</details>' +
     '<div class="wz-foot">' +
       '<button class="wz-btn wz-btn-g" onclick="document.getElementById(\'modalClienteApi\').style.display=\'none\'">Cancelar</button>' +

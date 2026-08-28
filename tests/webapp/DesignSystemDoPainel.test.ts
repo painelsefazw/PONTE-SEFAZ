@@ -107,6 +107,25 @@ describe('o painel usa o design system do console', () => {
     expect(painel).not.toContain('NF-e Engine');
   });
 
+  test('o texto visivel tem acento — e so ele', () => {
+    // O painel foi escrito sem acento nenhum, provavelmente para nao brigar com
+    // codificacao: um problema real ha vinte anos, e nenhum hoje.
+    //
+    // O risco de corrigir nao era a gramatica: era trocar um NOME. `descricao`
+    // e rotulo na tela E chave que vai e volta da API; `municipio` e rotulo e
+    // campo do XML da NF-e. Por isso a correcao so tocou o que fica ENTRE as
+    // tags e nos atributos que o usuario le.
+    for (const palavra of ['Operação', 'Número', 'Destinatário', 'Município',
+      'Série', 'Não', 'Serviço', 'Código', 'Endereço', 'Emissão']) {
+      expect(painel).toContain(palavra);
+    }
+
+    // A outra metade da regra, e a que protege a emissao: nenhum `value=`
+    // ganhou acento. O que o formulario ENVIA continua sendo o que sempre foi.
+    const comAcento = painel.match(/value="[^"]*[çáéíóúãõâêôàü][^"]*"/gi) ?? [];
+    expect(comAcento).toEqual([]);
+  });
+
   test('a caixa alta e do CSS, nunca do texto', () => {
     // Esta é a regra que salva o acento. `text-transform` transforma "Visão
     // geral" em "VISÃO GERAL" com o til; escrever "VISAO GERAL" na mão perde o
