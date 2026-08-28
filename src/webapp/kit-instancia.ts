@@ -267,6 +267,28 @@ export const VARIAVEIS = {
   ],
   opcionais: [
     ['SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM', 'Envio de DANFE e XML por e-mail.'],
+    /**
+     * Sem esta variavel a instancia EMITE do mesmo jeito — o que muda e a cara
+     * do PDF.
+     *
+     * O DANFE no layout homologado da SEFAZ e desenhado por um servico PHP
+     * separado (`sped-da`), que nao vem neste pacote: ele e outro projeto, com
+     * as dependencias PHP dele. Sem `DANFE_SERVICE_URL`, a ponte cai num
+     * gerador simplificado proprio — o PDF sai, a nota vale, mas nao e o
+     * desenho oficial, e a logo do emitente nao aparece.
+     *
+     * Sao duas saidas honestas, e a escolha e de quem instala:
+     *
+     * 1. Publicar o proprio `danfe-service` e apontar para ele — instancia
+     *    100% independente;
+     * 2. Apontar para o servico de quem entregou o pacote — mais rapido, mas
+     *    cria uma dependencia entre as duas operacoes.
+     *
+     * Deixar em branco tambem e uma escolha valida: o DANFE simplificado
+     * atende quem so precisa do documento, e a variavel pode entrar depois.
+     */
+    ['DANFE_SERVICE_URL', 'Endereco do servico que desenha o DANFE no layout oficial. Em branco, a ponte usa um gerador simplificado proprio — a nota vale igual, mas o PDF nao e o desenho homologado e a logo do emitente nao sai.'],
+    ['DANFE_KEY', 'Chave compartilhada com esse servico, se ele exigir.'],
     ['NFE_FANTASIA', 'Nome fantasia.'],
     ['NFE_COMPLEMENTO', 'Complemento do endereco.'],
     ['NFE_FONE', 'Telefone.'],
