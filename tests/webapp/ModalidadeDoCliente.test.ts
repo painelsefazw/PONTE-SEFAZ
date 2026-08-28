@@ -76,7 +76,9 @@ describe('modalidade do cliente e coluna propria', () => {
       expect(painel).toContain(`showCadastroClienteApi('${mod}')`);
     }
     expect(painel).toContain("{ id: 'clientesapi-api', label: 'Por API' }");
-    expect(painel).toContain("{ id: 'clientesapi-plataforma', label: 'Com plataforma' }");
+    // "Por API" e "Por plataforma": a construcao paralela e o que faz as duas
+    // se lerem como duas faces da mesma pergunta.
+    expect(painel).toContain("{ id: 'clientesapi-plataforma', label: 'Por plataforma' }");
     // A aba aberta É a modalidade — a busca vai sempre presa a ela.
     expect(painel).toMatch(/_modalidadeAtiva = 'api'/);
     expect(painel).toMatch(/_modalidadeAtiva = 'plataforma'/);

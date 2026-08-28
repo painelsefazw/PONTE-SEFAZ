@@ -455,43 +455,43 @@ body.modo-operador .fiscal-avancado { display: none !important; }
    amarelo virar um holofote no meio da tela. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
-    --fundo: #0b1120;
-    --cartao: #111c33;
-    --suave: #16213c;
-    --borda: #24324f;
-    --texto: #e8eefc;
-    --texto-medio: #c3cee5;
-    --suave-texto: #93a2be;
+    --fundo: #0a0a0b;
+    --cartao: #141416;
+    --suave: #1c1c1f;
+    --borda: #2c2c31;
+    --texto: #ededef;
+    --texto-medio: #c7c7cc;
+    --suave-texto: #8e8e96;
 
     --marca: #6366f1;
     --marca-forte: #818cf8;
-    --marca-texto: #0b1120;
-    --marca-fundo: #1c2547;
-    --marca-borda: #35407a;
+    --marca-texto: #0a0a0b;
+    --marca-fundo: #1d1c33;
+    --marca-borda: #363654;
     --marca-tinta: #a5b4fc;
 
     --sucesso: #22c55e;
-    --sucesso-fundo: #10261c;
-    --sucesso-borda: #1f5137;
+    --sucesso-fundo: #10231a;
+    --sucesso-borda: #1f4a33;
     --sucesso-tinta: #6ee7b7;
 
     --alerta: #f59e0b;
-    --alerta-fundo: #2a2010;
-    --alerta-borda: #5c451a;
+    --alerta-fundo: #241c0e;
+    --alerta-borda: #503c18;
     --alerta-tinta: #fcd34d;
 
     --perigo: #ef4444;
-    --perigo-fundo: #2b1417;
-    --perigo-borda: #5e2429;
+    --perigo-fundo: #251316;
+    --perigo-borda: #532226;
     --perigo-tinta: #fca5a5;
 
-    --info: #38bdf8;
-    --info-fundo: #0d2235;
-    --info-borda: #1e4763;
+    --info: #60a5fa;
+    --info-fundo: #10192b;
+    --info-borda: #22375c;
     --info-tinta: #7dd3fc;
 
     --roxo: #a78bfa;
-    --roxo-fundo: #211a3c;
+    --roxo-fundo: #1e1a2e;
     --roxo-tinta: #c4b5fd;
 
     --sombra: 0 1px 2px rgb(0 0 0 / 40%);
@@ -500,43 +500,43 @@ body.modo-operador .fiscal-avancado { display: none !important; }
 }
 
 :root[data-tema="escuro"] {
-  --fundo: #0b1120;
-  --cartao: #111c33;
-  --suave: #16213c;
-  --borda: #24324f;
-  --texto: #e8eefc;
-  --texto-medio: #c3cee5;
-  --suave-texto: #93a2be;
+  --fundo: #0a0a0b;
+  --cartao: #141416;
+  --suave: #1c1c1f;
+  --borda: #2c2c31;
+  --texto: #ededef;
+  --texto-medio: #c7c7cc;
+  --suave-texto: #8e8e96;
 
   --marca: #6366f1;
   --marca-forte: #818cf8;
-  --marca-texto: #0b1120;
-  --marca-fundo: #1c2547;
-  --marca-borda: #35407a;
+  --marca-texto: #0a0a0b;
+  --marca-fundo: #1d1c33;
+  --marca-borda: #363654;
   --marca-tinta: #a5b4fc;
 
   --sucesso: #22c55e;
-  --sucesso-fundo: #10261c;
-  --sucesso-borda: #1f5137;
+  --sucesso-fundo: #10231a;
+  --sucesso-borda: #1f4a33;
   --sucesso-tinta: #6ee7b7;
 
   --alerta: #f59e0b;
-  --alerta-fundo: #2a2010;
-  --alerta-borda: #5c451a;
+  --alerta-fundo: #241c0e;
+  --alerta-borda: #503c18;
   --alerta-tinta: #fcd34d;
 
   --perigo: #ef4444;
-  --perigo-fundo: #2b1417;
-  --perigo-borda: #5e2429;
+  --perigo-fundo: #251316;
+  --perigo-borda: #532226;
   --perigo-tinta: #fca5a5;
 
-  --info: #38bdf8;
-  --info-fundo: #0d2235;
-  --info-borda: #1e4763;
+  --info: #60a5fa;
+  --info-fundo: #10192b;
+  --info-borda: #22375c;
   --info-tinta: #7dd3fc;
 
   --roxo: #a78bfa;
-  --roxo-fundo: #211a3c;
+  --roxo-fundo: #1e1a2e;
   --roxo-tinta: #c4b5fd;
 
   --sombra: 0 1px 2px rgb(0 0 0 / 40%);
@@ -600,6 +600,10 @@ body {
 .sub-tab-bar button.active { color: var(--marca-tinta); border-bottom-color: var(--marca); }
 
 /* --- O topo que acompanha a rolagem ------------------------------------- */
+/* Navegacao e contexto dividem a MESMA faixa. Empilhados, gastavam duas linhas
+   para pouca coisa — e a de baixo ficava quase vazia, com dois botoes
+   encostados na direita e o resto em branco. Lado a lado, a navegacao cresce
+   para a esquerda e o contexto se ancora na direita. */
 /* Navegacao que sai de cena ao rolar obriga a subir a pagina inteira so para
    trocar de aba. E, meio rolada, ela deixa uma tira clara no alto que parece
    um cabecalho vazio. Grudando o bloco, as duas coisas somem de uma vez. */
@@ -607,6 +611,23 @@ body {
   position: sticky; top: 0; z-index: 100;
   background: var(--cartao);
   box-shadow: 0 1px 0 var(--borda);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'nav contexto' 'sub sub';
+  align-items: center;
+}
+.topo-fixo .tab-bar { grid-area: nav; border-bottom: none; }
+.topo-fixo .appbar { grid-area: contexto; border-bottom: none; padding-right: 20px; }
+.topo-fixo .sub-tab-bar { grid-area: sub; border-top: 1px solid var(--borda); }
+
+/* Numa janela estreita nao ha largura para as duas: o contexto desce, que e
+   o certo — navegacao e o que se usa, contexto e o que se confere. */
+@media (max-width: 720px) {
+  .topo-fixo {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'nav' 'contexto' 'sub';
+  }
+  .topo-fixo .appbar { justify-content: flex-start; padding-left: 8px; }
 }
 
 /* --- Barra de contexto -------------------------------------------------- */
@@ -828,6 +849,8 @@ body {
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('operacoes')">Operações</button>
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('config')">Configurações</button>
   <button class="somente-contador" onclick="showGroup('clientesapi')">Clientes</button>
+  <button class="somente-contador" onclick="showGroup('instancia')">Nova inst&acirc;ncia</button>
+  <button class="somente-contador" onclick="showGroup('auditoria')">Auditoria</button>
 </div>
 <!-- Barra de contexto: em nome de QUEM se opera, em qual ambiente e como
      esta a SEFAZ. Ficava no topo junto da marca; saiu de la quando a navegacao
@@ -2357,8 +2380,8 @@ body {
 <div class="container">
   <div class="section">
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Clientes com plataforma</span>
-      <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Novo cliente com plataforma</button>
+      <span>Clientes por plataforma</span>
+      <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Novo cliente por plataforma</button>
     </div>
     <div style="font-size:12px;color:var(--suave-texto);margin:-8px 0 16px">Empresas que recebem um site pronto, publicado e mantido por nós — com repositório próprio e senha de painel.</div>
     <div id="clientesApiResumo-plataforma" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
@@ -2616,13 +2639,16 @@ var TAB_GROUPS = {
   cadastros: [{ id: 'produtos', label: 'Produtos' }, { id: 'servicos', label: 'Serviços' }, { id: 'importar', label: 'Importar XLSX' }, { id: 'regras', label: 'Regras fiscais' }],
   operacoes: [{ id: 'inutilizar', label: 'Inutilizar' }, { id: 'manifestacao', label: 'Manifestação' }],
   config: [{ id: 'configuracoes', label: 'SMTP' }, { id: 'api', label: 'API' }],
+  // Clientes ficou so com o que E cliente. "Nova instancia" cria outra ponte
+  // e "Auditoria" olha o historico de todas — nenhuma das duas pertence a
+  // ficha de um cliente, e escondidas como sub-aba pareciam pertencer.
   clientesapi: [
     { id: 'clientesapi-api', label: 'Por API' },
-    { id: 'clientesapi-plataforma', label: 'Com plataforma' },
+    { id: 'clientesapi-plataforma', label: 'Por plataforma' },
     { id: 'clientesapi-templates', label: 'Templates', soCompleto: true },
-    { id: 'clientesapi-instancia', label: 'Nova instância' },
-    { id: 'clientesapi-audit', label: 'Auditoria' },
   ],
+  instancia: [{ id: 'clientesapi-instancia', label: 'Nova instância' }],
+  auditoria: [{ id: 'clientesapi-audit', label: 'Auditoria' }],
 };
 
 var currentGroup = 'emissao';
