@@ -258,7 +258,14 @@ export const VARIAVEIS = {
   ],
   recomendadas: [
     ['API_PUBLIC_URL', 'Endereco publico DESTA instancia. Sem ele as plataformas geradas apontam para o lugar errado.'],
-    ['DANFE_SERVICE_URL', 'Servico que transforma XML em PDF. Pode ser o mesmo da instancia existente: ele nao guarda estado.'],
+    // Recomendada, e nao obrigatoria, porque a ponte emite sem ela — o que
+    // muda e a CARA do PDF. Sem o servico, cai num gerador simplificado
+    // proprio: a nota vale igual, mas nao e o desenho homologado e a logo do
+    // emitente nao sai. Quem instala precisa saber que ha essa escolha.
+    ['DANFE_SERVICE_URL', 'Servico que transforma XML no DANFE em layout oficial. '
+      + 'Pode ser o mesmo da instancia existente: ele nao guarda estado. Em branco, a '
+      + 'ponte usa um gerador simplificado — a nota vale igual, mas o PDF nao e o desenho '
+      + 'homologado e a logo do emitente nao aparece.'],
     ['DANFE_KEY', 'Chave do servico de DANFE.'],
     ['NFE_AMBIENTE', '1 producao, 2 homologacao. Padrao 2 — comece por ele.'],
     ['NFE_CRT', 'Regime tributario do emitente padrao. 1 Simples, 3 Normal.'],
@@ -267,28 +274,6 @@ export const VARIAVEIS = {
   ],
   opcionais: [
     ['SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS / SMTP_FROM', 'Envio de DANFE e XML por e-mail.'],
-    /**
-     * Sem esta variavel a instancia EMITE do mesmo jeito — o que muda e a cara
-     * do PDF.
-     *
-     * O DANFE no layout homologado da SEFAZ e desenhado por um servico PHP
-     * separado (`sped-da`), que nao vem neste pacote: ele e outro projeto, com
-     * as dependencias PHP dele. Sem `DANFE_SERVICE_URL`, a ponte cai num
-     * gerador simplificado proprio — o PDF sai, a nota vale, mas nao e o
-     * desenho oficial, e a logo do emitente nao aparece.
-     *
-     * Sao duas saidas honestas, e a escolha e de quem instala:
-     *
-     * 1. Publicar o proprio `danfe-service` e apontar para ele — instancia
-     *    100% independente;
-     * 2. Apontar para o servico de quem entregou o pacote — mais rapido, mas
-     *    cria uma dependencia entre as duas operacoes.
-     *
-     * Deixar em branco tambem e uma escolha valida: o DANFE simplificado
-     * atende quem so precisa do documento, e a variavel pode entrar depois.
-     */
-    ['DANFE_SERVICE_URL', 'Endereco do servico que desenha o DANFE no layout oficial. Em branco, a ponte usa um gerador simplificado proprio — a nota vale igual, mas o PDF nao e o desenho homologado e a logo do emitente nao sai.'],
-    ['DANFE_KEY', 'Chave compartilhada com esse servico, se ele exigir.'],
     ['NFE_FANTASIA', 'Nome fantasia.'],
     ['NFE_COMPLEMENTO', 'Complemento do endereco.'],
     ['NFE_FONE', 'Telefone.'],
