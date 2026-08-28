@@ -1398,14 +1398,36 @@ body {
       <div class="dash-card warn"><div class="dash-num" id="dashRegras">—</div><div class="dash-label">Regras fiscais</div></div>
     </div>
   </div>
-  <div class="section" style="text-align:right">
-    <button type="button" class="btn btn-success" style="font-size:12px;padding:6px 16px;margin-right:8px" onclick="exportarXmls()">Exportar XMLs</button>
-    <button type="button" class="btn" style="background:var(--perigo);color:var(--cartao);font-size:12px;padding:6px 16px" onclick="limparHomologacao()">Limpar notas de homologação</button>
-    <span id="limparMsg" style="font-size:12px;color:var(--suave-texto);margin-left:8px"></span>
-  </div>
+  <!-- Acoes que valem para TODAS as empresas. Ficavam numa faixa sem titulo,
+       o que fazia a limpeza de homologacao — que apaga nota — parecer um botao
+       qualquer flutuando no meio da tela. Cada empresa tem as acoes dela no
+       proprio cartao; aqui so o que e do conjunto. -->
   <div class="section">
-    <div class="section-title">Visao Geral das Empresas</div>
-    <div id="dashTabelaUnificada"><div class="hist-empty">Carregando...</div></div>
+    <div class="section-title">Ações de todas as empresas</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="btn btn-outline" onclick="exportarXmls()">Exportar XMLs</button>
+      <button type="button" class="btn btn-danger" onclick="limparHomologacao()">Limpar notas de homologação</button>
+      <span id="limparMsg" style="font-size:12px;color:var(--suave-texto)"></span>
+    </div>
+    <div style="font-size:12px;color:var(--suave-texto);margin-top:10px">
+      A limpeza apaga apenas as notas de <b>homologação</b>, que são de teste e não têm valor
+      fiscal. Nota de produção não é tocada.
+    </div>
+  </div>
+  <!-- Um cartao por empresa, e nao uma linha de tabela.
+       A tabela cabia numa tela e nao respondia nada: "2 notas" e "R$ 0.00" nao
+       dizem se a empresa esta emitindo, se o certificado vence semana que vem
+       ou se ha nota rejeitada esperando alguem. Cada empresa e um caso, e caso
+       se lê num cartao — com o que ela TEM de um lado e o que se FAZ com ela
+       do outro. -->
+  <div class="section">
+    <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Empresas</span>
+      <input type="text" id="dashBuscaEmpresa" placeholder="Filtrar por nome ou CNPJ"
+             oninput="filtrarCartoesDeEmpresa()"
+             style="font-size:12px;padding:6px 10px;border:1px solid var(--borda);border-radius:6px;min-width:220px">
+    </div>
+    <div id="dashEmpresasCards"><div class="hist-empty">Carregando...</div></div>
   </div>
 </div>
 </div>
@@ -4646,6 +4668,11 @@ function toggleDestDoc() {
   document.getElementById('destDoc').placeholder = tipo === 'cnpj' ? '00.000.000/0000-00' : '000.000.000-00';
 }
 
+/** Valor em reais, com o separador de milhar que se le no Brasil. */
+function reais(v) {
+  return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
 function formatCnpj(v) {
   if (v.length !== 14) return v;
   return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
@@ -5912,60 +5939,188 @@ async function loadDashboard() {
       certMap[cnpj] = c;
     });
 
-    // Tabela unificada
-    var box = document.getElementById('dashTabelaUnificada');
-    if (!ativas.length) {
-      box.innerHTML = '<div class="hist-empty">Nenhuma empresa cadastrada</div>';
-    } else {
-      var html = '<div style="overflow-x:auto"><table class="hist-table"><thead><tr>' +
-        '<th>Empresa</th><th>CNPJ</th><th>UF</th><th>CRT</th><th>Ambiente</th>' +
-        '<th style="text-align:center">Certificado</th>' +
-        '<th style="text-align:right">Notas</th><th style="text-align:right">Valor Total</th>' +
-        '</tr></thead><tbody>';
-
-      var totalNotas = 0, totalValor = 0;
-      ativas.forEach(function(e) {
-        var cnpj = e.cnpj.replace(/\D/g, '');
-        var crtLabel = e.crt === '1' ? 'Simples' : (e.crt === '3' ? 'Normal' : 'CRT ' + e.crt);
-        var ambLabel = e.ambiente === '1' ? '<span style="color:var(--perigo);font-weight:600">PROD</span>' : '<span style="color:var(--alerta)">HOM</span>';
-
-        // Certificado
-        var certHtml = '<span style="color:var(--suave-texto);font-size:11px">Sem cert.</span>';
-        var cert = certMap[cnpj];
-        if (cert) {
-          var dtFmt = new Date(cert.validoAte).toLocaleDateString('pt-BR');
-          if (cert.vencido) {
-            certHtml = '<span style="color:var(--perigo);font-weight:600" title="Vencido em ' + dtFmt + '">VENCIDO</span>';
-          } else if (cert.alerta) {
-            certHtml = '<span style="color:var(--alerta);font-weight:600" title="Válido até ' + dtFmt + '">' + cert.diasRestantes + ' dias</span>';
-          } else {
-            certHtml = '<span style="color:var(--sucesso)" title="Válido até ' + dtFmt + '">' + cert.diasRestantes + ' dias</span>';
-          }
-        }
-
-        var qtdNotas = porEmpresa[cnpj] || 0;
-        var valor = valorPorEmpresa[cnpj] || 0;
-        totalNotas += qtdNotas;
-        totalValor += valor;
-
-        html += '<tr><td>' + (e.fantasia || e.razaoSocial).substring(0, 30) + '</td>' +
-          '<td style="font-family:monospace;font-size:12px">' + formatCnpj(cnpj) + '</td>' +
-          '<td>' + e.uf + '</td><td>' + crtLabel + '</td><td>' + ambLabel + '</td>' +
-          '<td style="text-align:center">' + certHtml + '</td>' +
-          '<td style="text-align:right;font-weight:600">' + (qtdNotas || '-') + '</td>' +
-          '<td style="text-align:right">' + (valor ? 'R$ ' + valor.toFixed(2) : '-') + '</td></tr>';
+    // --- Um cartao por empresa -------------------------------------------
+    // Guardado para o filtro de busca poder redesenhar sem ir de novo a rede.
+    _dashEmpresas = ativas.map(function(e) {
+      var cnpj = String(e.cnpj || '').replace(/\D/g, '');
+      var notasDela = notas.filter(function(n) {
+        return String(n.empresaCnpj || '').replace(/\D/g, '') === cnpj;
       });
-
-      html += '<tr style="font-weight:700;border-top:2px solid var(--marca)"><td colspan="6">TOTAL</td>' +
-        '<td style="text-align:right">' + totalNotas + '</td>' +
-        '<td style="text-align:right">R$ ' + totalValor.toFixed(2) + '</td></tr>';
-      html += '</tbody></table></div>';
-      box.innerHTML = html;
-    }
+      return { empresa: e, cnpj: cnpj, notas: notasDela, cert: certMap[cnpj] || null };
+    });
+    renderCartoesDeEmpresa();
   } catch(e) {
-    document.getElementById('dashTabelaUnificada').innerHTML = '<div class="hist-empty">Erro: ' + e.message + '</div>';
+    document.getElementById('dashEmpresasCards').innerHTML =
+      '<div class="hist-empty">Não foi possível carregar: ' + e.message + '</div>';
   }
 }
+
+/** O que a ultima carga trouxe, para o filtro nao precisar da rede. */
+var _dashEmpresas = [];
+
+/** Regime tributario por extenso. `undefined` na tela e defeito, nao dado. */
+function regimeDaEmpresa(crt) {
+  if (crt === '1' || crt === 1) return 'Simples Nacional';
+  if (crt === '2' || crt === 2) return 'Simples — excesso';
+  if (crt === '3' || crt === 3) return 'Regime normal';
+  if (crt === '4' || crt === 4) return 'MEI';
+  return 'Regime não informado';
+}
+
+/**
+ * O estado do certificado, que e a informacao mais perecivel do painel.
+ *
+ * Certificado vencido nao avisa: a empresa simplesmente para de emitir, e o
+ * primeiro a perceber e o cliente dela no balcao. Por isso ele aparece com
+ * cor e prazo, e nao como um "sim/nao".
+ */
+function estadoDoCertificado(cert) {
+  if (!cert) return { texto: 'Sem certificado', tom: 'perigo', detalhe: 'A empresa não emite sem ele.' };
+  var dias = Number(cert.diasRestantes);
+  var ate = cert.validoAte ? new Date(cert.validoAte).toLocaleDateString('pt-BR') : null;
+  if (cert.vencido) return { texto: 'Vencido', tom: 'perigo', detalhe: ate ? 'Venceu em ' + ate : '' };
+  if (!isFinite(dias)) return { texto: 'Enviado', tom: 'sucesso', detalhe: ate ? 'Válido até ' + ate : '' };
+  if (dias <= 30) return { texto: dias + ' dias', tom: 'alerta', detalhe: 'Vence em ' + ate + '. Renove agora.' };
+  return { texto: dias + ' dias', tom: 'sucesso', detalhe: ate ? 'Válido até ' + ate : '' };
+}
+
+function filtrarCartoesDeEmpresa() { renderCartoesDeEmpresa(); }
+
+function renderCartoesDeEmpresa() {
+  var box = document.getElementById('dashEmpresasCards');
+  if (!box) return;
+  var termo = (document.getElementById('dashBuscaEmpresa') || {}).value || '';
+  var busca = termo.replace(/\D/g, '').length >= 3
+    ? termo.replace(/\D/g, '')
+    : termo.trim().toLowerCase();
+
+  var lista = _dashEmpresas.filter(function(d) {
+    if (!busca) return true;
+    var e = d.empresa;
+    return d.cnpj.indexOf(busca) >= 0
+      || String(e.razaoSocial || '').toLowerCase().indexOf(busca) >= 0
+      || String(e.fantasia || '').toLowerCase().indexOf(busca) >= 0;
+  });
+
+  if (!lista.length) {
+    box.innerHTML = '<div class="hist-empty">' +
+      (_dashEmpresas.length ? 'Nenhuma empresa com esse nome ou CNPJ' : 'Nenhuma empresa cadastrada') +
+      '</div>';
+    return;
+  }
+
+  box.innerHTML = lista.map(cartaoDaEmpresa).join('');
+}
+
+/** Um numero com o rotulo embaixo — a unidade de leitura das estatisticas. */
+function numeroDoCartao(rotulo, valor, tom) {
+  var cor = tom ? 'var(--' + tom + '-tinta)' : 'var(--texto)';
+  return '<div style="min-width:78px">' +
+    '<div style="font-size:19px;font-weight:700;color:' + cor + ';font-variant-numeric:tabular-nums">' + valor + '</div>' +
+    '<div style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--suave-texto);margin-top:1px">' + rotulo + '</div>' +
+    '</div>';
+}
+
+function cartaoDaEmpresa(d) {
+  var e = d.empresa;
+  var cnpj = d.cnpj;
+  var nome = e.fantasia || e.razaoSocial || cnpj;
+
+  // Estatisticas: o que aconteceu.
+  var autorizadas = 0, canceladas = 0, valor = 0, ultima = null;
+  d.notas.forEach(function(n) {
+    if (String(n.status || '').toUpperCase().indexOf('CANCEL') >= 0) canceladas++;
+    else autorizadas++;
+    valor += parseFloat(n.vNF || n.valor || 0) || 0;
+    var q = n.emitidaEm ? new Date(n.emitidaEm) : null;
+    if (q && (!ultima || q > ultima)) ultima = q;
+  });
+
+  var cert = estadoDoCertificado(d.cert);
+  var producao = String(e.ambiente) === '1';
+  var pill = function(txt, tom, titulo) {
+    return '<span title="' + (titulo || '') + '" style="font-size:10px;font-weight:600;letter-spacing:.03em;' +
+      'text-transform:uppercase;padding:2px 9px;border-radius:99px;border:1px solid currentColor;' +
+      'background:var(--' + tom + '-fundo);color:var(--' + tom + '-tinta)">' + txt + '</span>';
+  };
+
+  return '<div style="border:1px solid var(--borda);border-radius:var(--raio);background:var(--cartao);' +
+      'padding:16px 18px;margin-bottom:12px">' +
+
+    // Cabecalho: quem e a empresa, e em que pe ela esta.
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">' +
+      '<div style="min-width:0">' +
+        '<div style="font-size:14px;font-weight:700">' + escapeHtml(String(nome)) + '</div>' +
+        '<div style="font-size:12px;color:var(--suave-texto);margin-top:2px">' +
+          formatCnpj(cnpj) + ' · ' + (e.uf || '—') + ' · ' + regimeDaEmpresa(e.crt) +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
+        pill(producao ? 'Produção' : 'Homologação',
+             producao ? 'perigo' : 'alerta',
+             producao ? 'As notas desta empresa têm valor fiscal' : 'Ambiente de teste, sem valor fiscal') +
+        pill(cert.texto, cert.tom, cert.detalhe) +
+      '</div>' +
+    '</div>' +
+
+    // Estatisticas: o que a empresa produziu.
+    '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;padding-top:14px;' +
+        'border-top:1px solid var(--borda)">' +
+      numeroDoCartao('Autorizadas', autorizadas, autorizadas ? 'sucesso' : '') +
+      numeroDoCartao('Canceladas', canceladas, canceladas ? 'perigo' : '') +
+      numeroDoCartao('Valor emitido', valor ? reais(valor) : '—', '') +
+      numeroDoCartao('Última emissão',
+        ultima ? ultima.toLocaleDateString('pt-BR') : 'Nunca',
+        ultima ? '' : 'alerta') +
+    '</div>' +
+
+    // Controle: o que se FAZ com ela. Separado das estatisticas de proposito —
+    // um lado se le, o outro se clica, e misturar os dois faz procurar o botao
+    // no meio do numero.
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;' +
+        'border-top:1px dashed var(--borda)">' +
+      '<button class="btn btn-outline btn-sm" onclick="verNotasDaEmpresa(\'' + cnpj + '\')">Ver notas</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="exportarXmlsDaEmpresa(\'' + cnpj + '\')">Exportar XMLs</button>' +
+      '<button class="btn btn-outline btn-sm" onclick="abrirEmpresa(\'' + cnpj + '\')">Cadastro</button>' +
+    '</div>' +
+  '</div>';
+}
+
+/**
+ * Abre o historico ja filtrado nesta empresa.
+ *
+ * O caminho antigo era trocar a empresa no seletor do topo e depois achar a
+ * aba — dois passos que dependem de lembrar em qual empresa se estava.
+ */
+function verNotasDaEmpresa(cnpj) {
+  var sel = document.getElementById('empresaSel');
+  if (sel) { sel.value = cnpj; if (typeof onEmpresaChange === 'function') onEmpresaChange(); }
+  showGroup('consultas');
+}
+
+/**
+ * Exporta os XMLs DESTA empresa.
+ *
+ * `exportarXmls` sempre exportou os da empresa em uso — o que era certo quando
+ * so havia um lugar de clicar. No cartao, o botao esta ao lado do nome de uma
+ * empresa especifica, e exportar a de outra seria mentira. Trocar a empresa em
+ * uso antes resolve, e de quebra deixa o painel coerente com o que se ve.
+ */
+function exportarXmlsDaEmpresa(cnpj) {
+  var sel = document.getElementById('empresaSel');
+  if (sel && sel.value !== cnpj) {
+    sel.value = cnpj;
+    if (typeof onEmpresaChange === 'function') onEmpresaChange();
+  }
+  exportarXmls();
+}
+
+function abrirEmpresa(cnpj) {
+  var sel = document.getElementById('empresaSel');
+  if (sel) { sel.value = cnpj; if (typeof onEmpresaChange === 'function') onEmpresaChange(); }
+  showGroup('empresas');
+}
+
 
 async function limparHomologacao() {
   if (!confirm('Apagar TODAS as notas de homologacao (teste)?\n\nNotas de producao NAO serao afetadas.')) return;
@@ -7804,7 +7959,6 @@ function painelSuporteHtml(p, cnpj, stats) {
   var plano = p.planoDetalhe || { nome: String(p.cliente.plano || '').toUpperCase(), cor: 'var(--suave-texto)', perfil: '', documentos: [], limiteNotas: 0 };
 
   var num = function(v) { return Number(v || 0).toLocaleString('pt-BR'); };
-  var reais = function(v) { return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); };
   var quando = function(d) {
     if (!d) return 'nunca';
     var dt = new Date(d), dias = Math.floor((Date.now() - dt.getTime()) / 86400000);
