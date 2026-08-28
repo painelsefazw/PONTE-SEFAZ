@@ -229,6 +229,22 @@ describe('o caminho ate o PDF', () => {
     }
   });
 
+  test('o health check diz QUAL versao esta no ar', () => {
+    // Sem marcador, o health check respondia "ok" tanto para a versao que
+    // desenha a logo quanto para a que nao sabe que ela existe — e foi assim
+    // que um deploy velho ficou no ar parecendo saudavel. Agora "ja subiu?" e
+    // uma pergunta com resposta.
+    expect(php).toMatch(/const VERSAO = \d+/);
+    expect(php).toMatch(/'versao'\s*=>\s*VERSAO/);
+  });
+
+  test('o health check informa allow_url_fopen', () => {
+    // Sem `gd`, a biblioteca transforma a logo numa URL `data://` e a le de
+    // volta com getimagesize. Com allow_url_fopen desligado ela le `false` e a
+    // logo some calada — a mesma falha silenciosa, por outra porta.
+    expect(php).toContain('allow_url_fopen');
+  });
+
   test('o JSON so e lido quando o cliente diz que e JSON', () => {
     // Adivinhar pelo primeiro caractere quebraria um XML que comece com espaco
     // ou BOM — e ai a nota nao sai.

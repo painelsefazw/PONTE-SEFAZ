@@ -31,15 +31,31 @@ function jsonOut(int $code, array $data): void
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+/**
+ * Marcador de versao do proprio arquivo.
+ *
+ * Sem isto, o health check respondia "ok" tanto para a versao que desenha a
+ * logo quanto para a que nem sabe que ela existe — e foi exatamente assim que
+ * um deploy velho ficou semanas no ar parecendo saudavel. Subir este numero a
+ * cada mudanca de comportamento e o que torna o "ja subiu?" uma pergunta com
+ * resposta.
+ */
+const VERSAO = 2; // 2 = aceita JSON com logo e posicao
+
 // Health check + diagnostico de extensoes
 if ($method === 'GET') {
     jsonOut(200, [
         'ok'      => true,
         'service' => 'danfe-service',
+        'versao'  => VERSAO,
         'php'     => PHP_VERSION,
         'gd'      => extension_loaded('gd'),
         'dom'     => extension_loaded('dom'),
         'mbstring'=> extension_loaded('mbstring'),
+        // Sem `gd`, a biblioteca converte a logo para uma URL `data://` e le de
+        // volta com getimagesize. Com isto desligado, ela le `false` e a logo
+        // some sem dizer o motivo — e o unico jeito de saber e perguntar.
+        'url_fopen' => (bool) ini_get('allow_url_fopen'),
     ]);
 }
 
