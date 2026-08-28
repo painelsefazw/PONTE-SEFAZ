@@ -6864,7 +6864,103 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '3. Cancelamento, Correcao e Inutilizacao',
+        nome: '3. Emissao de NFS-e (Sistema Nacional)',
+        resumo: 'Nota de SERVICO, pelo Emissor Nacional (padrao ABRASF/RFB) — nao pela '
+          + 'prefeitura. O municipio do prestador precisa ter aderido: se nao aderiu, a API '
+          + 'recusa ANTES de transmitir e diz que o problema e a prefeitura, e nao a nota. '
+          + 'A partir de 01/09/2026 as empresas do Simples que prestam servico so emitem por aqui.',
+        endpoints: [
+          {
+            metodo: 'GET', path: '/api/nfse/convenio',
+            descricao: 'O municipio do prestador emite pelo Emissor Nacional? Consulte ANTES de '
+              + 'integrar: sem adesao, nenhuma nota sai, e nao ha o que ajustar do lado do ERP.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/nfse/convenio`,
+            response_sucesso: { sucesso: true, podeEmitir: true, podeBaixar: true, codigoMunicipio: '3136702' },
+          },
+          {
+            metodo: 'POST', path: '/api/nfse/emitir',
+            descricao: 'Emitir NFS-e. O ISS e calculado pela tributacao informada; a numeracao '
+              + 'e por serie e ambiente.',
+            campos: [
+              { nome: 'ambiente', tipo: "'1' | '2'", obrigatorio: false, descricao: '1 producao, 2 homologacao. Sem informar, usa o da empresa.' },
+              { nome: 'serie', tipo: 'string', obrigatorio: false, descricao: 'Serie da DPS. Padrao: 1.' },
+              { nome: 'numero', tipo: 'number', obrigatorio: false, descricao: 'Sem informar, a API pega o proximo da serie.' },
+              { nome: 'competencia', tipo: 'string (AAAA-MM-DD)', obrigatorio: false, descricao: 'Mes de competencia do servico. Padrao: hoje.' },
+              { nome: 'tomador.cnpj', tipo: 'string (14 digitos)', obrigatorio: 'um dos tres', descricao: 'CNPJ do tomador.' },
+              { nome: 'tomador.cpf', tipo: 'string (11 digitos)', obrigatorio: 'um dos tres', descricao: 'CPF do tomador.' },
+              { nome: 'tomador.nif', tipo: 'string', obrigatorio: 'um dos tres', descricao: 'Identificacao fiscal, para tomador no exterior.' },
+              { nome: 'tomador.razaoSocial', tipo: 'string', obrigatorio: true },
+              { nome: 'tomador.email', tipo: 'string', obrigatorio: false },
+              { nome: 'tomador.endereco', tipo: 'objeto', obrigatorio: false, descricao: 'Mesma forma do destinatario da NF-e.' },
+              { nome: 'servicoCodigo', tipo: 'string', obrigatorio: true, descricao: 'Codigo de tributacao nacional (cTribNac) — o item da LC 116.' },
+              { nome: 'servico', tipo: 'string', obrigatorio: true, descricao: 'Descricao do servico prestado.' },
+              { nome: 'valorServico', tipo: 'number', obrigatorio: true },
+              { nome: 'aliquotaIss', tipo: 'number', obrigatorio: false, descricao: 'Em porcento. No Simples, quem define e o regime — nao informe.' },
+              { nome: 'issRetido', tipo: 'boolean', obrigatorio: false, descricao: 'ISS retido na fonte pelo tomador.' },
+              { nome: 'tributacaoIssqn', tipo: 'string', obrigatorio: false, descricao: 'Tributavel, isento, imune, exigibilidade suspensa. Imunidade sem o tipo e recusada (E0592).' },
+              { nome: 'obra', tipo: 'objeto', obrigatorio: 'em servico de construcao', descricao: 'Alguns subitens da LC 116 EXIGEM o grupo de obra (E0370) e outros o RECUSAM (E0372).' },
+              { nome: 'comercioExterior', tipo: 'objeto', obrigatorio: 'em exportacao', descricao: 'Exportacao sem este grupo e recusada com E0330.' },
+              { nome: 'simular', tipo: 'boolean', obrigatorio: false, descricao: 'Monta e valida SEM transmitir. Nao consome cota.' },
+            ],
+            curl_exemplo: `curl -s -X POST \\
+  -H "x-api-key: SUA_CHAVE" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+  "tomador": { "cnpj": "12345678000190", "razaoSocial": "CLIENTE LTDA" },
+  "servicoCodigo": "010701",
+  "servico": "Suporte tecnico mensal",
+  "valorServico": 1500.00
+}' ${BASE}/api/nfse/emitir`,
+            response_sucesso: { sucesso: true, chaveAcesso: 'NFS35...', numero: 42, serie: '1', dataEmissao: '2026-08-28T09:00:00-03:00' },
+          },
+          {
+            metodo: 'POST', path: '/api/nfse/cancelar',
+            descricao: 'Cancelar NFS-e emitida.',
+            campos: [
+              { nome: 'chaveAcesso', tipo: 'string', obrigatorio: true },
+              { nome: 'motivo', tipo: 'string', obrigatorio: true },
+            ],
+            curl_exemplo: `curl -s -X POST -H "x-api-key: SUA_CHAVE" -H "Content-Type: application/json" \\
+  -d '{"chaveAcesso":"NFS35...","motivo":"Servico nao prestado"}' ${BASE}/api/nfse/cancelar`,
+          },
+          {
+            metodo: 'GET', path: '/api/nfse/{chave}',
+            descricao: 'Consultar uma NFS-e. `/xml` e `/danfse` baixam o XML e o PDF.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/nfse/CHAVE`,
+          },
+          {
+            metodo: 'GET', path: '/api/nfse/historico?limit=50',
+            descricao: 'Listar as NFS-e emitidas pela empresa.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" "${BASE}/api/nfse/historico?limit=50"`,
+          },
+          {
+            metodo: 'GET', path: '/api/nfse/proximo-numero?serie=1',
+            descricao: 'O proximo numero livre da serie. Util para o ERP reservar antes de emitir.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" "${BASE}/api/nfse/proximo-numero?serie=1"`,
+          },
+          {
+            metodo: 'GET', path: '/api/nfse/distribuicao',
+            descricao: 'NFS-e RECEBIDAS pela empresa, do Ambiente Nacional.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/nfse/distribuicao`,
+          },
+          {
+            metodo: 'POST', path: '/api/nfse/enviar-email',
+            descricao: 'Enviar a NFS-e (PDF + XML) por email. Requer SMTP configurado.',
+            curl_exemplo: `curl -s -X POST -H "x-api-key: SUA_CHAVE" -H "Content-Type: application/json" \\
+  -d '{"chaveAcesso":"NFS35...","destinatarioEmail":"cliente@email.com"}' ${BASE}/api/nfse/enviar-email`,
+          },
+        ],
+        avisos: [
+          'Municipio sem adesao ao Emissor Nacional recusa ANTES de transmitir, com a mensagem '
+          + 'dizendo que a adesao e feita pela prefeitura. Nao ha ajuste no ERP que contorne isso.',
+          'ADN fora do ar NAO bloqueia a emissao: indisponibilidade de terceiro nao pode impedir '
+          + 'de faturar.',
+          'A partir de 01/09/2026, empresa do Simples que presta servico so emite pelo Emissor '
+          + 'Nacional (Resolucao CGSN 189/2026).',
+        ],
+      },
+      {
+        nome: '4. Cancelamento, Correcao e Inutilizacao',
         endpoints: [
           {
             metodo: 'POST', path: '/api/cancelar',
@@ -6948,7 +7044,7 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '4. Consultas e Historico',
+        nome: '5. Consultas e Historico',
         endpoints: [
           {
             metodo: 'GET', path: '/api/status',
@@ -7014,7 +7110,7 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '5. Manifestacao e DF-e',
+        nome: '6. Manifestacao e DF-e',
         endpoints: [
           {
             metodo: 'POST', path: '/api/manifestar',
@@ -7052,7 +7148,7 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '6. Cadastros (Empresas, Produtos)',
+        nome: '7. Cadastros (Empresas, Produtos)',
         endpoints: [
           {
             metodo: 'GET', path: '/api/empresas',
@@ -7350,7 +7446,7 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '7. Parametros do DANFE (logo e texto fixo)',
+        nome: '8. Parametros do DANFE (logo e texto fixo)',
         resumo: 'Duas coisas saem impressas no DANFE e NAO vem no XML da nota: a '
           + 'logomarca do emitente e o texto fixo que a empresa repete em toda nota. '
           + 'Sao guardadas por CNPJ e aplicadas em TODA geracao de DANFE — nao ha '
@@ -7426,8 +7522,71 @@ app.get('/api/docs', (req, res) => {
         ],
       },
       {
-        nome: '8. Email e Utilitarios',
+        nome: '9. Utilitarios e contrato da API',
         endpoints: [
+          {
+            metodo: 'GET', path: '/api/nfe/distribuicao',
+            descricao: 'NF-e RECEBIDAS pela empresa (DF-e). E por aqui que o ERP descobre a nota '
+              + 'que um fornecedor emitiu contra o CNPJ dela — a SEFAZ nao avisa, e preciso '
+              + 'perguntar. `/{chave}/xml` baixa o XML de uma delas.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/nfe/distribuicao`,
+            response_sucesso: { sucesso: true, ultimoNSU: '000000000001284', documentos: [{ chave: '3126...', emitente: 'FORNECEDOR LTDA', valor: '1250.00' }] },
+          },
+          {
+            metodo: 'POST', path: '/api/classificar',
+            descricao: 'Sugere NCM, CFOP e tributacao a partir da descricao do produto. Serve '
+              + 'para o ERP nao obrigar quem cadastra a saber a tabela de cor — a sugestao vem '
+              + 'para conferencia, e nao aplicada sozinha.',
+            campos: [
+              { nome: 'descricao', tipo: 'string', obrigatorio: true, descricao: 'A descricao do produto, como o vendedor a escreveria.' },
+            ],
+            curl_exemplo: `curl -s -X POST -H "x-api-key: SUA_CHAVE" -H "Content-Type: application/json" \\
+  -d '{"descricao":"molho de pimenta artesanal 150ml"}' ${BASE}/api/classificar`,
+            response_sucesso: { ncm: '21039021', cfop: '5102', confianca: 'alta' },
+          },
+          {
+            metodo: 'GET', path: '/api/billing/planos',
+            descricao: 'Os planos disponiveis e o que cada um cobre — quais documentos e qual '
+              + 'teto mensal.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/billing/planos`,
+          },
+          {
+            metodo: 'GET', path: '/api/openapi.json',
+            descricao: 'O contrato da API em OpenAPI 3. Importe no Insomnia, no Swagger UI ou no '
+              + 'gerador de cliente da sua linguagem — em vez de escrever as chamadas a mao.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/openapi.json`,
+          },
+          {
+            metodo: 'GET', path: '/api/postman.json',
+            descricao: 'A mesma coisa como colecao do Postman, ja com as variaveis de ambiente.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/postman.json -o ponte.postman.json`,
+          },
+          {
+            metodo: 'GET', path: '/api/billing/uso',
+            descricao: 'Quanto da cota do mes ja foi usada. Vale consultar ANTES de um lote: '
+              + 'estourar o limite no meio da rotina para a emissao com o cliente esperando.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" ${BASE}/api/billing/uso`,
+            response_sucesso: { usado: 143, limite: 1000, restante: 857, mes: '2026-08' },
+          },
+          {
+            metodo: 'GET', path: '/api/regras-fiscais?uf=MG',
+            descricao: 'As regras fiscais cadastradas (CFOP, CST/CSOSN por NCM e destino). Sem '
+              + '`?uf`, usa a UF da empresa — fixar uma UF que nao e a dela devolve lista vazia '
+              + 'sem dizer por que.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" "${BASE}/api/regras-fiscais?uf=MG"`,
+          },
+          {
+            metodo: 'GET', path: '/api/produtos/sugestoes?q=TERMO',
+            descricao: 'Autocompletar produto pelo que ja foi cadastrado — para o ERP oferecer '
+              + 'o item sem obrigar a digitar NCM e CFOP de novo.',
+            curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" "${BASE}/api/produtos/sugestoes?q=pimenta"`,
+          },
+          {
+            metodo: 'POST', path: '/api/importar-xlsx',
+            descricao: 'Importar catalogo de produtos em lote (XLSX ou CSV pelo `/api/importar-csv`). '
+              + 'Responde quantos entraram e quantos foram recusados, com o motivo de cada um.',
+            curl_exemplo: `curl -s -X POST -H "x-api-key: SUA_CHAVE" -F "arquivo=@produtos.xlsx" ${BASE}/api/importar-xlsx`,
+          },
           {
             metodo: 'POST', path: '/api/enviar-email',
             descricao: 'Enviar DANFE (PDF) + XML por email. Requer SMTP configurado.',
