@@ -3476,7 +3476,7 @@ function updateAmbientePill() {
  */
 function sincronizarAmbiente() {
   var amb = ambienteSelecionado();
-  var texto = amb === '1' ? 'PRODUCAO' : 'Homologacao';
+  var texto = amb === '1' ? 'Produção' : 'Homologação';
   [['nfceAmbiente', 'nfceAmbienteLabel'], ['nfseAmbiente', 'nfseAmbienteLabel']].forEach(function(par) {
     var campo = document.getElementById(par[0]);
     var label = document.getElementById(par[1]);
@@ -6039,7 +6039,10 @@ function renderCartoesDeEmpresa() {
 /** Um numero com o rotulo embaixo — a unidade de leitura das estatisticas. */
 function numeroDoCartao(rotulo, valor, tom) {
   var cor = tom ? 'var(--' + tom + '-tinta)' : 'var(--texto)';
-  return '<div style="min-width:78px">' +
+  // Sem `min-width`: quem define a largura agora e a coluna da grade, e um
+  // minimo brigando com ela e o que fazia os quatro numeros nao baterem entre
+  // um cartao e outro.
+  return '<div style="min-width:0">' +
     '<div style="font-size:19px;font-weight:700;color:' + cor + ';font-variant-numeric:tabular-nums">' + valor + '</div>' +
     '<div style="font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--suave-texto);margin-top:1px">' + rotulo + '</div>' +
     '</div>';
@@ -6062,34 +6065,41 @@ function cartaoDaEmpresa(d) {
 
   var cert = estadoDoCertificado(d.cert);
   var producao = String(e.ambiente) === '1';
+  // Mesma largura para todos: "PRODUÇÃO" e "8 DIAS" tem tamanhos muito
+  // diferentes, e sem largura fixa cada cartao termina num ponto — a coluna da
+  // direita vira um zigue-zague.
   var pill = function(txt, tom, titulo) {
-    return '<span title="' + (titulo || '') + '" style="font-size:10px;font-weight:600;letter-spacing:.03em;' +
-      'text-transform:uppercase;padding:2px 9px;border-radius:99px;border:1px solid currentColor;' +
-      'background:var(--' + tom + '-fundo);color:var(--' + tom + '-tinta)">' + txt + '</span>';
+    return '<span title="' + (titulo || '') + '" style="display:block;width:100%;' +
+      'text-align:center;font-size:10px;font-weight:600;letter-spacing:.03em;' +
+      'text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid currentColor;' +
+      'white-space:nowrap;background:var(--' + tom + '-fundo);color:var(--' + tom + '-tinta)">' +
+      txt + '</span>';
   };
 
   return '<div style="border:1px solid var(--borda);border-radius:var(--raio);background:var(--cartao);' +
       'padding:16px 18px;margin-bottom:12px">' +
 
-    // Cabecalho: quem e a empresa, e em que pe ela esta.
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">' +
+    // Cabecalho em tres colunas: nome, ambiente, certificado. As duas ultimas
+    // tem largura fixa, entao ficam no mesmo x em todos os cartoes — e da para
+    // varrer a coluna de certificado de cima a baixo sem ler o resto.
+    '<div style="display:grid;grid-template-columns:minmax(0,1fr) 118px 108px;' +
+        'align-items:start;gap:12px">' +
       '<div style="min-width:0">' +
-        '<div style="font-size:14px;font-weight:700">' + escapeHtml(String(nome)) + '</div>' +
+        '<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;' +
+          'white-space:nowrap">' + escapeHtml(String(nome)) + '</div>' +
         '<div style="font-size:12px;color:var(--suave-texto);margin-top:2px">' +
           formatCnpj(cnpj) + ' · ' + (e.uf || '—') + ' · ' + regimeDaEmpresa(e.crt) +
         '</div>' +
       '</div>' +
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
-        pill(producao ? 'Produção' : 'Homologação',
+      '<div>' + pill(producao ? 'Produção' : 'Homologação',
              producao ? 'perigo' : 'alerta',
-             producao ? 'As notas desta empresa têm valor fiscal' : 'Ambiente de teste, sem valor fiscal') +
-        pill(cert.texto, cert.tom, cert.detalhe) +
-      '</div>' +
+             producao ? 'As notas desta empresa têm valor fiscal' : 'Ambiente de teste, sem valor fiscal') + '</div>' +
+      '<div>' + pill(cert.texto, cert.tom, cert.detalhe) + '</div>' +
     '</div>' +
 
     // Estatisticas: o que a empresa produziu.
-    '<div style="display:flex;gap:22px;flex-wrap:wrap;margin-top:14px;padding-top:14px;' +
-        'border-top:1px solid var(--borda)">' +
+    '<div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:12px;' +
+        'margin-top:14px;padding-top:14px;border-top:1px solid var(--borda)">' +
       numeroDoCartao('Autorizadas', autorizadas, autorizadas ? 'sucesso' : '') +
       numeroDoCartao('Canceladas', canceladas, canceladas ? 'perigo' : '') +
       numeroDoCartao('Valor emitido', valor ? reais(valor) : '—', '') +
@@ -6101,8 +6111,8 @@ function cartaoDaEmpresa(d) {
     // Controle: o que se FAZ com ela. Separado das estatisticas de proposito —
     // um lado se le, o outro se clica, e misturar os dois faz procurar o botao
     // no meio do numero.
-    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;' +
-        'border-top:1px dashed var(--borda)">' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));' +
+        'gap:8px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--borda)">' +
       '<button class="btn btn-outline btn-sm" onclick="verNotasDaEmpresa(\'' + cnpj + '\')">Ver notas</button>' +
       '<button class="btn btn-outline btn-sm" onclick="exportarXmlsDaEmpresa(\'' + cnpj + '\')">Exportar XMLs</button>' +
       '<button class="btn btn-outline btn-sm" onclick="abrirEmpresa(\'' + cnpj + '\')">Cadastro</button>' +
@@ -7450,15 +7460,42 @@ async function promoverParaPlataforma(cnpj) {
   }
 }
 
+/**
+ * O selo — sempre da mesma largura.
+ *
+ * Um selo que encolhe com o texto faz cada linha da lista terminar num ponto
+ * diferente, e a lista inteira parece torta. `min-width` mais centro resolve:
+ * "API" e "Plataforma" ocupam a mesma caixa, e as caixas formam uma coluna.
+ */
+/**
+ * O fundo tingido de uma cor.
+ *
+ * Cinco lugares faziam `cor + '15'` — o truque de colar dois digitos de alfa no
+ * fim de um hexadecimal. Funcionava enquanto a cor ERA um hexadecimal. Quando
+ * as cores viraram token, `var(--sucesso)15` virou CSS invalido, o navegador
+ * descartou a regra e os selos perderam o fundo — ficaram texto colorido solto
+ * no meio da linha.
+ *
+ * `color-mix` faz o mesmo e funciona com token, hexadecimal ou o que vier.
+ */
+function tingir(cor) {
+  return 'color-mix(in srgb, ' + cor + ' 15%, transparent)';
+}
+
+function selo(texto, fundo, cor, titulo) {
+  return '<span title="' + (titulo || '') + '" style="display:inline-block;min-width:92px;' +
+    'text-align:center;font-size:10.5px;padding:3px 10px;border-radius:99px;font-weight:600;' +
+    'letter-spacing:.02em;white-space:nowrap;background:' + fundo + ';color:' + cor + '">' +
+    texto + '</span>';
+}
+
 function seloModalidade(modalidade) {
   var plataforma = modalidade === 'plataforma';
-  return '<span title="' + (plataforma
-      ? 'Recebe um site pronto, publicado por nós'
-      : 'Já tem sistema; usa só a credencial de integração') + '" ' +
-    'style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;' +
-      'background:' + (plataforma ? 'var(--marca-fundo)' : 'var(--suave)') + ';' +
-      'color:' + (plataforma ? 'var(--marca-tinta)' : 'var(--suave-texto)') + '">' +
-    (plataforma ? 'Plataforma' : 'API') + '</span>';
+  return selo(plataforma ? 'Plataforma' : 'API',
+    plataforma ? 'var(--marca-fundo)' : 'var(--suave)',
+    plataforma ? 'var(--marca-tinta)' : 'var(--suave-texto)',
+    plataforma ? 'Recebe um site pronto, publicado por nós'
+               : 'Já tem sistema; usa só a credencial de integração');
 }
 
 function renderClientesLista(clients, total) {
@@ -7471,24 +7508,45 @@ function renderClientesLista(clients, total) {
   clients.forEach(function(c) {
     var statusColor = STATUS_COLORS[c.status] || 'var(--suave-texto)';
     var statusLabel = STATUS_LABELS[c.status] || c.status;
-    html += '<div onclick="abrirDetalheCliente(\'' + c.empresaCnpj + '\')" style="background:var(--cartao);border:1px solid var(--borda);border-radius:10px;padding:16px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" onmouseout="this.style.boxShadow=\'none\'">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center">' +
-        '<div>' +
-          '<div style="font-weight:600;font-size:14px">' + (c.razaoSocial || c.empresaCnpj) + '</div>' +
-          '<div style="font-size:12px;color:var(--suave-texto);margin-top:3px;display:flex;align-items:center;gap:6px">' + formatarCnpj(c.empresaCnpj) +
-            '<span style="background:' + seloPlano(c.plano).cor + ';color:var(--cartao);padding:2px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.06em">' + seloPlano(c.plano).nome + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<div style="display:flex;gap:8px;align-items:center">' +
-          // O selo de modalidade so aparece quando a lista MISTURA as duas —
-          // dentro da aba "Por API", dizer "API" em cada linha e repetir o
-          // titulo seis vezes. A marca propria continua, porque ela e
-          // independente: cliente de API pode ter a logo dele no DANFE.
-          (c.modalidade && c.modalidade !== _modalidadeAtiva ? seloModalidade(c.modalidade) : '') +
-          (c.whiteLabelAtiva ? '<span title="Marca própria" style="font-size:11px;background:var(--roxo-fundo);color:var(--roxo-tinta);padding:2px 8px;border-radius:99px">Marca própria</span>' : '') +
-          '<span style="font-size:11px;background:' + statusColor + '15;color:' + statusColor + ';padding:3px 10px;border-radius:99px;font-weight:600">' + statusLabel + '</span>' +
+    // Grade de colunas, e nao `space-between`. Com `space-between` cada linha
+    // termina onde o texto dela acabou: nome curto empurra o selo para um
+    // lugar, nome longo para outro, e a lista inteira fica torta. Colunas de
+    // largura fixa fazem os selos formarem uma coluna de verdade.
+    html += '<div onclick="abrirDetalheCliente(\'' + c.empresaCnpj + '\')" ' +
+        'style="background:var(--cartao);border:1px solid var(--borda);border-radius:10px;' +
+        'padding:14px 16px;margin-bottom:8px;cursor:pointer;transition:box-shadow .15s;' +
+        'display:grid;grid-template-columns:minmax(0,1fr) 108px 108px 132px;' +
+        'align-items:center;gap:12px" ' +
+        'onmouseover="this.style.boxShadow=\'0 2px 8px rgba(0,0,0,.08)\'" ' +
+        'onmouseout="this.style.boxShadow=\'none\'">' +
+
+      // Coluna 1 — quem e o cliente.
+      '<div style="min-width:0">' +
+        '<div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;' +
+          'white-space:nowrap">' + (c.razaoSocial || c.empresaCnpj) + '</div>' +
+        '<div style="font-size:12px;color:var(--suave-texto);margin-top:3px;display:flex;' +
+          'align-items:center;gap:6px">' + formatarCnpj(c.empresaCnpj) +
+          '<span style="background:' + seloPlano(c.plano).cor + ';color:var(--cartao);padding:2px 8px;' +
+            'border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.06em">' +
+            seloPlano(c.plano).nome + '</span>' +
         '</div>' +
       '</div>' +
+
+      // Coluna 2 — modalidade. So aparece quando a lista MISTURA as duas:
+      // dentro da aba "Por API", dizer "API" em cada linha e repetir o titulo
+      // seis vezes. A coluna fica vazia, e nao some, para o resto nao deslizar.
+      '<div>' + (c.modalidade && c.modalidade !== _modalidadeAtiva
+        ? seloModalidade(c.modalidade) : '') + '</div>' +
+
+      // Coluna 3 — marca propria. Independente da modalidade: cliente de API
+      // pode ter a logo dele no DANFE.
+      '<div>' + (c.whiteLabelAtiva
+        ? selo('Marca própria', 'var(--roxo-fundo)', 'var(--roxo-tinta)',
+               'Usa identidade visual própria') : '') + '</div>' +
+
+      // Coluna 4 — situacao. A ultima porque e a que se procura primeiro
+      // quando se varre a lista de cima a baixo.
+      '<div>' + selo(statusLabel, tingir(statusColor), statusColor) + '</div>' +
     '</div>';
   });
   el.innerHTML = html;
@@ -8464,6 +8522,28 @@ async function gravarParametrosDanfe(cnpj, corpo, sucesso) {
   }
 }
 
+/**
+ * Um botao de acao do cliente.
+ *
+ * Todos iguais de proposito. A cor volta a significar alguma coisa quando
+ * quase nada e colorido: `principal` para a acao que se espera clicar,
+ * `tracejado` para a que muda a natureza do cadastro, e contorno neutro para
+ * o resto.
+ */
+function acaoDoCliente(fn, cnpj, texto, tipo, titulo) {
+  var estilo = 'width:100%;padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;'
+    + 'font-family:inherit;text-transform:uppercase;letter-spacing:.03em;font-weight:600;';
+  if (tipo === 'principal') {
+    estilo += 'border:1px solid var(--marca);background:var(--marca);color:var(--marca-texto)';
+  } else if (tipo === 'tracejado') {
+    estilo += 'border:1px dashed var(--borda);background:var(--cartao);color:var(--suave-texto)';
+  } else {
+    estilo += 'border:1px solid var(--borda);background:var(--cartao);color:var(--texto)';
+  }
+  return '<button onclick="' + fn + '(\'' + cnpj + '\')" title="' + (titulo || '') + '" ' +
+    'style="' + estilo + '">' + texto + '</button>';
+}
+
 function renderDetalheCliente(cnpj) {
   var d = _clienteDetalhe;
   var c = d.cliente;
@@ -8511,7 +8591,7 @@ function renderDetalheCliente(cnpj) {
   var healthHtml = '';
   if (d.health && HEALTH_INFO[d.health.status]) {
     var h = HEALTH_INFO[d.health.status];
-    healthHtml = '<div style="display:inline-block;background:' + h.cor + '15;color:' + h.cor +
+    healthHtml = '<div style="display:inline-block;background:' + tingir(h.cor) + ';color:' + h.cor +
       ';padding:3px 12px;border-radius:99px;font-size:12px;font-weight:700">' + h.texto + '</div>';
   }
 
@@ -8546,14 +8626,14 @@ function renderDetalheCliente(cnpj) {
     keysHtml = '<div style="font-size:13px;color:var(--suave-texto)">Nenhuma chave ativa. Sem ela o cliente não consegue chamar a API.</div>';
   } else {
     keysHtml = ativas.map(function (k) {
-      var amb = k.ambientePermitido === 'producao' ? ['Producao', 'var(--sucesso)']
-              : k.ambientePermitido === 'ambos' ? ['Producao + Homologacao', 'var(--marca)']
-              : ['Homologacao', 'var(--alerta)'];
+      var amb = k.ambientePermitido === 'producao' ? ['Produção', 'var(--sucesso)']
+              : k.ambientePermitido === 'ambos' ? ['Produção + Homologação', 'var(--marca)']
+              : ['Homologação', 'var(--alerta)'];
       return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--suave);border:1px solid var(--borda);border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
         '<div><div style="font-size:13px;font-weight:600">' + escapeHtml(k.nome || 'Integracao') + '</div>' +
         '<div style="font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--suave-texto)">' + escapeHtml(k.prefixo || '') + '&hellip;</div></div>' +
         '<div style="display:flex;gap:8px;align-items:center">' +
-          '<span style="background:' + amb[1] + '15;color:' + amb[1] + ';padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600">' + amb[0] + '</span>' +
+          '<span style="background:' + tingir(amb[1]) + ';color:' + amb[1] + ';padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600">' + amb[0] + '</span>' +
           (k.escopo === 'readonly' ? '<span style="background:#6b728015;color:var(--suave-texto);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600">Somente leitura</span>' : '') +
           '<button onclick="revogarChaveCliente(\'' + cnpj + '\',' + k.id + ')" style="padding:4px 12px;border:1px solid var(--perigo);color:var(--perigo);background:var(--cartao);border-radius:6px;font-size:11px;cursor:pointer">Revogar</button>' +
         '</div>' +
@@ -8569,7 +8649,7 @@ function renderDetalheCliente(cnpj) {
           '<div style="font-size:13px;color:var(--suave-texto);margin-top:3px">' + formatarCnpj(cnpj) + ' &middot; ' + escapeHtml(c.codigoInterno || '—') + '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center;flex-shrink:0">' + healthHtml +
-          '<span style="background:' + statusColor + '15;color:' + statusColor + ';padding:4px 14px;border-radius:99px;font-size:12px;font-weight:700">' + (STATUS_LABELS[c.status] || c.status) + '</span>' +
+          '<span style="background:' + tingir(statusColor) + ';color:' + statusColor + ';padding:4px 14px;border-radius:99px;font-size:12px;font-weight:700">' + (STATUS_LABELS[c.status] || c.status) + '</span>' +
         '</div>' +
       '</div>' +
 
@@ -8631,27 +8711,55 @@ function renderDetalheCliente(cnpj) {
         '<div style="margin-top:8px"><button onclick="showCriarWebhook(\'' + cnpj + '\')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">+ Adicionar webhook</button></div>' +
       '</div>' +
 
-      '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--borda);display:flex;gap:8px;flex-wrap:wrap">' +
-        statusBtn(cnpj, c.status, 'sandbox', 'Ambiente de testes') +
-        statusBtn(cnpj, c.status, 'active', 'Ativar') +
-        statusBtn(cnpj, c.status, 'suspended', 'Suspender') +
-        statusBtn(cnpj, c.status, 'cancelled', 'Cancelar') +
-        '<button onclick="showCadastroFiscal(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--info);color:var(--info);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Cadastro fiscal</button>' +
-        '<button onclick="showEnviarCertificado(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--sucesso);color:var(--sucesso);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Certificado A1</button>' +
-        '<button onclick="showWhiteLabelConfig(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--roxo);color:var(--roxo);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Marca própria</button>' +
-        (temPlataforma
-          ? '<button onclick="showGerarKit(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--marca);color:var(--cartao);background:var(--marca);border-radius:6px;font-size:12px;cursor:pointer">Gerar plataforma</button>'
-          // Quem entrou por API pode comprar plataforma depois. Em vez de
-          // sumir com o caminho, ele vira o que de fato e: uma MUDANCA de
-          // modalidade, dita em voz alta, e nao um botao que age por conta.
-          : '<button onclick="promoverParaPlataforma(\'' + cnpj + '\')" style="padding:6px 16px;border:1px dashed var(--borda);color:var(--suave-texto);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer" title="Este cliente entrou por API. Passar para plataforma cria site, repositório e senha de painel.">Passar para plataforma</button>') +
-        // Cliente que ja tem sistema proprio nao quer plataforma nenhuma: quer o
-        // manual para plugar no ERP dele. O manual existia e so aparecia no
-        // instante em que a chave era criada — quem precisava depois, que e a
-        // maioria, nao alcancava.
-        '<button onclick="baixarDocIntegracao(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--sucesso);color:var(--sucesso);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Manual de integração</button>' +
-        '<button onclick="showLogsCliente(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--borda);color:var(--texto-medio);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Ver Logs</button>' +
-        '<button onclick="excluirClienteApi(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--perigo);color:var(--cartao);background:var(--perigo);border-radius:6px;font-size:12px;cursor:pointer;margin-left:auto">Excluir Cliente</button>' +
+      // --- Acoes do cliente -------------------------------------------------
+      //
+      // Eram doze botoes soltos num `flex-wrap`, cada um com uma cor propria:
+      // azul, verde, roxo, ambar, vermelho. Duas coisas davam errado ao mesmo
+      // tempo. A largura seguia o texto, entao as linhas quebravam em lugares
+      // diferentes e nada se alinhava com nada. E a cor nao significava nada —
+      // com tudo colorido, o unico botao que PRECISA gritar (excluir) gritava
+      // junto com os outros onze.
+      //
+      // Agora: grade de colunas iguais, e cor so onde ela informa. Mudar
+      // situacao mantem a cor do estado (e a unica leitura de cor util aqui);
+      // o resto e contorno neutro; excluir fica sozinho, embaixo, em vermelho.
+      '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--borda)">' +
+
+        '<div style="font-size:10px;font-weight:600;letter-spacing:.05em;' +
+          'text-transform:uppercase;color:var(--suave-texto);margin-bottom:8px">Situação</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:8px">' +
+          statusBtn(cnpj, c.status, 'sandbox', 'Ambiente de testes') +
+          statusBtn(cnpj, c.status, 'active', 'Ativar') +
+          statusBtn(cnpj, c.status, 'suspended', 'Suspender') +
+          statusBtn(cnpj, c.status, 'cancelled', 'Cancelar') +
+        '</div>' +
+
+        '<div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;' +
+          'color:var(--suave-texto);margin:16px 0 8px">Cadastro e entrega</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:8px">' +
+          acaoDoCliente('showCadastroFiscal', cnpj, 'Cadastro fiscal') +
+          acaoDoCliente('showEnviarCertificado', cnpj, 'Certificado A1') +
+          acaoDoCliente('showWhiteLabelConfig', cnpj, 'Marca própria') +
+          (temPlataforma
+            ? acaoDoCliente('showGerarKit', cnpj, 'Gerar plataforma', 'principal')
+            // Quem entrou por API pode comprar plataforma depois. Em vez de
+            // sumir com o caminho, ele vira o que de fato e: uma MUDANCA de
+            // modalidade, dita em voz alta, e nao um botao que age por conta.
+            : acaoDoCliente('promoverParaPlataforma', cnpj, 'Passar para plataforma', 'tracejado',
+                'Este cliente entrou por API. Passar para plataforma cria site, repositório e senha de painel.')) +
+          // Cliente que ja tem sistema proprio nao quer plataforma nenhuma:
+          // quer o manual para plugar no ERP dele. Ele existia e so aparecia no
+          // instante em que a chave era criada — quem precisava depois, que e a
+          // maioria, nao alcancava.
+          acaoDoCliente('baixarDocIntegracao', cnpj, 'Manual de integração') +
+          acaoDoCliente('showLogsCliente', cnpj, 'Ver logs') +
+        '</div>' +
+
+        '<div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--borda);' +
+          'display:flex;justify-content:flex-end">' +
+          '<button onclick="excluirClienteApi(\'' + cnpj + '\')" class="btn btn-danger btn-sm">' +
+            'Excluir cliente</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
 
@@ -8665,7 +8773,13 @@ function statusBtn(cnpj, current, target, label) {
   if (current === target) return '';
   var colors = { sandbox: 'var(--alerta)', active: 'var(--sucesso)', suspended: 'var(--perigo)', cancelled: 'var(--suave-texto)' };
   var c = colors[target] || 'var(--suave-texto)';
-  return '<button onclick="alterarStatusCliente(\'' + cnpj + '\',\'' + target + '\')" style="padding:6px 16px;border:1px solid ' + c + ';color:' + c + ';background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">' + label + '</button>';
+  // `width:100%` para o botao ocupar a coluna da grade — sem isso ele volta a
+  // seguir o texto, e "Ambiente de testes" fica o dobro de "Ativar".
+  return '<button onclick="alterarStatusCliente(\'' + cnpj + '\',\'' + target + '\')" ' +
+    'style="width:100%;padding:7px 12px;border:1px solid ' + c + ';color:' + c + ';' +
+    'background:var(--cartao);border-radius:8px;font-size:12px;cursor:pointer;' +
+    'font-family:inherit;text-transform:uppercase;letter-spacing:.03em;font-weight:600">' +
+    label + '</button>';
 }
 
 async function excluirClienteApi(cnpj) {
@@ -8882,8 +8996,8 @@ function mostrarChaveGerada(cnpj, j) {
   // Cliente ativo nasce com chave dos dois ambientes: e o que deixa a plataforma
   // dele ter "ver previa" (homologacao) e "emitir" (producao) sem trocar
   // credencial no meio do caminho.
-  var rotuloAmb = permitido === 'ambos' ? 'Producao + Homologacao'
-                : permitido === 'producao' ? 'Producao' : 'Homologacao';
+  var rotuloAmb = permitido === 'ambos' ? 'Produção + Homologação'
+                : permitido === 'producao' ? 'Produção' : 'Homologação';
   var notaAmb = permitido === 'ambos'
       ? ' — a plataforma escolhe por nota: previa e teste em homologacao, emissao valendo em producao.'
     : permitido === 'homologacao'
@@ -10007,7 +10121,7 @@ function renderTemplates(tpls) {
         '<div><span style="font-weight:600;font-size:14px">' + escapeHtml(t.name) + '</span>' +
           '<span style="font-size:12px;color:var(--suave-texto);margin-left:8px">v' + t.version + ' &middot; ' + t.slug + '</span></div>' +
         '<div style="display:flex;gap:8px;align-items:center">' +
-          '<span style="font-size:11px;background:' + sColor + '15;color:' + sColor + ';padding:3px 10px;border-radius:99px;font-weight:600">' + t.status.toUpperCase() + '</span>' +
+          '<span style="font-size:11px;background:' + tingir(sColor) + ';color:' + sColor + ';padding:3px 10px;border-radius:99px;font-weight:600">' + t.status.toUpperCase() + '</span>' +
           (t.status === 'draft' ? '<button onclick="publicarTemplate(' + t.id + ')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">Publicar</button>' : '') +
         '</div>' +
       '</div>' +
