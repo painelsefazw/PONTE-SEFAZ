@@ -7495,6 +7495,8 @@ app.get('/api/admin/clients', async (req, res) => {
     const result = await store.listar({
       status: req.query.status as ClientStatus,
       plano: req.query.plano as string,
+      modalidade: req.query.modalidade === 'plataforma' ? 'plataforma'
+        : req.query.modalidade === 'api' ? 'api' : undefined,
       whiteLabel: req.query.whiteLabel === 'true' ? true : req.query.whiteLabel === 'false' ? false : undefined,
       busca: req.query.busca as string,
       limite: Number(req.query.limite) || 50,
@@ -8050,7 +8052,11 @@ app.post('/api/admin/clients/:cnpj/whitelabel', async (req, res) => {
     const cnpj = req.params.cnpj.replace(/\D/g, '');
     const store = await getWhiteLabelStore();
     await store.salvar({ ...req.body, empresaCnpj: cnpj });
-    // Ativar white-label no cliente
+    // Liga a marca propria — e SO isso. Esta linha ja significou tambem "este
+    // cliente tem plataforma", porque `whiteLabelAtiva` fazia os dois papeis:
+    // um cliente de API que pedia a logo dele no DANFE era reclassificado
+    // aqui, sozinho, e passava a aparecer nas listas de plataforma. A
+    // modalidade agora e coluna propria e ninguem a muda pelas costas.
     const clientStore = await getApiClientStore();
     await clientStore.atualizar(cnpj, { whiteLabelAtiva: true });
     registrarAudit('admin', 'whitelabel.saved', 'white_label', {

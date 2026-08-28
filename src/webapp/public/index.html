@@ -827,7 +827,7 @@ body {
   <button class="escondido-na-revenda" onclick="showGroup('cadastros')">Cadastros</button>
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('operacoes')">Operações</button>
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('config')">Configurações</button>
-  <button class="somente-contador" onclick="showGroup('clientesapi')">Clientes API</button>
+  <button class="somente-contador" onclick="showGroup('clientesapi')">Clientes</button>
 </div>
 <!-- Barra de contexto: em nome de QUEM se opera, em qual ambiente e como
      esta a SEFAZ. Ficava no topo junto da marca; saiu de la quando a navegacao
@@ -2300,7 +2300,7 @@ body {
 <div class="container">
   <div class="section">
     <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Clientes API</span>
+      <span>Clientes</span>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" onclick="showCadastroClienteApi('api')" title="O cliente já tem sistema e so quer credencial para integrar">+ Cliente por API</button>
         <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Cliente com plataforma</button>
@@ -2309,6 +2309,14 @@ body {
     <div id="clientesApiDashboard" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
     <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <input type="text" id="clienteApiBusca" placeholder="Buscar por nome ou CNPJ" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px" oninput="loadClientesApi()">
+      <!-- A modalidade vem ANTES do status porque e a divisao mais grossa: as
+           duas listas tem perguntas diferentes. Em "com plataforma" se olha
+           publicacao e versao; em "por API", chave e ultimo uso. -->
+      <select id="clienteApiModalidadeFilter" onchange="loadClientesApi()" style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
+        <option value="">Todas as modalidades</option>
+        <option value="api">Somente por API</option>
+        <option value="plataforma">Somente com plataforma</option>
+      </select>
       <select id="clienteApiStatusFilter" onchange="loadClientesApi()" style="padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px">
         <option value="">Todos os status</option>
         <option value="active">Ativo</option>
@@ -7156,9 +7164,11 @@ async function loadClientesApi() {
   await carregarPlanos();
   var busca = document.getElementById('clienteApiBusca').value;
   var status = document.getElementById('clienteApiStatusFilter').value;
+  var modalidade = document.getElementById('clienteApiModalidadeFilter').value;
   var qs = '?limite=50';
   if (busca) qs += '&busca=' + encodeURIComponent(busca);
   if (status) qs += '&status=' + status;
+  if (modalidade) qs += '&modalidade=' + modalidade;
   try {
     var [dashR, listR] = await Promise.all([
       apiFetch('/api/admin/dashboard'),
@@ -7177,6 +7187,9 @@ async function loadClientesApi() {
 function renderClientesDashboard(d) {
   var el = document.getElementById('clientesApiDashboard');
   el.innerHTML = [
+    // A modalidade vem primeiro: e a divisao que muda o trabalho do dia.
+    cardMini('Por API', d.porApi || 0, ''),
+    cardMini('Com plataforma', d.comPlataforma || 0, ''),
     cardMini('Ativos', d.ativos || 0, 'success'),
     // `sandbox` e `white-label` sao os valores internos; na tela eles se leem
     // em portugues, porque quem opera nao precisa saber o nome do campo.
@@ -7196,10 +7209,52 @@ function cardMini(label, val, tom) {
     '<div class="dash-label">' + label + '</div></div>';
 }
 
+/**
+ * O selo da modalidade.
+ *
+ * Nao e enfeite: e a resposta para "por que este cliente nao tem plataforma?".
+ * Sem ele, a lista mistura quem comprou site com quem comprou credencial, e a
+ * unica forma de saber e abrindo a ficha.
+ */
+/**
+ * Passa um cliente de API para plataforma.
+ *
+ * Pergunta antes porque nao e so um campo: a partir daqui o cliente passa a
+ * ter site, repositorio e senha de painel, e alguem precisa publicar e manter
+ * isso. Trocar por engano cria trabalho que ninguem pediu.
+ */
+async function promoverParaPlataforma(cnpj) {
+  if (!confirm('Passar este cliente para a modalidade PLATAFORMA?\n\n'
+    + 'Ele passa a ter site próprio, repositório e senha de painel — e alguém '
+    + 'precisa publicar e manter isso.')) return;
+  try {
+    var r = await apiFetch('/api/admin/clients/' + cnpj, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ modalidade: 'plataforma' })
+    });
+    if (!r.ok) throw new Error((await r.json()).erro || 'falhou');
+    abrirDetalheCliente(cnpj);
+  } catch (e) {
+    alert('Não foi possível mudar a modalidade: ' + e.message);
+  }
+}
+
+function seloModalidade(modalidade) {
+  var plataforma = modalidade === 'plataforma';
+  return '<span title="' + (plataforma
+      ? 'Recebe um site pronto, publicado por nós'
+      : 'Já tem sistema; usa só a credencial de integração') + '" ' +
+    'style="font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;' +
+      'background:' + (plataforma ? 'var(--marca-fundo)' : 'var(--suave)') + ';' +
+      'color:' + (plataforma ? 'var(--marca-tinta)' : 'var(--suave-texto)') + '">' +
+    (plataforma ? 'Plataforma' : 'API') + '</span>';
+}
+
 function renderClientesLista(clients, total) {
   var el = document.getElementById('clientesApiLista');
   if (!clients.length) {
-    el.innerHTML = '<div class="hist-empty">Nenhum cliente de API cadastrado</div>';
+    el.innerHTML = '<div class="hist-empty">Nenhum cliente cadastrado</div>';
     return;
   }
   var html = '<div style="font-size:12px;color:var(--suave-texto);margin-bottom:8px">' + total + ' cliente(s)</div>';
@@ -7215,7 +7270,11 @@ function renderClientesLista(clients, total) {
           '</div>' +
         '</div>' +
         '<div style="display:flex;gap:8px;align-items:center">' +
-          (c.whiteLabelAtiva ? '<span style="font-size:11px;background:var(--roxo-fundo);color:var(--roxo);padding:2px 8px;border-radius:99px">WL</span>' : '') +
+          // Modalidade e marca sao selos DIFERENTES de proposito: um cliente
+          // de API pode ter marca propria (a logo dele no DANFE) sem ter
+          // plataforma nenhuma, e ate hoje os dois casos se confundiam.
+          seloModalidade(c.modalidade) +
+          (c.whiteLabelAtiva ? '<span title="Marca própria" style="font-size:11px;background:var(--roxo-fundo);color:var(--roxo-tinta);padding:2px 8px;border-radius:99px">Marca própria</span>' : '') +
           '<span style="font-size:11px;background:' + statusColor + '15;color:' + statusColor + ';padding:3px 10px;border-radius:99px;font-weight:600">' + statusLabel + '</span>' +
         '</div>' +
       '</div>' +
@@ -7609,9 +7668,10 @@ async function wzSalvar() {
         plano: c.plano,
         responsavel: c.responsavel || undefined,
         emailTecnico: c.email || undefined,
-        // A modalidade escolhida no botao. Sem isto, o cliente cadastrado como
-        // "com plataforma" nascia identico ao de API e so virava white-label
-        // quando alguem lembrasse de marcar depois.
+        // A modalidade escolhida no botao, agora gravada como ela mesma. Ela
+        // viajava só como `whiteLabelAtiva`, e isso confundia duas perguntas
+        // diferentes: "o que o cliente comprou" e "ele tem marca própria".
+        modalidade: c.modalidade === 'plataforma' ? 'plataforma' : 'api',
         whiteLabelAtiva: c.whiteLabelAtiva === true,
         observacoes: obs.join(' | ') || undefined,
         // Vai junto do cadastro: sem isso a chave existe mas a nota nao monta.
@@ -8199,6 +8259,11 @@ function renderDetalheCliente(cnpj) {
   var c = d.cliente;
   var el = document.getElementById('clientesApiLista');
   var statusColor = STATUS_COLORS[c.status] || 'var(--suave-texto)';
+  // O que o cliente COMPROU decide o que esta tela mostra. Antes ela mostrava
+  // tudo para todos: quem entrou por API via senha de um site que nao tem e
+  // botao de publicar um repositorio que nunca vai existir. Nao era so ruido —
+  // sugeria que ele tinha plataforma, e mais de uma vez alguem clicou.
+  var temPlataforma = c.modalidade === 'plataforma';
 
   var svcsHtml = (d.servicos || []).map(function(s) {
     return '<span style="display:inline-block;background:var(--sucesso-fundo);color:var(--sucesso);padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;margin-right:4px">' + (s.service || s).toUpperCase() + '</span>';
@@ -8329,12 +8394,16 @@ function renderDetalheCliente(cnpj) {
         '</div>' +
       '</div>' +
 
+      // Senha de um site que este cliente nao tem e ruido — e pior: sugere
+      // que ele tem. Some para quem comprou so a credencial.
+      (temPlataforma ?
       '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Acesso ao painel do template</h4>' +
         '<div style="font-size:12px;color:var(--suave-texto)">Usuário e senha que o cliente usa para entrar no site dele. Sorteados por CNPJ — não existe senha padrão.</div>' +
         '<div style="margin-top:8px;display:flex;gap:12px">' +
           '<button onclick="verSenhaPainel(\'' + cnpj + '\')" style="font-size:12px;color:var(--marca);background:none;border:none;cursor:pointer;font-weight:600">Ver senha</button>' +
           '<button onclick="rotacionarSenhaPainel(\'' + cnpj + '\')" style="font-size:12px;color:var(--alerta-tinta);background:none;border:none;cursor:pointer;font-weight:600">Gerar outra</button>' +
-        '</div>' +
+        '</div>'
+        : '') +
       '</div>' +
 
       '<div style="margin-top:20px"><h4 style="font-size:14px;font-weight:700;margin-bottom:8px">Serviços Contratados</h4>' + svcsHtml +
@@ -8360,7 +8429,12 @@ function renderDetalheCliente(cnpj) {
         '<button onclick="showCadastroFiscal(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--info);color:var(--info);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Cadastro fiscal</button>' +
         '<button onclick="showEnviarCertificado(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--sucesso);color:var(--sucesso);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Certificado A1</button>' +
         '<button onclick="showWhiteLabelConfig(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--roxo);color:var(--roxo);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer">Marca própria</button>' +
-        '<button onclick="showGerarKit(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--marca);color:var(--cartao);background:var(--marca);border-radius:6px;font-size:12px;cursor:pointer">Gerar plataforma</button>' +
+        (temPlataforma
+          ? '<button onclick="showGerarKit(\'' + cnpj + '\')" style="padding:6px 16px;border:1px solid var(--marca);color:var(--cartao);background:var(--marca);border-radius:6px;font-size:12px;cursor:pointer">Gerar plataforma</button>'
+          // Quem entrou por API pode comprar plataforma depois. Em vez de
+          // sumir com o caminho, ele vira o que de fato e: uma MUDANCA de
+          // modalidade, dita em voz alta, e nao um botao que age por conta.
+          : '<button onclick="promoverParaPlataforma(\'' + cnpj + '\')" style="padding:6px 16px;border:1px dashed var(--borda);color:var(--suave-texto);background:var(--cartao);border-radius:6px;font-size:12px;cursor:pointer" title="Este cliente entrou por API. Passar para plataforma cria site, repositório e senha de painel.">Passar para plataforma</button>') +
         // Cliente que ja tem sistema proprio nao quer plataforma nenhuma: quer o
         // manual para plugar no ERP dele. O manual existia e so aparecia no
         // instante em que a chave era criada — quem precisava depois, que e a

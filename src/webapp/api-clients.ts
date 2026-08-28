@@ -2,6 +2,20 @@ import { Pool } from 'pg';
 
 export type ClientStatus = 'draft' | 'sandbox' | 'active' | 'past_due' | 'suspended' | 'cancelled';
 
+/**
+ * As duas modalidades de venda, que nao sao a mesma coisa que a marca.
+ *
+ * `api`        — o cliente ja tem sistema e so quer credencial para integrar.
+ * `plataforma` — o cliente recebe um site pronto, publicado por nos.
+ *
+ * A diferenca e COMERCIAL e muda o trabalho: quem entra por API nunca vai ter
+ * repositorio, publicacao nem senha de painel; quem entra por plataforma
+ * precisa dos tres. Misturar os dois numa lista so faz cada pergunta ("quais
+ * plataformas estao desatualizadas?", "quais chaves andam paradas?") varrer
+ * clientes que nao tem como responde-la.
+ */
+export type ModalidadeCliente = 'api' | 'plataforma';
+
 export interface ApiClient {
   empresaCnpj: string;
   razaoSocial: string;
@@ -12,6 +26,18 @@ export interface ApiClient {
   responsavel?: string;
   emailTecnico?: string;
   observacoes?: string;
+  /**
+   * O que o cliente comprou. Ver `ModalidadeCliente`.
+   *
+   * Nasceu porque `whiteLabelAtiva` estava fazendo este papel, e nao e ele.
+   * "Tem marca propria" e uma pergunta VISUAL; "recebe plataforma" e uma
+   * pergunta comercial. Elas coincidiam so porque o mesmo botao ligava as
+   * duas — e divergiam em silencio em dois casos reais: o cliente de
+   * plataforma que prefere sair sob a NOSSA marca, e o cliente de API que
+   * pede a logo dele no DANFE. Este segundo era pior: salvar a marca dele
+   * chamava `whiteLabelAtiva: true` e o reclassificava sozinho.
+   */
+  modalidade: ModalidadeCliente;
   whiteLabelAtiva: boolean;
   temCertificado: boolean;
   certificadoVencimento?: string;
@@ -83,6 +109,7 @@ export class ApiClientStore {
         responsavel TEXT,
         email_tecnico TEXT,
         observacoes TEXT,
+        modalidade VARCHAR(12) NOT NULL DEFAULT 'api',
         white_label_ativa BOOLEAN NOT NULL DEFAULT FALSE,
         template_id TEXT,
         template_version TEXT,
@@ -94,6 +121,25 @@ export class ApiClientStore {
         atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    // A coluna nasce depois da tabela, entao as instalacoes que ja existem
+    // precisam ganha-la aqui — nenhuma delas tem psql a mao.
+    await this.pool.query(
+      `ALTER TABLE webapp_api_clients ADD COLUMN IF NOT EXISTS modalidade VARCHAR(12) NOT NULL DEFAULT 'api'`,
+    ).catch(() => {});
+    // Preenchimento dos que ja existem, uma vez so (`= 'api'` no fim garante
+    // que nao desfaz classificacao feita a mao depois).
+    //
+    // A prova de que um cliente TEM plataforma e material: repositorio, URL
+    // publicada, projeto no construtor ou template gravado. Marca propria
+    // entra na lista por ser o unico sinal que a versao antiga registrava —
+    // mas e o mais fraco, e por isso vem por ultimo.
+    await this.pool.query(`
+      UPDATE webapp_api_clients SET modalidade = 'plataforma'
+       WHERE modalidade = 'api'
+         AND (repository_url IS NOT NULL OR plataforma_url IS NOT NULL
+              OR lovable_project_url IS NOT NULL OR template_id IS NOT NULL
+              OR white_label_ativa = TRUE)
+    `).catch(() => {});
     await this.pool.query(`ALTER TABLE webapp_api_clients ADD COLUMN IF NOT EXISTS razao_social TEXT NOT NULL DEFAULT ''`).catch(() => {});
     await this.pool.query(`ALTER TABLE webapp_api_clients ADD COLUMN IF NOT EXISTS fantasia TEXT`).catch(() => {});
     await this.pool.query(`ALTER TABLE webapp_api_clients ADD COLUMN IF NOT EXISTS pfx_encrypted TEXT`).catch(() => {});
@@ -139,13 +185,14 @@ export class ApiClientStore {
     responsavel?: string;
     emailTecnico?: string;
     observacoes?: string;
+    modalidade?: ModalidadeCliente;
   }): Promise<ApiClient> {
     const cnpj = data.empresaCnpj.replace(/\D/g, '');
     const codigo = data.codigoInterno || `CLI_${cnpj.slice(0, 8)}`;
     const r = await this.pool.query(
       `INSERT INTO webapp_api_clients
-        (empresa_cnpj, razao_social, fantasia, codigo_interno, plano, responsavel, email_tecnico, observacoes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (empresa_cnpj, razao_social, fantasia, codigo_interno, plano, responsavel, email_tecnico, observacoes, modalidade)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        ON CONFLICT (empresa_cnpj) DO UPDATE SET
         razao_social = COALESCE(EXCLUDED.razao_social, webapp_api_clients.razao_social),
         fantasia = COALESCE(EXCLUDED.fantasia, webapp_api_clients.fantasia),
@@ -154,9 +201,15 @@ export class ApiClientStore {
         responsavel = COALESCE(EXCLUDED.responsavel, webapp_api_clients.responsavel),
         email_tecnico = COALESCE(EXCLUDED.email_tecnico, webapp_api_clients.email_tecnico),
         observacoes = COALESCE(EXCLUDED.observacoes, webapp_api_clients.observacoes),
+        modalidade = EXCLUDED.modalidade,
         atualizado_em = NOW()
        RETURNING *`,
-      [cnpj, data.razaoSocial, data.fantasia || null, codigo, data.plano || 'free', data.responsavel || null, data.emailTecnico || null, data.observacoes || null],
+      [cnpj, data.razaoSocial, data.fantasia || null, codigo, data.plano || 'free',
+       data.responsavel || null, data.emailTecnico || null, data.observacoes || null,
+       // `api` e o padrao seguro: cria credencial e mais nada. Prometer
+       // plataforma a quem nao comprou custa trabalho; deixar de prometer a
+       // quem comprou aparece na hora, porque o cliente cobra.
+       data.modalidade === 'plataforma' ? 'plataforma' : 'api'],
     );
     await this.pool.query(
       `INSERT INTO webapp_api_client_limits (empresa_cnpj) VALUES ($1) ON CONFLICT DO NOTHING`,
@@ -168,6 +221,7 @@ export class ApiClientStore {
   async listar(filtros?: {
     status?: ClientStatus;
     plano?: string;
+    modalidade?: ModalidadeCliente;
     whiteLabel?: boolean;
     busca?: string;
     limite?: number;
@@ -184,6 +238,10 @@ export class ApiClientStore {
     if (filtros?.plano) {
       conditions.push(`c.plano = $${idx++}`);
       params.push(filtros.plano);
+    }
+    if (filtros?.modalidade) {
+      conditions.push(`c.modalidade = $${idx++}`);
+      params.push(filtros.modalidade);
     }
     if (filtros?.whiteLabel !== undefined) {
       conditions.push(`c.white_label_ativa = $${idx++}`);
@@ -242,7 +300,8 @@ export class ApiClientStore {
     const fields: [keyof ApiClient, string][] = [
       ['razaoSocial', 'razao_social'], ['fantasia', 'fantasia'],
       ['plano', 'plano'], ['responsavel', 'responsavel'], ['emailTecnico', 'email_tecnico'],
-      ['observacoes', 'observacoes'], ['whiteLabelAtiva', 'white_label_ativa'],
+      ['observacoes', 'observacoes'], ['modalidade', 'modalidade'],
+    ['whiteLabelAtiva', 'white_label_ativa'],
       ['templateId', 'template_id'], ['templateVersion', 'template_version'],
       ['plataformaUrl', 'plataforma_url'], ['lovableProjectUrl', 'lovable_project_url'],
       ['repositoryUrl', 'repository_url'], ['codigoInterno', 'codigo_interno'],
@@ -465,6 +524,7 @@ export class ApiClientStore {
 
   async dashboard(): Promise<{
     ativos: number; sandbox: number; suspensos: number; total: number;
+    porApi: number; comPlataforma: number;
     whiteLabelAtivas: number; emissoesMes: number;
   }> {
     const r = await this.pool.query(`
@@ -473,6 +533,8 @@ export class ApiClientStore {
         COUNT(*) FILTER (WHERE status = 'active') as ativos,
         COUNT(*) FILTER (WHERE status = 'sandbox') as sandbox,
         COUNT(*) FILTER (WHERE status = 'suspended') as suspensos,
+        COUNT(*) FILTER (WHERE modalidade = 'api') as por_api,
+        COUNT(*) FILTER (WHERE modalidade = 'plataforma') as com_plataforma,
         COUNT(*) FILTER (WHERE white_label_ativa = TRUE) as white_label
       FROM webapp_api_clients
     `);
@@ -482,6 +544,8 @@ export class ApiClientStore {
       ativos: +row.ativos,
       sandbox: +row.sandbox,
       suspensos: +row.suspensos,
+      porApi: +row.por_api,
+      comPlataforma: +row.com_plataforma,
       whiteLabelAtivas: +row.white_label,
       emissoesMes: 0,
     };
@@ -498,6 +562,9 @@ export class ApiClientStore {
       responsavel: row.responsavel,
       emailTecnico: row.email_tecnico,
       observacoes: row.observacoes,
+      // Instalacao antiga, antes da coluna existir: sem valor, `api` e o
+      // padrao seguro — nao inventa plataforma para quem nao tem.
+      modalidade: row.modalidade === 'plataforma' ? 'plataforma' : 'api',
       whiteLabelAtiva: row.white_label_ativa,
       temCertificado: !!row.pfx_encrypted,
       certificadoVencimento: row.certificado_vencimento,
