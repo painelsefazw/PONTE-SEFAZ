@@ -101,6 +101,35 @@ describe('o painel esconde as telas certas', () => {
     }
   });
 
+  test('mudar a COR de um selo nao pode desfazer o esconder', () => {
+    // Este era o defeito, e ele enganava: a regra de CSS existia, a classe
+    // estava no HTML, e mesmo assim o selo de modo, a pilula de ambiente e o
+    // indicador da SEFAZ reapareciam na ponte de revenda.
+    //
+    // O motivo era `el.className = 'status-pill hom'` — atribuicao substitui a
+    // lista INTEIRA, e junto ia embora o `escondido-na-revenda`. Na primeira
+    // troca de estado, meio segundo depois de a pagina abrir, os tres voltavam.
+    // Ninguem tinha esquecido de esconder: o codigo desfazia.
+    //
+    // O ajudante guarda as classes de REGRA e devolve depois de trocar as de
+    // aparencia. O teste prende o padrao, e nao o ajudante: o que nao pode
+    // voltar e a atribuicao crua nesses elementos.
+    expect(html).toContain('function definirClasses(');
+    expect(html).toContain("CLASSES_DE_REGRA = ['escondido-na-revenda'");
+    for (const cru of [
+      /pill\.className = '/,
+      /badge\.className = '/,
+      /el\.className = 'sefaz-status/,
+    ]) {
+      expect(html).not.toMatch(cru);
+    }
+    // E os tres continuam marcados para sumir.
+    for (const id of ['modoBadge', 'sefazStatus', 'ambientePill']) {
+      const linha = html.split(String.fromCharCode(10)).find(l => l.includes(`id="${id}"`));
+      expect(linha).toContain('escondido-na-revenda');
+    }
+  });
+
   test('a regra de CSS que esconde existe', () => {
     expect(html).toMatch(/body\.modo-revenda \.escondido-na-revenda \{ display: none/);
   });

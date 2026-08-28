@@ -2489,6 +2489,34 @@ let itemCount = 0;
 let configData = {};
 
 
+
+// ---------------------------------------------------------------------------
+// Trocar classe sem perder regra
+// ---------------------------------------------------------------------------
+/**
+ * Aplica as classes de APARENCIA sem apagar as de REGRA.
+ *
+ * O selo de modo, a pilula de ambiente e o indicador da SEFAZ mudam de cor
+ * conforme o estado, e cada um fazia isso com `el.className = 'x y'` — que
+ * substitui a lista inteira. So que essas mesmas etiquetas carregam
+ * `escondido-na-revenda`, que e o que as faz sumir numa ponte sem emitente
+ * proprio. Na primeira troca de estado a marca ia embora e as tres voltavam a
+ * aparecer.
+ *
+ * O sintoma enganava: a regra de CSS existia, a classe estava no HTML, e mesmo
+ * assim a tela mostrava o que deveria esconder. Foi preciso pedir a remocao
+ * varias vezes para alguem desconfiar de que ninguem tinha esquecido de
+ * esconder — o codigo e que desfazia, meio segundo depois.
+ */
+var CLASSES_DE_REGRA = ['escondido-na-revenda', 'somente-contador', 'fiscal-avancado'];
+
+function definirClasses(el, classes) {
+  if (!el) return;
+  var guardadas = CLASSES_DE_REGRA.filter(function (c) { return el.classList.contains(c); });
+  el.className = classes;
+  guardadas.forEach(function (c) { el.classList.add(c); });
+}
+
 // ---------------------------------------------------------------------------
 // Tema claro e escuro
 // ---------------------------------------------------------------------------
@@ -3375,11 +3403,11 @@ function updateAmbientePill() {
   const aviso = document.getElementById('prodAviso');
   if (ambienteSelecionado() === '1') {
     pill.textContent = 'Produção';
-    pill.className = 'status-pill prod';
+    definirClasses(pill, 'status-pill prod');
     aviso.style.display = 'block';
   } else {
     pill.textContent = 'Homologação';
-    pill.className = 'status-pill hom';
+    definirClasses(pill, 'status-pill hom');
     aviso.style.display = 'none';
   }
 }
@@ -3493,7 +3521,7 @@ function onTpNotaChange() {
 async function checkSefaz() {
   const el = document.getElementById('sefazStatus');
   el.textContent = 'Verificando SEFAZ...';
-  el.className = 'sefaz-status';
+  definirClasses(el, 'sefaz-status');
   try {
     // fetch direto (sem prompt de senha): indicador nao deve abrir popup sozinho
     const headers = {};
@@ -3504,26 +3532,26 @@ async function checkSefaz() {
     const res = await fetch('/api/status?ambiente=' + ambienteSelecionado(), { headers });
     if (res.status === 401) {
       el.textContent = 'SEFAZ: aguardando senha de acesso';
-      el.className = 'sefaz-status offline';
+      definirClasses(el, 'sefaz-status offline');
       return;
     }
     const data = await res.json();
     if (data.online) {
       el.textContent = 'SEFAZ Online';
-      el.className = 'sefaz-status online';
+      definirClasses(el, 'sefaz-status online');
     } else if (window.modoDoPainel === 'revenda') {
       // Numa ponte que revende, o emitente proprio pode nunca existir: cada
       // cliente tem o seu certificado, cifrado no banco. Dizer "SEFAZ: variavel
       // ausente" em vermelho descreve um defeito que nao existe.
       el.textContent = 'Ponte de revenda (sem emitente próprio)';
-      el.className = 'sefaz-status';
+      definirClasses(el, 'sefaz-status');
     } else {
       el.textContent = 'SEFAZ: ' + (data.xMotivo || 'Indisponivel').substring(0, 60);
-      el.className = 'sefaz-status offline';
+      definirClasses(el, 'sefaz-status offline');
     }
   } catch(e) {
     el.textContent = 'SEFAZ Indisponivel (clique p/ tentar de novo)';
-    el.className = 'sefaz-status offline';
+    definirClasses(el, 'sefaz-status offline');
   }
 }
 
@@ -5793,11 +5821,11 @@ function setModo(modo) {
   if (modo === 'operador') {
     document.body.classList.add('modo-operador');
     badge.textContent = 'Operador';
-    badge.className = 'modo-badge operador';
+    definirClasses(badge, 'modo-badge operador');
   } else {
     document.body.classList.remove('modo-operador');
     badge.textContent = 'Contador';
-    badge.className = 'modo-badge contador';
+    definirClasses(badge, 'modo-badge contador');
   }
 }
 
