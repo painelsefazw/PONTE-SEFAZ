@@ -71,6 +71,22 @@ describe('o painel usa o design system do console', () => {
     expect(painel).toContain('<div class="appbar">');
   });
 
+  test('o topo e um bloco so, e ele gruda ao rolar', () => {
+    // Soltas, as tres faixas rolavam em tempos diferentes: bastavam 30px de
+    // rolagem para a navegacao sair de cena e sobrar uma tira clara no alto —
+    // lida, com razao, como "um cabecalho que sobrou". Grudando o bloco
+    // inteiro, a tira some e a navegacao continua ao alcance.
+    expect(painel).toContain('<div class="topo-fixo">');
+    expect(painel).toMatch(/\.topo-fixo \{[^}]*position: sticky/);
+    expect(painel).toMatch(/\.topo-fixo \{[^}]*top: 0/);
+    // As tres faixas precisam estar DENTRO dele, nesta ordem.
+    const topo = painel.slice(painel.indexOf('<div class="topo-fixo">'),
+      painel.indexOf('</div><!-- /topo-fixo -->'));
+    expect(topo.indexOf('id="mainTabBar"')).toBeGreaterThan(-1);
+    expect(topo.indexOf('class="appbar"')).toBeGreaterThan(topo.indexOf('id="mainTabBar"'));
+    expect(topo.indexOf('id="subTabBar"')).toBeGreaterThan(topo.indexOf('class="appbar"'));
+  });
+
   test('ha um botao de tema, e ele lembra a escolha', () => {
     // Tres estados, nao dois: claro, escuro e "o que o sistema disser" — este
     // ultimo e o padrao. E a escolha sobrevive ao F5: um botao de tema que

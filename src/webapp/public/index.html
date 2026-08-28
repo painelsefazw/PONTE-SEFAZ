@@ -599,6 +599,16 @@ body {
 .sub-tab-bar button:hover { color: var(--texto); }
 .sub-tab-bar button.active { color: var(--marca-tinta); border-bottom-color: var(--marca); }
 
+/* --- O topo que acompanha a rolagem ------------------------------------- */
+/* Navegacao que sai de cena ao rolar obriga a subir a pagina inteira so para
+   trocar de aba. E, meio rolada, ela deixa uma tira clara no alto que parece
+   um cabecalho vazio. Grudando o bloco, as duas coisas somem de uma vez. */
+.topo-fixo {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--cartao);
+  box-shadow: 0 1px 0 var(--borda);
+}
+
 /* --- Barra de contexto -------------------------------------------------- */
 .appbar {
   display: flex; align-items: center; justify-content: flex-end; gap: 12px;
@@ -804,7 +814,11 @@ body {
   </div>
 </div>
 
-<!-- Tabs -->
+<!-- O topo do sistema: navegacao, contexto e abas internas.
+     Ficam num bloco unico porque grudam JUNTOS ao rolar. Soltos, cada um
+     grudava numa altura diferente e a pagina rolava por baixo de uma tira
+     branca — que foi lida, com razao, como "um cabecalho que sobrou". -->
+<div class="topo-fixo">
 <div class="tab-bar" id="mainTabBar">
   <button class="somente-contador" onclick="showGroup('painel')">Painel</button>
   <button class="active escondido-na-revenda" onclick="showGroup('emissao')">Emissão</button>
@@ -839,6 +853,7 @@ body {
 </div>
 <div class="sub-tab-bar" id="subTabBar" style="display:none">
 </div>
+</div><!-- /topo-fixo -->
 
 <!-- TAB: Emissao -->
 <div class="tab-content active" id="tab-emissao">
