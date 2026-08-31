@@ -49,6 +49,15 @@ const procurados = new Set(
 const oferecidos = new Set(
   [...painel.matchAll(/id="([A-Za-z0-9_-]+)"/g)].map((m) => m[1]));
 
+// So o trecho de script: declaracoes de funcao nao existem na marcacao.
+const js = painel.slice(painel.indexOf('<script>'));
+const declaradas = new Set([
+  ...[...js.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]),
+  ...[...js.matchAll(/(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:function|\()/g)]
+    .map((m) => m[1]),
+  ...[...js.matchAll(/window\.([A-Za-z_$][\w$]*)\s*=/g)].map((m) => m[1]),
+]);
+
 describe('elementos que o painel procura', () => {
   test('todo getElementById literal encontra um id que existe', () => {
     const orfaos = [...procurados]
@@ -78,5 +87,56 @@ describe('elementos que o painel procura', () => {
     const abaAntes = painel.lastIndexOf('<div class="tab-content', modal);
     const fechaAntes = painel.lastIndexOf('\n</div>\n', modal);
     expect(fechaAntes).toBeGreaterThan(abaAntes);
+  });
+
+  test('todo botao chama uma funcao que existe', () => {
+    // O mesmo defeito do modal, um andar acima: o botao "XML" da NFC-e chamava
+    // `downloadXml`, que nunca existiu neste arquivo. Clicar nao fazia nada, e
+    // nao havia como descobrir isso pela tela.
+    const chamados = new Set<string>();
+    for (const m of painel.matchAll(
+      /on(?:click|change|input|submit|keydown|keyup|blur|focus)="([^"]*)"/g)) {
+      for (const f of m[1].matchAll(/(?:^|[^\w.$])([A-Za-z_$][\w$]*)\s*\(/g)) {
+        chamados.add(f[1]);
+      }
+    }
+    const NATIVAS = new Set(['alert', 'confirm', 'prompt', 'parseInt', 'parseFloat',
+      'Number', 'String', 'Boolean', 'Array', 'Object', 'JSON', 'Math', 'Date',
+      'encodeURIComponent', 'decodeURIComponent', 'setTimeout', 'if', 'return']);
+    const orfas = [...chamados]
+      .filter((f) => !NATIVAS.has(f) && !declaradas.has(f))
+      .sort();
+    expect(orfas).toEqual([]);
+  });
+
+  test('nenhuma funcao e declarada duas vezes', () => {
+    // Duas funcoes com o mesmo nome nao dao erro: a ultima apaga a primeira.
+    // Aconteceu com `selo` — a versao de quatro argumentos dos cartoes de
+    // cliente apagou a de um argumento das sugestoes de NCM, e a lista passou a
+    // mostrar "[object Object]" em cada linha, em producao.
+    const nomes = [...js.matchAll(/\n(?:async )?function ([A-Za-z_$][\w$]*)\s*\(/g)]
+      .map((m) => m[1]);
+    const repetidas = nomes.filter((n, i) => nomes.indexOf(n) !== i);
+    expect([...new Set(repetidas)]).toEqual([]);
+  });
+
+  test('o selo do NCM tem nome proprio, e e ele que a lista usa', () => {
+    expect(painel).toContain('function seloNcmJaUsado(n)');
+    // As duas listas de sugestao — a do item da nota e a do cadastro de
+    // produto — chamam a mesma funcao.
+    expect(painel.match(/\+ seloNcmJaUsado\(n\) \+/g)).toHaveLength(2);
+    expect(painel).not.toMatch(/\+ selo\(n\) \+/);
+  });
+
+  test('a NFC-e entrega os arquivos que vieram na resposta', () => {
+    // A rota devolve `xml` e `danfePdf` na propria emissao. Baixar de novo pelo
+    // servidor seria uma segunda ida a rede no caixa, que e onde ela falta.
+    const bloco = painel.slice(painel.indexOf("'<h3>NFC-e Autorizada!</h3>"));
+    const corpo = bloco.slice(0, bloco.indexOf('} else {'));
+    expect(corpo).toContain('data.xml');
+    expect(corpo).toContain('data.danfePdf');
+    expect(corpo).toContain('linkDeArquivo(');
+    expect(painel).toContain('function linkDeArquivo(');
+    expect(painel).toContain('function bytesDeBase64(');
   });
 });

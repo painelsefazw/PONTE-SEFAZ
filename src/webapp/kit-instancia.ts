@@ -274,6 +274,8 @@ export const VARIAVEIS = {
     ['NFE_COMPLEMENTO', 'Complemento do endereco.'],
     ['NFE_FONE', 'Telefone.'],
     ['PLATAFORMA_LOGIN_PADRAO / PLATAFORMA_SENHA_PADRAO', 'Acesso padrao das plataformas geradas.'],
+    ['WEBAPP_MARCA', 'Nome que aparece no painel e nos documentos gerados. Sem ela, "Ponte SEFAZ".'],
+    ['FISCAL_API_URL / FISCAL_API_KEY', 'Base fiscal externa que busca e classifica NCM. Sem elas a busca por descricao fica so na base local e /api/classificar responde "NCM nao encontrado no cerebro fiscal".'],
   ],
 } as const;
 

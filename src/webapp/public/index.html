@@ -4235,7 +4235,7 @@ function sugerirNcmDoItem(campo) {
         return '<div onmousedown="aplicarNcmNoItem(this, \'' + n.codigo + '\')" '
           + 'style="padding:7px 10px;cursor:pointer;border-bottom:1px solid var(--suave);font-size:12px" '
           + 'onmouseover="this.style.background=\'var(--marca-fundo)\'" onmouseout="this.style.background=\'var(--cartao)\'">'
-          + '<strong>' + n.codigo + '</strong> — ' + (n.descricao || '') + selo(n) + '</div>';
+          + '<strong>' + n.codigo + '</strong> — ' + (n.descricao || '') + seloNcmJaUsado(n) + '</div>';
       }).join('');
       caixa.style.display = 'block';
     } catch (e) { caixa.style.display = 'none'; }
@@ -4724,6 +4724,27 @@ function histMsg(ok, texto) {
   el.style.background = ok ? 'var(--sucesso-fundo)' : 'var(--perigo-fundo)';
   el.style.border = ok ? '1px solid var(--sucesso-borda)' : '1px solid var(--perigo-borda)';
   el.textContent = texto;
+}
+
+/* Arquivo que ja esta na memoria vira botao de download aqui.
+   A NF-e montava esses botoes na mao; a NFC-e nao montava nada — o botao
+   "XML" dela chamava `downloadXml`, uma funcao que nunca existiu no arquivo.
+   Clicar nele nao fazia nada, e nao havia como saber disso pela tela. */
+function linkDeArquivo(rotulo, nome, blob, classe) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nome;
+  a.textContent = rotulo;
+  a.className = 'btn btn-sm ' + classe;
+  a.style.textDecoration = 'none';
+  return a;
+}
+
+function bytesDeBase64(b64) {
+  var bin = atob(b64);
+  var arr = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
 }
 
 async function baixarNota(chave, tipo) {
@@ -5707,7 +5728,12 @@ let _ncmResults = [];
  * decisao de quem conhece o produto, e nao semelhanca de texto. Mostrar isso
  * deixa o operador escolher com o contexto na mao.
  */
-function selo(n) {
+/* Nome proprio, e nao `selo`: ja existiu um segundo `selo` neste arquivo — o
+   dos cartoes de cliente, com quatro argumentos — e como ele foi declarado
+   depois, apagou este. As sugestoes de NCM passaram a mostrar
+   "[object Object]" em cada linha, porque o objeto do NCM chegava no lugar do
+   texto do selo. */
+function seloNcmJaUsado(n) {
   if (n.origem !== 'catalogo') return '';
   return '<span style="margin-left:8px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;'
     + 'background:var(--sucesso-fundo);color:var(--sucesso-tinta)">JA USADO' + (n.usos > 1 ? ' ' + n.usos + '×' : '') + '</span>';
@@ -5730,7 +5756,7 @@ async function buscarNcmPorDescricao(q) {
     }
     box.innerHTML = _ncmResults.map(function(n, i) {
       return '<div onmousedown="selecionarNcm(' + i + ')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--suave);font-size:13px" onmouseover="this.style.background=\'var(--marca-fundo)\'" onmouseout="this.style.background=\'var(--cartao)\'">'
-        + '<strong>' + n.codigo + '</strong> — ' + (n.descricao || '') + selo(n) + '</div>';
+        + '<strong>' + n.codigo + '</strong> — ' + (n.descricao || '') + seloNcmJaUsado(n) + '</div>';
     }).join('');
     box.style.display = 'block';
   } catch(e) { box.style.display = 'none'; }
@@ -7286,10 +7312,24 @@ async function emitirNfce() {
         '<strong>Chave:</strong> ' + data.chaveAcesso + '<br>' +
         '<strong>Protocolo:</strong> ' + data.protocolo + '<br>' +
         '<strong>Status:</strong> ' + data.cStat + ' — ' + data.xMotivo + '<br>' +
-        '</div>' +
-        '<div class="result-downloads">' +
-        '<button class="btn btn-primary btn-sm" onclick="downloadXml(\'' + data.chaveAcesso + '\')">XML</button>' +
         '</div>';
+      // Os dois arquivos vem NA resposta da emissao (`xml` e `danfePdf`), entao
+      // os botoes apontam para bytes que ja estao aqui. Uma segunda ida ao
+      // servidor seria justamente onde o caixa costuma perder a rede — e o
+      // cupom precisa sair na hora.
+      var arquivosNfce = document.createElement('div');
+      arquivosNfce.className = 'result-downloads';
+      if (data.xml) {
+        arquivosNfce.appendChild(linkDeArquivo('Baixar XML',
+          data.arquivo || 'NFCe_' + data.chaveAcesso + '.xml',
+          new Blob([data.xml], { type: 'application/xml' }), 'btn-primary'));
+      }
+      if (data.danfePdf) {
+        arquivosNfce.appendChild(linkDeArquivo('Baixar cupom (PDF)',
+          'NFCe_' + data.chaveAcesso + '.pdf',
+          new Blob([bytesDeBase64(data.danfePdf)], { type: 'application/pdf' }), 'btn-success'));
+      }
+      box.appendChild(arquivosNfce);
     } else {
       box.className = 'result-box error';
       var envioNfce = falhaDeEnvio(data);
