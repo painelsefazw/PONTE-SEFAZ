@@ -588,16 +588,22 @@ body {
 .topbar { display: none !important; }
 
 /* --- Navegacao ---------------------------------------------------------- */
-@media (min-width: 721px) {
-  /* Sem barra de rolagem no topo: quatro abas cabem, e a caixa de rolagem que
-     sobrou do tempo de dez desenhava setinhas no meio da faixa, sem nada para
-     rolar. */
-  .tab-bar { overflow: visible; }
-}
+/* A faixa mantem `overflow-x: auto` em qualquer largura. Ja teve um
+   `overflow: visible` acima de 721px, escrito quando a revenda (quatro abas)
+   era o caso em vista; com as dez abas do contador ele fazia a navegacao
+   transbordar para FORA da pagina, e quem ganhava rolagem lateral era o
+   documento inteiro. As "setinhas sem nada para rolar" que motivaram aquilo
+   eram outro defeito — 2px de conteudo vazando na vertical —, e esse ja foi
+   corrigido no proprio botao. */
 .tab-bar {
   background: var(--cartao);
   border-bottom: 1px solid var(--borda);
-  padding: 0 20px;
+  /* 12px, e nao 20: com dez abas e a barra de contexto na mesma linha, a
+     largura acaba antes do fim: em 1536 (a resolucao mais comum) faltavam 29px.
+     O recuo da borda e o unico espaco em branco dali que ninguem sente falta.
+     Muda junto com o `.sub-tab-bar`, senao as duas fileiras de abas ficam
+     desalinhadas. */
+  padding: 0 12px;
   gap: 2px;
 }
 .tab-bar button {
@@ -614,7 +620,7 @@ body {
 .tab-bar button.active { color: var(--marca-tinta); border-bottom-color: var(--marca); }
 
 .sub-tab-bar {
-  background: var(--suave); border-bottom: 1px solid var(--borda); padding: 0 20px;
+  background: var(--suave); border-bottom: 1px solid var(--borda); padding: 0 12px;
 }
 .sub-tab-bar button { color: var(--suave-texto); font-size: 12px; }
 .sub-tab-bar button:hover { color: var(--texto); }
@@ -633,22 +639,40 @@ body {
   background: var(--cartao);
   box-shadow: 0 1px 0 var(--borda);
   display: grid;
-  /* `minmax(max-content, 1fr)` e nao `minmax(0, 1fr)`: com zero de minimo, a
-     coluna da navegacao encolhe ABAIXO das proprias abas, elas estouram a
-     celula e o navegador desenha uma barra de rolagem no meio do topo. Com
-     `max-content` a navegacao nunca fica menor do que precisa; quem cede
-     espaco e o contexto, que e `auto`. */
-  grid-template-columns: minmax(max-content, 1fr) auto;
+  /* A navegacao e `max-content`: ela nunca encolhe abaixo das proprias abas.
+     Com um minimo menor, as abas estouram a celula e o navegador desenha uma
+     barra de rolagem no meio do topo.
+
+     Quem cede espaco e o contexto, e por isso ele e `minmax(0, 1fr)`: alem de
+     absorver a sobra (o que o mantem ancorado na direita), ele PODE ficar
+     menor que o proprio conteudo. Isso importa porque o texto de status muda
+     de largura — "Verificando SEFAZ..." e 32px mais largo que "SEFAZ Online",
+     e a folga da linha era de 12px. Sem esse minimo zero, nao havia de onde
+     tirar; e como a barra e alinhada a direita, o excedente de um flex
+     `flex-end` vaza pela ESQUERDA, nao pela direita. Dava o selo "Contador"
+     desenhado por cima da aba "Auditoria", so enquanto a tela carregava.
+
+     O par tem de ser `max-content` + `1fr`, e nao `1fr` + `auto`: com `1fr` na
+     navegacao ela fica gulosa, toma toda a sobra e espreme o contexto sempre,
+     deixando o status cortado ate quando ha espaco de sobra. */
+  grid-template-columns: max-content minmax(0, 1fr);
   grid-template-areas: 'nav contexto' 'sub sub';
   align-items: center;
 }
 .topo-fixo .tab-bar { grid-area: nav; border-bottom: none; }
-.topo-fixo .appbar { grid-area: contexto; border-bottom: none; padding-right: 20px; }
+.topo-fixo .appbar { grid-area: contexto; border-bottom: none; padding-right: 14px; }
 .topo-fixo .sub-tab-bar { grid-area: sub; border-top: 1px solid var(--borda); }
 
 /* Numa janela estreita nao ha largura para as duas: o contexto desce, que e
-   o certo — navegacao e o que se usa, contexto e o que se confere. */
-@media (max-width: 720px) {
+   o certo — navegacao e o que se usa, contexto e o que se confere.
+
+   O corte era 720px, largura de telefone, e por isso nada acontecia no caso
+   que importa: um notebook de 1280 ou 1366 com as dez abas do contador. Ali as
+   duas faixas nao cabem — sao 1105px de abas e 440 de contexto —, o contexto
+   era espremido ate o status sumir e a PAGINA inteira ganhava rolagem lateral.
+   1440 e a largura onde as duas ainda cabem lado a lado com folga; abaixo
+   disso, empilhadas, as duas aparecem inteiras. */
+@media (max-width: 1440px) {
   .topo-fixo {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: 'nav' 'contexto' 'sub';
@@ -659,8 +683,9 @@ body {
 /* --- Barra de contexto -------------------------------------------------- */
 .appbar {
   display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-  padding: 9px 20px; background: var(--cartao);
+  padding: 9px 14px; background: var(--cartao);
   border-bottom: 1px solid var(--borda);
+  min-width: 0;
 }
 .appbar:empty { display: none; }
 .appbar .topbar-empresa { margin: 0 auto 0 0; }
@@ -674,9 +699,25 @@ body {
 .appbar .topbar-empresa select:hover,
 .appbar .btn-logout:hover, .btn-tema:hover { background: var(--suave); }
 .appbar .topbar-empresa select option { background: var(--cartao); color: var(--texto); }
-.appbar .sefaz-status { color: var(--suave-texto); margin-left: 0; opacity: 1; }
+.appbar .sefaz-status {
+  color: var(--suave-texto); margin-left: 0; opacity: 1;
+  /* E ele quem cede espaco quando a faixa aperta — ver o comentario abaixo. */
+  min-width: 0; flex-shrink: 1;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .appbar .sefaz-status.online { color: var(--sucesso-tinta); }
 .appbar .sefaz-status.offline { color: var(--perigo-tinta); }
+/* Dentro do contexto, quem cede e o TEXTO de status — e so ele. Selos e botoes
+   tem largura de conteudo e nada a cortar; o texto vai de "SEFAZ Online" a
+   "SEFAZ: aguardando senha de acesso", e a largura da barra nao pode depender
+   de qual mensagem esta em cartaz. O que for cortado continua inteiro no
+   `title`. */
+.appbar .topbar-right { min-width: 0; flex-shrink: 1; gap: 10px; }
+/* Rede de seguranca: se um dia o contexto ainda assim nao couber na faixa
+   dele, os itens quebram para uma segunda linha em vez de vazarem pela
+   esquerda por cima da navegacao. */
+.appbar, .appbar .topbar-right { flex-wrap: wrap; }
+.appbar .topbar-right > * { flex-shrink: 0; }
 /* So o icone: o rotulo "TEMA: CLARO" ocupava a largura de tres botoes para
    dizer o que o proprio desenho ja diz. O que o icone mostra e o estado ATUAL
    — sol no claro, lua no escuro, meia-lua quando segue o sistema — e o `title`
@@ -901,7 +942,7 @@ body {
   </div>
   <div class="topbar-right">
     <span id="modoBadge" class="modo-badge contador escondido-na-revenda">Contador</span>
-    <span id="sefazStatus" class="sefaz-status escondido-na-revenda" onclick="checkSefaz()" style="cursor:pointer" title="Clique para atualizar">Verificando SEFAZ...</span>
+    <span id="sefazStatus" class="sefaz-status escondido-na-revenda" onclick="checkSefaz()" style="cursor:pointer" title="Verificando SEFAZ... — clique para atualizar">Verificando...</span>
     <span id="ambientePill" class="status-pill hom escondido-na-revenda" onclick="toggleAmbiente()" title="Clique para alternar ambiente">Homologa&ccedil;&atilde;o</span>
     <button class="btn-tema" id="btnTema" onclick="alternarTema()"
             title="Alternar entre tema claro e escuro" aria-label="Tema"></button>
@@ -3668,10 +3709,23 @@ function onTpNotaChange() {
   calcTotal();
 }
 
+/* O texto do status e cortado com reticencias quando nao cabe na barra, entao
+   a mensagem inteira precisa ficar no `title`: sem isso, "SEFAZ: aguardando
+   senha de acesso" apareceria pela metade e ninguem descobriria por que nada
+   emite. */
+function sefazDiz(el, texto, classe) {
+  el.textContent = texto;
+  el.title = texto + ' — clique para atualizar';
+  definirClasses(el, classe);
+}
+
 async function checkSefaz() {
   const el = document.getElementById('sefazStatus');
-  el.textContent = 'Verificando SEFAZ...';
-  definirClasses(el, 'sefaz-status');
+  // "Verificando..." e nao "Verificando SEFAZ...": a segunda forma precisa de
+  // 137px numa fatia de 99, e era ela que estourava a linha do topo enquanto a
+  // tela carregava. O assunto continua obvio — em um segundo o mesmo texto vira
+  // "SEFAZ Online" — e a frase inteira segue no `title`.
+  sefazDiz(el, 'Verificando...', 'sefaz-status');
   try {
     // fetch direto (sem prompt de senha): indicador nao deve abrir popup sozinho
     const headers = {};
@@ -3681,27 +3735,23 @@ async function checkSefaz() {
     if (empresa) headers['x-empresa-cnpj'] = empresa;
     const res = await fetch('/api/status?ambiente=' + ambienteSelecionado(), { headers });
     if (res.status === 401) {
-      el.textContent = 'SEFAZ: aguardando senha de acesso';
-      definirClasses(el, 'sefaz-status offline');
+      sefazDiz(el, 'SEFAZ: aguardando senha de acesso', 'sefaz-status offline');
       return;
     }
     const data = await res.json();
     if (data.online) {
-      el.textContent = 'SEFAZ Online';
-      definirClasses(el, 'sefaz-status online');
+      sefazDiz(el, 'SEFAZ Online', 'sefaz-status online');
     } else if (window.modoDoPainel === 'revenda') {
       // Numa ponte que revende, o emitente proprio pode nunca existir: cada
       // cliente tem o seu certificado, cifrado no banco. Dizer "SEFAZ: variavel
       // ausente" em vermelho descreve um defeito que nao existe.
-      el.textContent = 'Ponte de revenda (sem emitente próprio)';
-      definirClasses(el, 'sefaz-status');
+      sefazDiz(el, 'Ponte de revenda (sem emitente próprio)', 'sefaz-status');
     } else {
-      el.textContent = 'SEFAZ: ' + (data.xMotivo || 'Indisponivel').substring(0, 60);
-      definirClasses(el, 'sefaz-status offline');
+      sefazDiz(el, 'SEFAZ: ' + (data.xMotivo || 'Indisponivel').substring(0, 60),
+        'sefaz-status offline');
     }
   } catch(e) {
-    el.textContent = 'SEFAZ Indisponivel (clique p/ tentar de novo)';
-    definirClasses(el, 'sefaz-status offline');
+    sefazDiz(el, 'SEFAZ Indisponivel (clique p/ tentar de novo)', 'sefaz-status offline');
   }
 }
 
