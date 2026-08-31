@@ -603,11 +603,14 @@ body {
      O recuo da borda e o unico espaco em branco dali que ninguem sente falta.
      Muda junto com o `.sub-tab-bar`, senao as duas fileiras de abas ficam
      desalinhadas. */
-  padding: 0 12px;
+  padding: 0 8px;
   gap: 2px;
 }
 .tab-bar button {
-  padding: 13px 16px; font-size: 12.5px; color: var(--suave-texto);
+  /* 12px de recuo lateral, e nao 16: dez abas multiplicam cada pixel por vinte.
+     Sao 80px devolvidos a linha — a diferenca entre as duas faixas caberem
+     juntas num monitor de 1521 e nao caberem. O texto nao muda de tamanho. */
+  padding: 13px 12px; font-size: 12.5px; color: var(--suave-texto);
   border-bottom: 2px solid transparent;
   /* O `-2px` original existia para o sublinhado da aba cobrir a borda de 2px
      da faixa. Essa borda saiu quando a navegacao passou a dividir a linha com
@@ -620,7 +623,7 @@ body {
 .tab-bar button.active { color: var(--marca-tinta); border-bottom-color: var(--marca); }
 
 .sub-tab-bar {
-  background: var(--suave); border-bottom: 1px solid var(--borda); padding: 0 12px;
+  background: var(--suave); border-bottom: 1px solid var(--borda); padding: 0 8px;
 }
 .sub-tab-bar button { color: var(--suave-texto); font-size: 12px; }
 .sub-tab-bar button:hover { color: var(--texto); }
@@ -638,52 +641,41 @@ body {
   position: sticky; top: 0; z-index: 100;
   background: var(--cartao);
   box-shadow: 0 1px 0 var(--borda);
-  display: grid;
-  /* A navegacao e `max-content`: ela nunca encolhe abaixo das proprias abas.
-     Com um minimo menor, as abas estouram a celula e o navegador desenha uma
-     barra de rolagem no meio do topo.
+  /* Flex com quebra, e nao grade: a grade exige decidir num numero fixo em que
+     largura as duas faixas param de caber, e esse numero NAO existe — ele muda
+     com o conteudo. Com uma empresa selecionada, o contexto ganha um seletor de
+     240px que nao estava la quando a tela carregou; a mesma janela cabia antes
+     e nao cabe depois.
 
-     Quem cede espaco e o contexto, e por isso ele e `minmax(0, 1fr)`: alem de
-     absorver a sobra (o que o mantem ancorado na direita), ele PODE ficar
-     menor que o proprio conteudo. Isso importa porque o texto de status muda
-     de largura — "Verificando SEFAZ..." e 32px mais largo que "SEFAZ Online",
-     e a folga da linha era de 12px. Sem esse minimo zero, nao havia de onde
-     tirar; e como a barra e alinhada a direita, o excedente de um flex
-     `flex-end` vaza pela ESQUERDA, nao pela direita. Dava o selo "Contador"
-     desenhado por cima da aba "Auditoria", so enquanto a tela carregava.
+     Aqui quem decide e o proprio conteudo. Enquanto as duas couberem, dividem a
+     linha (a navegacao cresce para a esquerda, o contexto se ancora na direita).
+     Quando nao couberem, o contexto desce INTEIRO e ocupa a largura toda.
 
-     O par tem de ser `max-content` + `1fr`, e nao `1fr` + `auto`: com `1fr` na
-     navegacao ela fica gulosa, toma toda a sobra e espreme o contexto sempre,
-     deixando o status cortado ate quando ha espaco de sobra. */
-  grid-template-columns: max-content minmax(0, 1fr);
-  grid-template-areas: 'nav contexto' 'sub sub';
+     O que nao pode acontecer — e acontecia — e a quebra pela metade: o "Sair"
+     sozinho na linha de baixo, com o resto em cima. Por isso as duas faixas sao
+     blocos que nao se partem por dentro (`flex-wrap: nowrap` mais abaixo). */
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
 }
-.topo-fixo .tab-bar { grid-area: nav; border-bottom: none; }
-.topo-fixo .appbar { grid-area: contexto; border-bottom: none; padding-right: 14px; }
-.topo-fixo .sub-tab-bar { grid-area: sub; border-top: 1px solid var(--borda); }
+.topo-fixo .tab-bar { flex: 1 1 auto; min-width: 0; border-bottom: none; }
+.topo-fixo .appbar { flex: 1 1 auto; min-width: 0; border-bottom: none; }
+/* A sub-navegacao sempre comeca uma linha nova. */
+.topo-fixo .sub-tab-bar { flex: 1 0 100%; border-top: 1px solid var(--borda); }
 
-/* Numa janela estreita nao ha largura para as duas: o contexto desce, que e
-   o certo — navegacao e o que se usa, contexto e o que se confere.
-
-   O corte era 720px, largura de telefone, e por isso nada acontecia no caso
-   que importa: um notebook de 1280 ou 1366 com as dez abas do contador. Ali as
-   duas faixas nao cabem — sao 1105px de abas e 440 de contexto —, o contexto
-   era espremido ate o status sumir e a PAGINA inteira ganhava rolagem lateral.
-   1440 e a largura onde as duas ainda cabem lado a lado com folga; abaixo
-   disso, empilhadas, as duas aparecem inteiras. */
-@media (max-width: 1440px) {
-  .topo-fixo {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'nav' 'contexto' 'sub';
-  }
+/* Nao ha mais media query de empilhamento: a quebra e decidida pelo conteudo,
+   nao por uma largura escolhida no chute. Ja foram 720px (largura de telefone,
+   que nunca disparava no notebook onde o problema aparecia) e 1440px (que
+   errava por 5px justamente na tela de 1521 do dia a dia). Numa janela
+   estreita, o unico ajuste que ainda faz sentido e de alinhamento. */
+@media (max-width: 720px) {
   .topo-fixo .appbar { justify-content: flex-start; padding-left: 8px; }
 }
 
 /* --- Barra de contexto -------------------------------------------------- */
 .appbar {
   display: flex; align-items: center; justify-content: flex-end; gap: 12px;
-  padding: 9px 14px; background: var(--cartao);
+  padding: 9px 10px; background: var(--cartao);
   border-bottom: 1px solid var(--borda);
   min-width: 0;
 }
@@ -712,11 +704,25 @@ body {
    "SEFAZ: aguardando senha de acesso", e a largura da barra nao pode depender
    de qual mensagem esta em cartaz. O que for cortado continua inteiro no
    `title`. */
-.appbar .topbar-right { min-width: 0; flex-shrink: 1; gap: 10px; }
-/* Rede de seguranca: se um dia o contexto ainda assim nao couber na faixa
-   dele, os itens quebram para uma segunda linha em vez de vazarem pela
-   esquerda por cima da navegacao. */
-.appbar, .appbar .topbar-right { flex-wrap: wrap; }
+.appbar .topbar-right { min-width: 0; flex-shrink: 1; gap: 8px; }
+/* Os dois sao blocos inteiros: ou cabem, ou descem juntos. Com `wrap` aqui,
+   quando faltavam 5px o que descia era so o botao "Sair", sozinho numa segunda
+   linha — pior do que qualquer uma das duas alternativas honestas. Quem cede,
+   quando aperta, e o texto de status (reticencias e a frase no `title`). */
+.appbar, .appbar .topbar-right { flex-wrap: nowrap; }
+/* E o seletor de empresa nao pode crescer com o nome do cliente: uma razao
+   social longa empurrava o resto da barra para fora sozinha. */
+/* Largura fixa, e nao `max-width`: o espaco que o seletor reserva enquanto
+   carrega precisa ser o MESMO que ele vai ocupar depois. Com largura variavel,
+   o topo mudaria de altura na hora em que o nome do cliente chegasse. */
+.appbar .topbar-empresa select { width: 240px; }
+
+/* No telefone nada disso cabe lado a lado: ali as duas faixas quebram por
+   dentro mesmo, e o seletor usa a largura que tiver. */
+@media (max-width: 640px) {
+  .appbar, .appbar .topbar-right { flex-wrap: wrap; }
+  .appbar .topbar-empresa select { width: auto; max-width: 100%; }
+}
 .appbar .topbar-right > * { flex-shrink: 0; }
 /* So o icone: o rotulo "TEMA: CLARO" ocupava a largura de tres botoes para
    dizer o que o proprio desenho ja diz. O que o icone mostra e o estado ATUAL
@@ -740,7 +746,7 @@ body {
    fundo tingido e quase branco, e sem borda o texto flutua solto na barra. */
 .modo-badge, .appbar .status-pill {
   border: 1px solid currentColor; border-radius: 999px;
-  font-size: 11px; padding: 3px 11px;
+  font-size: 11px; padding: 3px 9px;
 }
 
 /* --- Rodape ------------------------------------------------------------- */
@@ -936,7 +942,7 @@ body {
      emissao: dentro da aba, dava para trocar de aba e esquecer em nome de quem
      se estava operando. -->
 <div class="appbar">
-  <div id="empresaSelWrap" class="topbar-empresa escondido-na-revenda" style="display:none">
+  <div id="empresaSelWrap" class="topbar-empresa escondido-na-revenda" style="visibility:hidden">
     <span class="topbar-empresa-label">Empresa</span>
     <select id="empresaSel" onchange="onEmpresaChange()"></select>
   </div>
@@ -4882,14 +4888,23 @@ function empMsg(ok, texto) {
 
 let empresasPorCnpj = {};
 
+/* O seletor nasce reservando o proprio espaco e so entrega de vez quando se
+   sabe que nao vai ter empresa nenhuma — sem isso, o lugar guardado ficaria
+   vazio na barra. */
+function esconderSeletorDeEmpresa() {
+  const wrap = document.getElementById('empresaSelWrap');
+  if (wrap) wrap.style.display = 'none';
+}
+
 async function loadEmpresasSelector() {
   try {
     const res = await apiFetch('/api/empresas');
-    if (!res.ok) return;
+    // Sem devolver o lugar, o espaco reservado ficaria vazio para sempre.
+    if (!res.ok) { esconderSeletorDeEmpresa(); return; }
     const empresas = (await res.json()).filter(e => e.ativa);
     const wrap = document.getElementById('empresaSelWrap');
     const sel = document.getElementById('empresaSel');
-    if (!empresas.length) { wrap.style.display = 'none'; return; }
+    if (!empresas.length) { esconderSeletorDeEmpresa(); return; }
     // Sem opção "padrão do .env": o fallback de ambiente existe na API por
     // compatibilidade, mas oferecê-lo na tela permitia emitir com a configuração
     // do servidor em vez da do cadastro — inclusive em ambiente diferente do
@@ -4905,7 +4920,10 @@ async function loadEmpresasSelector() {
       .join('');
     // flex, não block: o wrapper alinha rótulo e seletor lado a lado no cabeçalho.
     wrap.style.display = 'flex';
-  } catch(e) { /* sem DB ou sem permissao: seletor fica oculto */ }
+    // Ele ja ocupava o lugar desde o primeiro quadro (`visibility:hidden` no
+    // HTML) justamente para o topo nao mudar de altura agora.
+    wrap.style.visibility = 'visible';
+  } catch(e) { esconderSeletorDeEmpresa(); }
 }
 
 function onEmpresaChange() {

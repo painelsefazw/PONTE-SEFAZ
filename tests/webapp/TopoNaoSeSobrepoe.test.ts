@@ -35,15 +35,51 @@ const regra = (seletor: string) => {
 };
 
 describe('o topo nao se sobrepoe', () => {
-  test('a navegacao nao encolhe, e o contexto pode ceder', () => {
-    // `max-content` na navegacao: as abas nunca sao cortadas para caber.
-    // `minmax(0, 1fr)` no contexto: ele absorve a sobra — o que o mantem
-    // ancorado na direita — E pode ficar menor que o proprio conteudo, que e
-    // de onde sai o espaco quando o texto de status cresce.
-    expect(painel).toContain('grid-template-columns: max-content minmax(0, 1fr);');
-    // Nao pode ser `1fr` na navegacao: assim ela fica gulosa, toma a sobra e
-    // espreme o contexto ate com espaco de sobra na tela.
-    expect(painel).not.toContain('grid-template-columns: minmax(max-content, 1fr)');
+  test('a quebra e decidida pelo conteudo, nao por uma largura escolhida', () => {
+    // A grade obrigava a cravar num numero em que largura as duas faixas param
+    // de caber — e esse numero nao existe. Ele muda com o conteudo: com uma
+    // empresa selecionada o contexto ganha um seletor de 240px que nao estava
+    // la enquanto a tela carregava, e a mesma janela que cabia antes nao cabe
+    // depois. O corte de 1440 errava por 5px justamente na tela de 1521.
+    const topo = regra('.topo-fixo {');
+    expect(topo).toContain('display: flex');
+    expect(topo).toContain('flex-wrap: wrap');
+    expect(painel).not.toMatch(/grid-template-areas: 'nav contexto'/);
+    expect(painel).not.toContain('@media (max-width: 1440px)');
+
+    // As duas dividem a linha enquanto couberem; o contexto, sozinho na linha
+    // de baixo, ocupa a largura inteira — por isso ele tambem cresce.
+    expect(painel).toContain('.topo-fixo .tab-bar { flex: 1 1 auto;');
+    expect(painel).toContain('.topo-fixo .appbar { flex: 1 1 auto;');
+    // A sub-navegacao sempre comeca uma linha nova.
+    expect(painel).toContain('.topo-fixo .sub-tab-bar { flex: 1 0 100%;');
+  });
+
+  test('o contexto nunca quebra pela metade', () => {
+    // Era isto que aparecia quando faltavam 5px: o botao "Sair" sozinho numa
+    // segunda linha, com o resto da barra em cima. Pior que qualquer uma das
+    // duas alternativas honestas — caber, ou descer inteiro.
+    expect(painel).toContain('.appbar, .appbar .topbar-right { flex-wrap: nowrap; }');
+    // No telefone nao ha o que dividir: ali quebrar por dentro e o certo.
+    const mobile = painel.slice(painel.lastIndexOf('@media (max-width: 640px) {'));
+    expect(mobile.slice(0, 300)).toContain('flex-wrap: wrap');
+  });
+
+  test('o seletor de empresa reserva o lugar dele desde o primeiro quadro', () => {
+    // `display:none` nao ocupa espaco: o topo nascia com uma linha e ganhava a
+    // segunda quando o seletor chegava, meio segundo depois — a pagina inteira
+    // descia 43px sozinha. Com `visibility:hidden` a altura ja nasce final.
+    expect(painel).toMatch(/id="empresaSelWrap"[^>]*style="visibility:hidden"/);
+    expect(painel).toContain('wrap.style.visibility = \'visible\'');
+    // Largura fixa, e nao `max-width`: o lugar reservado tem de ser do mesmo
+    // tamanho do que vai ocupar depois, senao o salto volta.
+    expect(regra('.appbar .topbar-empresa select {')).toContain('width: 240px');
+    // E quando nao houver empresa nenhuma, o lugar guardado tem de ser
+    // devolvido — senao fica um vazio permanente na barra.
+    expect(painel).toContain('function esconderSeletorDeEmpresa()');
+    const load = painel.slice(painel.indexOf('async function loadEmpresasSelector('));
+    const corpo = load.slice(0, load.indexOf('\nfunction onEmpresaChange'));
+    expect(corpo.match(/esconderSeletorDeEmpresa\(\)/g)).toHaveLength(3);
   });
 
   test('quem cede espaco e o texto de status, e so ele', () => {
@@ -58,13 +94,11 @@ describe('o topo nao se sobrepoe', () => {
     expect(status).toContain('white-space: nowrap');
   });
 
-  test('a barra de contexto pode encolher dentro da propria coluna', () => {
+  test('a barra de contexto pode encolher dentro da propria faixa', () => {
     // Sem `min-width: 0` o flex se recusa a encolher abaixo do conteudo, e a
-    // coluna volta a transbordar por cima da navegacao.
+    // barra volta a transbordar por cima da navegacao.
     expect(regra('.appbar {')).toContain('min-width: 0');
-    // Rede de seguranca: se ainda assim nao couber, os itens quebram linha em
-    // vez de vazarem para a esquerda.
-    expect(painel).toContain('.appbar, .appbar .topbar-right { flex-wrap: wrap; }');
+    expect(painel).toContain('.topo-fixo .appbar { flex: 1 1 auto; min-width: 0;');
   });
 
   test('a mensagem cortada continua inteira no title', () => {
@@ -95,12 +129,18 @@ describe('o topo nao se sobrepoe', () => {
     expect(painel).toContain('overflow-x: auto');
   });
 
-  test('abaixo de 1440 as duas faixas empilham, em vez de se espremerem', () => {
-    // 1105px de abas mais 440 de contexto nao cabem em 1366 nem em 1280. O
-    // corte antigo era 720px — largura de telefone —, e por isso nada
-    // acontecia justamente nos notebooks onde o problema aparecia.
-    expect(painel).toContain('@media (max-width: 1440px) {');
-    const bloco = painel.slice(painel.indexOf('@media (max-width: 1440px) {'));
-    expect(bloco.slice(0, 400)).toContain("grid-template-areas: 'nav' 'contexto' 'sub';");
+  test('as dez abas cabem com folga, e nao no limite', () => {
+    // Dez abas multiplicam cada pixel de recuo por vinte. Com 16px a linha
+    // fechava com 5px sobrando numa tela de 1521 — e 5px de folga nao e folga,
+    // e sorte. Com 12px sao 80px devolvidos, sem mudar o tamanho do texto.
+    // Sem o ajudante `regra` aqui de proposito: `.tab-bar` e `.tab-bar button`
+    // tem DUAS declaracoes cada uma neste arquivo — a antiga e a do design
+    // system, que veio depois e vence. Buscar pelo seletor acharia a primeira,
+    // que nao e a que manda.
+    expect(painel).toContain('padding: 13px 12px; font-size: 12.5px');
+    // Navegacao e sub-navegacao recuam igual, senao as duas fileiras de abas
+    // ficam desencontradas.
+    expect(painel).toContain('  padding: 0 8px;\n  gap: 2px;');
+    expect(painel).toContain('border-bottom: 1px solid var(--borda); padding: 0 8px;');
   });
 });
