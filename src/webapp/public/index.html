@@ -9997,7 +9997,12 @@ async function salvarWhiteLabel(cnpj) {
     corBackground: document.getElementById('wlBg').value,
     corSurface: document.getElementById('wlSrf').value,
     corTexto: document.getElementById('wlTxt').value,
-    corMuted: 'var(--suave-texto)',
+    // HEXADECIMAL, e nao `var(--suave-texto)`. Isto aqui nao e CSS: e um valor
+    // que vai para a coluna `cor_muted VARCHAR(9)` do banco. O token tem 18
+    // caracteres, o Postgres recusava a linha inteira com "value too long", e a
+    // marca NUNCA era gravada. Entrou na varredura que trocou cores por token —
+    // a mesma armadilha do `ctx.fillStyle` do canvas, noutro lugar.
+    corMuted: '#6b7280',
     suporteEmail: document.getElementById('wlEmail').value || undefined,
     // So digitos: e o formato que o link wa.me exige do outro lado.
     suporteWhatsapp: (document.getElementById('wlWhats').value || '').replace(/\D/g, '') || undefined,
@@ -10013,14 +10018,29 @@ async function salvarWhiteLabel(cnpj) {
     faviconBase64: valOpc('wlFav')
   };
   try {
-    await apiFetch('/api/admin/clients/' + cnpj + '/whitelabel', {
+    // `fetch` so rejeita em falha de REDE: um 500 chega aqui como resposta
+    // normal. Sem conferir, o codigo seguia fechando o modal e reabrindo a
+    // ficha — a tela dizia que salvou, e o banco tinha recusado a linha. Foi
+    // assim que a marca ficou meses sem gravar sem ninguem ver um erro.
+    var r = await apiFetch('/api/admin/clients/' + cnpj + '/whitelabel', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    await apiFetch('/api/admin/clients/' + cnpj, {
+    if (!r.ok) {
+      var e1 = await r.json().catch(function () { return {}; });
+      alert('A marca NAO foi salva: ' + (e1.erro || ('HTTP ' + r.status))
+        + ' — nada foi gravado. Corrija e salve de novo.');
+      return;
+    }
+    var r2 = await apiFetch('/api/admin/clients/' + cnpj, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ whiteLabelAtiva: true })
     });
+    if (!r2.ok) {
+      var e2 = await r2.json().catch(function () { return {}; });
+      alert('A marca foi salva, mas o cliente nao foi marcado como marca propria: '
+        + (e2.erro || ('HTTP ' + r2.status)));
+    }
     document.getElementById('modalClienteApi').style.display = 'none';
     abrirDetalheCliente(cnpj);
   } catch (e) { alert('Erro: ' + e.message); }
