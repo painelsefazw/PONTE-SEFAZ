@@ -137,6 +137,24 @@ function calcularDestino(ufEmitente: string, ufDestinatario: string): string {
 // Config carregada sob demanda: permite o deploy "nascer em branco" e
 // responder com instrução clara em vez de crashar no boot.
 let cachedConfig: NFeConfig | null = null;
+/**
+ * Timeout das chamadas a SEFAZ — sem exigir o emitente do servidor.
+ *
+ * Oito rotas liam este numero por `getConfig()`, que valida o emitente INTEIRO
+ * e estoura quando `NFE_PFX_PATH` nao existe. Numa ponte de revenda esse
+ * emitente nao existe de proposito: cada cliente traz o certificado dele,
+ * guardado cifrado no banco, e e ele que assina.
+ *
+ * O resultado era que emitir, cancelar, consultar, inutilizar, manifestar e o
+ * radar respondiam "Variavel de ambiente obrigatoria ausente: NFE_PFX_PATH" —
+ * um erro de instalacao, para quem tinha instalado tudo certo. E nenhuma das
+ * oito usava outra coisa do `config` alem deste numero.
+ */
+function timeoutSefazMs(): number {
+  const bruto = Number(process.env['NFE_TIMEOUT_MS']);
+  return Number.isFinite(bruto) && bruto > 0 ? bruto : 30000;
+}
+
 function getConfig(): NFeConfig {
   if (!cachedConfig) {
     cachedConfig = loadConfig();
@@ -448,6 +466,9 @@ async function resolveEmpresa(req: express.Request): Promise<EmpresaContext> {
     if (/Empresa nao identificada/.test(err?.message || '')) throw err;
   }
 
+  // Aqui o emitente do .env e o assunto de verdade — e nao um numero solto —,
+  // entao  cobrar o certificado e o comportamento certo: sem ele
+  // nao ha em nome de quem emitir.
   const config = getConfig();
   return {
     cnpj: config.cnpjEmitente,
@@ -2844,7 +2865,6 @@ app.post('/api/emitir', async (req, res) => {
   // e e justamente no catch que a reserva precisa ser desfeita.
   let reserva: { cnpj: string; serie: string; numero: number; ambiente: '1' | '2' } | undefined;
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const body = req.body;
     const ambiente = resolverAmbiente(req, res, emp.ambiente, body.ambiente);
@@ -3238,7 +3258,7 @@ app.post('/api/emitir', async (req, res) => {
     // de rede não é "não emitiu": é "não sei". O catch geral devolvia 500 sem a
     // chave, e o operador ficava sem a única informação que resolveria — com
     // que consultar. Reemitir às cegas gera duplicidade (cStat 539).
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getEndpoints(emp.uf, ambiente);
     let responseXml: string;
     try {
@@ -3432,7 +3452,6 @@ app.post('/api/emitir-nfce', async (req, res) => {
   // justamente onde a devolucao precisa acontecer.
   let reservaNfce: { cnpj: string; serie: string; numero: number; ambiente: '1' | '2' } | undefined;
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const body = req.body;
     const ambiente = resolverAmbiente(req, res, emp.ambiente, body.ambiente);
@@ -3653,7 +3672,7 @@ app.post('/api/emitir-nfce', async (req, res) => {
     const loteId = Date.now().toString();
     const envelope = xmlGen.wrapEnvelope(signedXml, loteId);
 
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getNfceEndpoints(emp.uf, ambiente);
 
     // Falha de envio no balcao: a NF-e ja separava "nao sei" de "nao saiu" e o
@@ -3926,7 +3945,6 @@ app.get('/api/nota/:chave/duplicar', async (req, res) => {
 app.post('/api/cancelar', async (req, res) => {
   if (bloqueiaEscrita(req, res)) return;
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const { chaveAcesso, protocolo, justificativa } = req.body;
     const ambiente = resolverAmbiente(req, res, emp.ambiente, req.body.ambiente);
@@ -3957,7 +3975,7 @@ app.post('/api/cancelar', async (req, res) => {
     const signer = new Signer(pfxBuffer, emp.pfxPassword);
     const signedXml = signer.sign(xml, `ID110111${chaveAcesso}01`);
 
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getEndpoints(emp.uf, ambiente);
     const responseXml = await soapClient.send(signedXml, endpoints.NFeRecepcaoEvento, 'NFeRecepcaoEvento');
     const parsed = parseEventoResponse(responseXml);
@@ -3990,7 +4008,6 @@ app.post('/api/cancelar', async (req, res) => {
 app.post('/api/carta-correcao', async (req, res) => {
   if (bloqueiaEscrita(req, res)) return;
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const { chaveAcesso, correcao } = req.body;
     const nSeqEvento = Number(req.body.nSeqEvento || 1);
@@ -4022,7 +4039,7 @@ app.post('/api/carta-correcao', async (req, res) => {
     const nSeqPadded = String(nSeqEvento).padStart(2, '0');
     const signedXml = signer.sign(xml, `ID110110${chaveAcesso}${nSeqPadded}`);
 
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getEndpoints(emp.uf, ambiente);
     const responseXml = await soapClient.send(signedXml, endpoints.NFeRecepcaoEvento, 'NFeRecepcaoEvento');
     const parsed = parseEventoResponse(responseXml);
@@ -4046,7 +4063,6 @@ app.post('/api/carta-correcao', async (req, res) => {
 // ---------------------------------------------------------------------------
 app.get('/api/consultar', async (req, res) => {
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const chave = req.query['chave'] as string;
     const ambienteQ = req.query['ambiente'] as string;
@@ -4060,7 +4076,7 @@ app.get('/api/consultar', async (req, res) => {
     const gen = new ConsultaXmlGenerator();
     const xml = gen.generate(chave, ambiente);
     const pfxBuffer = emp.pfxBuffer;
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getEndpoints(emp.uf, ambiente);
     const responseXml = await soapClient.send(xml, endpoints.NfeConsultaProtocolo, 'NfeConsultaProtocolo');
     const parsed = parseConsultaResponse(responseXml);
@@ -4191,7 +4207,6 @@ app.delete('/api/nota/:chave', async (req, res) => {
 app.post('/api/inutilizar', async (req, res) => {
   if (bloqueiaEscrita(req, res)) return;
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const { serie, nNFIni, nNFFin, justificativa } = req.body;
     const ambiente = resolverAmbiente(req, res, emp.ambiente, req.body.ambiente);
@@ -4276,7 +4291,7 @@ app.post('/api/inutilizar', async (req, res) => {
     const id = `ID${cUF}${ano}${emp.cnpj}55${String(serieNum).padStart(3, '0')}${String(ini).padStart(9, '0')}${String(fim).padStart(9, '0')}`;
     const signedXml = signer.sign(xml, id);
 
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getEndpoints(emp.uf, ambiente);
     const responseXml = await soapClient.send(signedXml, endpoints.NfeInutilizacao, 'NfeInutilizacao');
     const parsed = parseInutilizacaoResponse(responseXml);
@@ -4702,7 +4717,6 @@ app.post('/api/enviar-email', async (req, res) => {
 app.post('/api/manifestar', async (req, res) => {
   if (bloqueiaEscrita(req, res)) return;
   try {
-    const config = getConfig();
     const emp = await resolveEmpresa(req);
     const { chaveAcesso, tipoEvento, justificativa } = req.body;
     const ambiente = resolverAmbiente(req, res, emp.ambiente, req.body.ambiente);
@@ -4751,7 +4765,7 @@ app.post('/api/manifestar', async (req, res) => {
     const signer = new Signer(pfxBuffer, emp.pfxPassword);
     const signedXml = signer.sign(eventoXml, eventId);
 
-    const soapClient = new SoapClient({ timeout: config.timeoutMs, pfxBuffer, pfxPassword: emp.pfxPassword });
+    const soapClient = new SoapClient({ timeout: timeoutSefazMs(), pfxBuffer, pfxPassword: emp.pfxPassword });
     const endpoints = getEndpoints(emp.uf, ambiente);
     const responseXml = await soapClient.send(signedXml, endpoints.NFeRecepcaoEvento, 'NFeRecepcaoEvento');
     const parsed = parseEventoResponse(responseXml);
@@ -4803,14 +4817,13 @@ async function varrerDistribuicaoDFe(opts: {
   maxNSU: string;
   documentos: any[];
 }> {
-  const config = getConfig();
   const cUF = UF_TO_IBGE[opts.emp.uf] || '31';
   const { DistribuicaoDFeGenerator } = require('../infrastructure/xml/DistribuicaoDFeGenerator');
   const gen = new DistribuicaoDFeGenerator();
   const xml = gen.generate(cUF, opts.emp.cnpj, opts.nsu ? undefined : (opts.ultNSU || '0'), opts.nsu);
 
   const soapClient = new SoapClient({
-    timeout: config.timeoutMs, pfxBuffer: opts.emp.pfxBuffer, pfxPassword: opts.emp.pfxPassword,
+    timeout: timeoutSefazMs(), pfxBuffer: opts.emp.pfxBuffer, pfxPassword: opts.emp.pfxPassword,
   });
   const endpoint = DIST_DFE_ENDPOINTS[opts.ambiente as '1' | '2'] || DIST_DFE_ENDPOINTS['2'];
   const responseXml = await soapClient.send(xml, endpoint, 'NFeDistribuicaoDFe');
