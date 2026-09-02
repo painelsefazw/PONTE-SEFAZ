@@ -9806,10 +9806,51 @@ function buildWhiteLabelForm(cnpj, wl) {
         '<input class="fld" id="wlDom" autocomplete="off" value="' + escapeHtml(wl.dominioProducao || '') + '" placeholder="fiscal.empresa.com.br"></div>' +
     '</details>' +
 
+    // A marca cadastrada chegava ao repositorio dentro do manifest e parava ali:
+    // o construtor nao le o manifest, ele responde ao chat. O site do cliente
+    // nascia com as cores do modelo, e parecia que o cadastro nao servia.
+    '<div style="margin-top:20px;padding:12px 14px;border:1px solid var(--borda);border-radius:10px;background:var(--suave)">' +
+      '<div style="font-size:12.5px;font-weight:600;margin-bottom:4px">Levar esta marca para o construtor</div>' +
+      '<div style="font-size:11.5px;color:var(--suave-texto);line-height:1.5;margin-bottom:10px">' +
+        'O arquivo descreve cada campo desta tela como está gravado — sem resumir — para colar no chat do Lovable. ' +
+        'Salve antes de baixar: ele lê o que está no banco, não o que está na tela.</div>' +
+      '<button class="wz-btn wz-btn-g" onclick="baixarPersonalizacao(\'' + cnpj + '\')">Baixar personalização (.md)</button>' +
+    '</div>' +
+
     '<div class="wz-foot">' +
       '<button class="wz-btn wz-btn-g" onclick="document.getElementById(\'modalClienteApi\').style.display=\'none\'">Cancelar</button>' +
       '<button class="wz-btn wz-btn-p" onclick="salvarWhiteLabel(\'' + cnpj + '\')">Salvar marca</button>' +
     '</div>';
+}
+
+/**
+ * Baixa a personalizacao deste cliente como Markdown.
+ *
+ * Passa por `apiFetch` e nao por um link direto: a rota exige senha de admin, e
+ * um `<a href>` iria sem cabecalho nenhum — o navegador baixaria a pagina de
+ * erro com nome de arquivo `.md`, que e a pior forma de falhar, porque parece
+ * ter funcionado.
+ */
+async function baixarPersonalizacao(cnpj) {
+  try {
+    var r = await apiFetch('/api/admin/clients/' + cnpj + '/whitelabel/personalizacao.md');
+    if (!r.ok) {
+      var e = await r.json().catch(function () { return {}; });
+      alert('Nao foi possivel gerar: ' + (e.erro || ('HTTP ' + r.status)));
+      return;
+    }
+    var texto = await r.text();
+    var url = URL.createObjectURL(new Blob([texto], { type: 'text/markdown;charset=utf-8' }));
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'personalizacao-' + cnpj + '.md';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Nao foi possivel gerar: ' + e.message);
+  }
 }
 
 function wlCor(id, label, val) {

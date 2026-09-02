@@ -49,6 +49,7 @@ import { ClientServiceStore, type FiscalService, scopeAllowsService } from './cl
 import { WebhookStore, type WebhookEvent } from './webhooks';
 import { ApiClientStore, type ClientStatus } from './api-clients';
 import { WhiteLabelStore } from './white-label';
+import { gerarPersonalizacaoMd } from './personalizacao-md';
 import { PlatformTemplateStore, type PlatformManifest, type PlatformTemplate } from './platform-templates';
 import {
   baixarModelo, lerModeloDaPasta, montarZip, publicarNoGitHub, verificarAcessoAoRepositorio,
@@ -8310,6 +8311,59 @@ app.post('/api/admin/clients/:cnpj/whitelabel', async (req, res) => {
       empresaCnpj: cnpj, requestId: (req as any).requestId,
     });
     res.json({ sucesso: true });
+  } catch (err: any) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+/**
+ * GET /api/admin/clients/:cnpj/whitelabel/personalizacao.md
+ *
+ * A marca cadastrada aqui chegava ao repositório dentro do manifest e parava
+ * ali: o construtor não lê o manifest, ele responde ao que se escreve no chat
+ * dele. O site do cliente nascia com as cores do modelo, e a leitura natural
+ * era que o cadastro de marca não servia para nada.
+ *
+ * Esta rota escreve o que foi cadastrado num documento para colar no chat —
+ * campo por campo, sem resumir. Ela lê o mesmo registro que alimenta o
+ * manifest, então os dois nunca divergem.
+ */
+app.get('/api/admin/clients/:cnpj/whitelabel/personalizacao.md', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const cnpj = req.params.cnpj.replace(/\D/g, '');
+    const clientStore = await getApiClientStore();
+    const client = await clientStore.obter(cnpj);
+    if (!client) { res.status(404).json({ erro: 'Cliente API nao encontrado.' }); return; }
+
+    const [marca, servicos, fiscal] = await Promise.all([
+      (await getWhiteLabelStore()).obterOuPadrao(cnpj),
+      (await getClientServiceStore()).obterAtivos(cnpj),
+      clientStore.obterFiscal(cnpj),
+    ]);
+
+    // O mesmo domínio estável que vai para o manifest: um documento que mandasse
+    // o construtor apontar para outro endereço reproduziria, no chat, o defeito
+    // que acabou de ser corrigido no template.
+    const apiBaseUrl = process.env['API_PUBLIC_URL']
+      || (process.env['VERCEL_PROJECT_PRODUCTION_URL']
+        ? `https://${process.env['VERCEL_PROJECT_PRODUCTION_URL']}`
+        : '') || 'https://ponte-sefaz.vercel.app';
+
+    const md = gerarPersonalizacaoMd({
+      cnpj,
+      razaoSocial: client.razaoSocial,
+      fantasia: client.fantasia,
+      uf: fiscal?.uf,
+      modulos: servicos,
+      apiBaseUrl,
+      marca,
+    });
+
+    const arquivo = `personalizacao-${cnpj}.md`;
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${arquivo}"`);
+    res.send(md);
   } catch (err: any) {
     res.status(500).json({ erro: err.message });
   }
