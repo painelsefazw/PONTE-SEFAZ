@@ -4422,6 +4422,27 @@ app.get('/api/certificado-info', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/assinar-pdf — assina um PDF PELA EMPRESA com o certificado A1
+// (PAdES). Usado pelo MAGNU nos recibos de distribuicao de lucros: a empresa
+// assina aqui, o socio assina depois no gov.br. Ver webapp/assinarPdf.ts.
+// Corpo: { pdf_base64, motivo?, local?, contato? } → { pdf_base64, assinante, cnpj, quando }
+// ---------------------------------------------------------------------------
+app.post('/api/assinar-pdf', async (req, res) => {
+  try {
+    const emp = await resolveEmpresa(req);
+    const { pdf_base64, motivo, local, contato } = (req.body || {}) as Record<string, string>;
+    if (!pdf_base64) { res.status(400).json({ erro: 'pdf_base64 obrigatorio' }); return; }
+    const pdf = Buffer.from(String(pdf_base64).replace(/^data:.*?;base64,/, ''), 'base64');
+    if (pdf.length < 100) { res.status(400).json({ erro: 'PDF vazio ou invalido' }); return; }
+    const { assinarPdfComPfx } = await import('./assinarPdf');
+    const r = await assinarPdfComPfx(pdf, emp.pfxBuffer, emp.pfxPassword, { motivo, local, contato });
+    res.json({ ok: true, pdf_base64: r.pdf.toString('base64'), assinante: r.assinante, cnpj: r.cnpj, quando: r.quando });
+  } catch (err: any) {
+    res.status(400).json({ erro: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // GET /api/certificados-alertas — alertas de vencimento de TODOS os certificados
 // ---------------------------------------------------------------------------
 app.get('/api/certificados-alertas', async (req, res) => {
