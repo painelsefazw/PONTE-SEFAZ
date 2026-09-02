@@ -53,11 +53,33 @@ describe('SOAPAction da distribuicao', () => {
     }
   });
 
-  test('o corpo continua no namespace do servico', () => {
-    // A acao mudou; o namespace do `nfeDadosMsg` nao. Trocar os dois de uma vez
-    // seria duas mudancas num lugar onde so uma foi provada necessaria.
+  test('o corpo vem envolvido no elemento da operacao', () => {
+    // Este teste ja disse o contrario — "a acao mudou; o corpo nao" —, e a
+    // frase estava errada. Corrigir so a acao levou a SEFAZ a aceitar a
+    // requisicao e entao responder
+    //
+    //     Server was unable to process request.
+    //     ---> Object reference not set to an instance of an object.
+    //
+    // que e um NullReferenceException do .NET vazando como SOAP Fault: com a
+    // mensagem solta no corpo, o servico procura o parametro da operacao, nao
+    // acha, e estoura. A cautela de mudar uma coisa de cada vez estava certa —
+    // errada estava a conclusao de que a segunda mudanca era desnecessaria.
     const envelope = proto.buildEnvelope.call(cliente, '<x/>', 'NFeDistribuicaoDFe') as string;
     expect(envelope).toContain(
-      '<nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe">');
+      '<nfeDistDFeInteresse xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeDistribuicaoDFe">');
+    expect(envelope).toContain('<nfeDadosMsg>');
+    // A mensagem fica DENTRO da operacao, nao ao lado dela.
+    expect(envelope.indexOf('<nfeDistDFeInteresse'))
+      .toBeLessThan(envelope.indexOf('<nfeDadosMsg>'));
+  });
+
+  test('o corpo dos servicos estaduais continua sem envelope de operacao', () => {
+    // Eles declaram a mensagem direto no corpo. Envolver mudaria a emissao de
+    // todo cliente para consertar algo que hoje funciona.
+    const envelope = proto.buildEnvelope.call(cliente, '<enviNFe/>', 'NfeAutorizacao') as string;
+    expect(envelope).toContain(
+      '<nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4">');
+    expect(envelope).not.toContain('nfeDistDFeInteresse');
   });
 });

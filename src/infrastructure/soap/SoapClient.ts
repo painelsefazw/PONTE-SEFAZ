@@ -165,14 +165,34 @@ export class SoapClient {
     // rejeita com HTTP 400 vazio. Ocorre nos geradores de evento/consulta.
     const inner = xml.replace(/^\s*<\?xml[^>]*\?>\s*/, '');
 
+    // As SEFAZ estaduais declaram a mensagem direto no corpo: `nfeDadosMsg`
+    // sozinho dentro do `Body`. O Ambiente Nacional declara a OPERACAO
+    // envolvendo a mensagem, e sem esse envelope o servico .NET procura o
+    // parametro dele, nao acha, e devolve "Object reference not set to an
+    // instance of an object" — um NullReferenceException vazando como SOAP
+    // Fault. Nao ha nada de errado com o XML da consulta: ele so chega num
+    // lugar onde ninguem o le.
+    const operacao = this.operacaoDoServico(soapAction);
+    const corpo = operacao
+      ? [
+        `    <${operacao} xmlns="${wsdlNamespace}">`,
+        '      <nfeDadosMsg>',
+        `        ${inner}`,
+        '      </nfeDadosMsg>',
+        `    </${operacao}>`,
+      ]
+      : [
+        `    <nfeDadosMsg xmlns="${wsdlNamespace}">`,
+        `      ${inner}`,
+        '    </nfeDadosMsg>',
+      ];
+
     return [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<soap12:Envelope xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">',
       '  <soap12:Header/>',
       '  <soap12:Body>',
-      `    <nfeDadosMsg xmlns="${wsdlNamespace}">`,
-      `      ${inner}`,
-      '    </nfeDadosMsg>',
+      ...corpo,
       '  </soap12:Body>',
       '</soap12:Envelope>',
     ].join('\n');
@@ -201,16 +221,32 @@ export class SoapClient {
    * cada SEFAZ antes, nao deduzida.
    */
   private resolveSoapAction(soapAction: string): string {
+    const operacao = this.operacaoDoServico(soapAction);
+    return operacao
+      ? `${this.resolveWsdlNamespace(soapAction)}/${operacao}`
+      : soapAction;
+  }
+
+  /**
+   * O elemento de operacao do servico, quando ele exige um.
+   *
+   * Manda em duas coisas ao mesmo tempo, e por isso mora num lugar so: na
+   * SOAPAction do cabecalho e no envelope do corpo. Ter descoberto as duas em
+   * chamadas separadas custou duas idas a SEFAZ — a primeira correcao passou
+   * pela acao e esbarrou no corpo.
+   *
+   * Vazio para todo o resto: mexer nos servicos estaduais mudaria a emissao de
+   * todo cliente para consertar algo que hoje funciona.
+   */
+  private operacaoDoServico(soapAction: string): string {
     const operacoes: Array<[string, string]> = [
       ['distribuicaodfe', 'nfeDistDFeInteresse'],
     ];
     const alvo = soapAction.toLowerCase();
     for (const [chave, operacao] of operacoes) {
-      if (alvo.includes(chave)) {
-        return `${this.resolveWsdlNamespace(soapAction)}/${operacao}`;
-      }
+      if (alvo.includes(chave)) return operacao;
     }
-    return soapAction;
+    return '';
   }
 
   private resolveWsdlNamespace(soapAction: string): string {
