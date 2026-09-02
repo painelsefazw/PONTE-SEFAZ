@@ -1561,6 +1561,11 @@ app.post('/api/empresas/:cnpj/sincronizar-ie', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
     const alvo = req.params.cnpj.replace(/\D/g, '');
+    // Aqui NAO se usa `empresaPorCnpj`: esta rota ESCREVE a IE corrigida, e a
+    // escrita e no store de emitentes. Aceitar um cliente de API aqui leria de
+    // uma tabela e gravaria noutra — a consulta acertaria e a correcao se
+    // perderia, calada. A IE de cliente de API se corrige no cadastro fiscal
+    // dele.
     const store = await getEmpresaStore();
     const emp = await store.obterContexto(alvo);
     if (!emp) { res.status(404).json({ erro: 'Empresa nao cadastrada' }); return; }
@@ -1681,6 +1686,27 @@ app.patch('/api/empresas/:cnpj/crt', async (req, res) => {
   }
 });
 
+/**
+ * A empresa de um CNPJ, venha ela de onde vier.
+ *
+ * `getEmpresaStore()` conhece so os EMITENTES. Numa ponte de revenda o cliente
+ * nao esta la: ele e cliente de API, com cadastro fiscal e certificado
+ * proprios, noutra tabela. As rotas por `:cnpj` liam so a primeira e
+ * respondiam "Empresa nao cadastrada" para um cliente que existe, tem
+ * certificado no banco e acabou de consultar a SEFAZ com ele.
+ *
+ * `resolveEmpresa` ja fazia essa juncao para o header; faltava para o
+ * parametro. E a rota que mais sofria era justamente a de credenciamento — a
+ * que explica por que a SEFAZ recusou a emissao.
+ */
+async function empresaPorCnpj(cnpj: string): Promise<EmpresaContext | null> {
+  const store = await getEmpresaStore();
+  const emp = await store.obterContexto(cnpj);
+  if (emp) return emp;
+  const clientStore = await getApiClientStore();
+  return (await clientStore.obterContextoFiscal(cnpj)) ?? null;
+}
+
 app.get('/api/empresas/:cnpj/credenciamento', async (req, res) => {
   try {
     const alvo = req.params.cnpj.replace(/\D/g, '');
@@ -1689,8 +1715,7 @@ app.get('/api/empresas/:cnpj/credenciamento', async (req, res) => {
       res.status(403).json({ erro: 'Empresa fora do escopo desta credencial.' });
       return;
     }
-    const store = await getEmpresaStore();
-    const emp = await store.obterContexto(alvo);
+    const emp = await empresaPorCnpj(alvo);
     if (!emp) { res.status(404).json({ erro: 'Empresa nao cadastrada' }); return; }
     const url = CAD_CONSULTA_URLS[emp.uf];
     if (!url) {
