@@ -1,3 +1,5 @@
+import { manifest } from "./manifest";
+
 /**
  * As variaveis que o servidor precisa para a plataforma funcionar.
  *
@@ -46,14 +48,22 @@ export const VARIAVEIS_OBRIGATORIAS = [
 export const VARIAVEIS_OPCIONAIS = [
   {
     nome: "APP_USER",
-    para: "Usuario do painel. Sem cadastrar, e o CNPJ da empresa (o do manifest).",
+    para: "Usuario do painel.",
+    padrao: `o CNPJ da empresa (${manifest.company.cnpj})`,
   },
   {
     nome: "SESSION_SECRET",
-    para: "Assina o cookie. Sem cadastrar, e derivado da chave da API.",
+    para: "Assina o cookie de sessao.",
+    padrao: "derivado da chave da API — trocar a chave derruba as sessoes abertas",
   },
   {
     nome: "FISCAL_API_URL",
-    para: "Endereco da API fiscal. Sem cadastrar, usa o endereco padrao.",
+    // "usa o endereco padrao" nao dizia QUAL, e por muito tempo o padrao era um
+    // dominio cravado no codigo: a plataforma de um cliente cadastrado numa
+    // instalacao ia bater noutra, e a resposta era um 401 identico ao de chave
+    // revogada. Hoje o padrao vem do manifest, e o valor aparece escrito aqui —
+    // quem le sabe para onde as notas vao antes de emitir a primeira.
+    para: "Endereco da ponte que emite para esta empresa.",
+    padrao: manifest.api?.baseUrl || "NAO DEFINIDO — cadastre esta variavel",
   },
 ] as const;

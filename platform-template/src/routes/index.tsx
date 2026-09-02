@@ -82,22 +82,28 @@ function ConfiguracaoPendente({ faltando }: { faltando: string[] }) {
           para o repositório — veja <code>.env.example</code>.
         </p>
 
-        {/* Estas nao sao pendencia, mas precisam aparecer: sem isto alguem
-            procura por que o login aceita um usuario que alguem nunca cadastrou,
-            ou cadastra as cinco por achar que todas sao obrigatorias. */}
-        <details className="mt-4">
-          <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
-            Estas você não precisa cadastrar
-          </summary>
-          <ul className="mt-3 space-y-2">
+        {/* Sempre a VISTA, e nao dobrado atras de um "voce nao precisa".
+            Quem abre esta tela esta configurando o servidor: esconder metade
+            das variaveis obriga a descobrir a outra metade por erro. E a que
+            mais custou — `FISCAL_API_URL` — dizia so "usa o endereco padrao",
+            sem dizer qual: a plataforma de um cliente foi bater noutra
+            instalacao e a resposta foi um 401 igual ao de chave revogada. */}
+        <div className="mt-6 border-t pt-4">
+          <p className="text-xs font-medium">
+            Estas são opcionais — veja o que vale se deixar em branco
+          </p>
+          <ul className="mt-3 space-y-2.5">
             {VARIAVEIS_OPCIONAIS.map((v) => (
               <li key={v.nome} className="text-xs text-muted-foreground">
-                <code className="font-medium">{v.nome}</code>
+                <code className="font-medium text-foreground">{v.nome}</code>
                 <span className="block">{v.para}</span>
+                <span className="block">
+                  Em branco vale: <span className="font-medium">{v.padrao}</span>
+                </span>
               </li>
             ))}
           </ul>
-        </details>
+        </div>
       </div>
     </div>
   );
