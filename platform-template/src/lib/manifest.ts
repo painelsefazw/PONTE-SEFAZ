@@ -58,6 +58,20 @@ export interface PlatformManifest {
    * dele e quebraria no dia em que o dominio mudasse.
    */
   assets?: { logo?: string | null; logoDark?: string | null; favicon?: string | null };
+  /**
+   * A ponte que emite para ESTE cliente.
+   *
+   * O gerador sempre escreve este bloco, mas a interface nao o declarava — e o
+   * que nao esta declarado nao da erro quando ninguem usa. O `fiscal.server`
+   * entao caia num dominio cravado no codigo, e a plataforma de um cliente
+   * cadastrado numa instalacao ia bater noutra: a chave certa, ativa, recusada
+   * com 401, porque o banco do outro lado nunca ouviu falar dela.
+   *
+   * `secret` vem como marcador (`{{API_SECRET_SERVER_SIDE}}`) e NAO e segredo:
+   * este arquivo vai para o repositorio e para o bundle do navegador. A
+   * credencial de verdade e a `FISCAL_API_KEY`, que so existe no servidor.
+   */
+  api: { baseUrl: string; clientId: string; tenantId: string; secret?: string };
   modules: { nfe: boolean; nfce: boolean; nfse: boolean; cte?: boolean; mdfe?: boolean };
   features: { dashboard: boolean; users: boolean; reports: boolean; support: boolean };
   /**

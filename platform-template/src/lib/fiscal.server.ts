@@ -2,15 +2,25 @@ import { getPainelSession } from "./auth.server";
 import { manifest } from "./manifest";
 
 /**
- * Domínio estável da API. Não usar a URL de um deploy específico
- * (nfe-emissor-<hash>-...vercel.app): ela muda a cada publicação e responde
- * 302 por trás da proteção de deploy, o que derruba a plataforma inteira.
+ * Endereço da ponte que emite para ESTE cliente.
  *
- * Configurável por `FISCAL_API_URL` porque o endereço estava cravado aqui: um
- * template gerado para outro cliente, ou a própria API mudando de domínio,
- * exigiria editar código. O valor abaixo é só o padrão.
+ * Vem do manifest, que é gerado por instalação junto com o template. O padrão
+ * era um domínio cravado aqui, e isso mandava a plataforma para a ponte errada:
+ * o cliente foi cadastrado numa instalação, o manifest saiu apontando para ela,
+ * e o código ignorava o manifest e falava com outra. Como as duas rodam o mesmo
+ * servidor, a resposta era um 401 idêntico ao de chave revogada — a chave certa
+ * batendo na porta de um banco que nunca ouviu falar dela. Levou horas para
+ * achar, porque tudo o que a tela dizia estava correto: a chave existia, estava
+ * ativa, e era recusada.
+ *
+ * `FISCAL_API_URL` continua valendo como sobrescrita, para o caso de a ponte
+ * mudar de domínio depois de o template ter sido gerado.
+ *
+ * Nunca apontar para a URL de um deploy específico (`...-<hash>.vercel.app`):
+ * ela muda a cada publicação e responde 302 por trás da proteção de deploy.
  */
-const BASE_URL = process.env["FISCAL_API_URL"] || "https://nfe-emissor.vercel.app";
+const BASE_URL = String(process.env["FISCAL_API_URL"] ?? "").trim()
+  || (manifest.api?.baseUrl ?? "");
 
 /**
  * Credencial da API fiscal.
@@ -115,6 +125,9 @@ export async function apiFetchArquivo(
 ): Promise<ApiResult<{ base64: string; tipo: string }>> {
   const apiKey = chaveDaApi();
   if (!apiKey) return { ok: false, error: "Credencial da API não configurada no servidor." };
+  if (!BASE_URL) {
+    return { ok: false, error: "Endereco da ponte nao configurado: defina FISCAL_API_URL." };
+  }
 
   try {
     const res = await fetch(`${BASE_URL}${path}`, {
@@ -156,6 +169,9 @@ export async function apiFetch<T>(
 ): Promise<ApiResult<T>> {
   const apiKey = chaveDaApi();
   if (!apiKey) return { ok: false, error: "Credencial da API não configurada no servidor." };
+  if (!BASE_URL) {
+    return { ok: false, error: "Endereco da ponte nao configurado: defina FISCAL_API_URL." };
+  }
 
   try {
     const res = await fetch(`${BASE_URL}${path}`, {

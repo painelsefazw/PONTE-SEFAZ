@@ -18,8 +18,19 @@
     "accent": "#10b981",
     "theme": "light"
   },
-  "modules": { "nfe": true, "nfce": false, "nfse": false, "cte": false, "mdfe": false },
-  "features": { "dashboard": true, "users": false, "reports": true, "support": true },
+  "modules": {
+    "nfe": true,
+    "nfce": false,
+    "nfse": false,
+    "cte": false,
+    "mdfe": false
+  },
+  "features": {
+    "dashboard": true,
+    "users": false,
+    "reports": true,
+    "support": true
+  },
   "support": {
     "email": "",
     "whatsapp": ""
@@ -28,5 +39,11 @@
     "browserTitle": "Sua Empresa",
     "loginMessage": "Bem-vindo",
     "footer": "© 2026 Sua Empresa. Todos os direitos reservados."
+  },
+  "api": {
+    "baseUrl": "https://ponte-sefaz.vercel.app",
+    "clientId": "CLI_EXEMPLO",
+    "tenantId": "00000000000000",
+    "secret": "{{API_SECRET_SERVER_SIDE}}"
   }
 }
