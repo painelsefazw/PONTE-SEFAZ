@@ -89,11 +89,12 @@ export class SoapClient {
 
   async send(xml: string, endpoint: string, soapAction: string): Promise<string> {
     const soapEnvelope = this.buildEnvelope(xml, soapAction);
+    const acao = this.resolveSoapAction(soapAction);
 
     try {
       const response = await axios.post(endpoint, soapEnvelope, {
         headers: {
-          'Content-Type': `application/soap+xml; charset=utf-8; action="${soapAction}"`,
+          'Content-Type': `application/soap+xml; charset=utf-8; action="${acao}"`,
         },
         timeout: this.timeout,
         httpsAgent: this.httpsAgent,
@@ -175,6 +176,41 @@ export class SoapClient {
       '  </soap12:Body>',
       '</soap12:Envelope>',
     ].join('\n');
+  }
+
+  /**
+   * A SOAPAction completa, para os servicos que a validam.
+   *
+   * As SEFAZ estaduais ignoram o parametro `action` do Content-Type: mandar
+   * so `NfeAutorizacao` sempre funcionou, e por isso ninguem percebeu que o
+   * valor estava incompleto.
+   *
+   * A DistribuicaoDFe nao roda numa SEFAZ estadual: ela vive no Ambiente
+   * Nacional (`www1.nfe.fazenda.gov.br`), que e um `.asmx` e CONFERE a acao.
+   * Com o nome curto ele responde
+   *
+   *     Unable to handle request. The action 'NFeDistribuicaoDFe'
+   *     was not recognized.
+   *
+   * — um SOAP Fault que parece problema de servico fora do ar, e nao de
+   * cabecalho. A acao que ele espera e o namespace do WSDL mais a OPERACAO.
+   *
+   * O mapa e conservador de proposito: so entra o servico que comprovadamente
+   * exige. Trocar a acao dos outros mexeria na emissao de todo cliente para
+   * corrigir algo que hoje nao falha, e essa troca precisa ser provada contra
+   * cada SEFAZ antes, nao deduzida.
+   */
+  private resolveSoapAction(soapAction: string): string {
+    const operacoes: Array<[string, string]> = [
+      ['distribuicaodfe', 'nfeDistDFeInteresse'],
+    ];
+    const alvo = soapAction.toLowerCase();
+    for (const [chave, operacao] of operacoes) {
+      if (alvo.includes(chave)) {
+        return `${this.resolveWsdlNamespace(soapAction)}/${operacao}`;
+      }
+    }
+    return soapAction;
   }
 
   private resolveWsdlNamespace(soapAction: string): string {
