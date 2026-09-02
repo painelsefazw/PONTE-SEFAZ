@@ -152,6 +152,7 @@ describe('traducao do erro do driver', () => {
     ['connect ECONNREFUSED 127.0.0.1:5432', /pausado por inatividade/],
     ['database postgres does not exist', /Confira NFE_DB_REF/],
     ['self signed certificate in certificate chain', /host errado/],
+    ['(ENOTFOUND) tenant/user postgres.abc not found', /pooler RESPONDEU/],
   ];
 
   test.each(casos)('%s vira explicacao', (cru, esperado) => {
@@ -163,6 +164,25 @@ describe('traducao do erro do driver', () => {
     // virou nome de servidor.
     expect(explicarErroDeBanco('getaddrinfo ENOTFOUND base'))
       .toMatch(/traduzida pelo navegador/);
+  });
+
+  test('tenant nao encontrado NAO manda conferir espaco no host', () => {
+    // Este caso enganou de verdade. O Supavisor embrulha a resposta dele como
+    // `(ENOTFOUND) tenant/user postgres.<ref> not found`, e o codigo de DNS ali
+    // e mentira: o host resolveu e RESPONDEU — quem respondeu foi o pooler,
+    // dizendo que nao hospeda o projeto. Casando primeiro com ENOTFOUND, a
+    // explicacao mandava cacar um espaco colado no fim do NFE_DB_HOST, um erro
+    // de digitacao que nao existia, enquanto a causa real era o projeto ter
+    // sumido. Por isso este caso vem ANTES na cadeia.
+    const dito = explicarErroDeBanco('(ENOTFOUND) tenant/user postgres.ddfoo not found')!;
+    // A explicacao de DNS nao pode ser esta — e nem parecida com ela. Dizer
+    // "nao e host com espaco" faz parte da resposta certa: descarta de saida o
+    // caminho que o codigo `ENOTFOUND` sugere sozinho.
+    expect(dito).not.toBe(explicarErroDeBanco('getaddrinfo ENOTFOUND base'));
+    expect(dito).not.toMatch(/costuma vir com espaço/);
+    expect(dito).toMatch(/regi.o|pausado|removido/i);
+    // E aponta a ferramenta que responde a pergunta em vez de deixar adivinhar.
+    expect(dito).toContain('/api/diagnostico/pooler');
   });
 
   test('a senha recusada aponta o simbolo, e nao trocar a senha', () => {

@@ -676,6 +676,18 @@ app.get('/api/cron/webhooks-retry', async (req, res) => {
  */
 export function explicarErroDeBanco(mensagem: string): string | null {
   const m = String(mensagem ?? '');
+  // ANTES do ENOTFOUND, e de propósito: a mensagem do Supavisor vem embrulhada
+  // como `(ENOTFOUND) tenant/user postgres.<ref> not found`, e o código de DNS
+  // ali é enganoso. O host RESOLVEU e RESPONDEU — quem respondeu foi o pooler,
+  // dizendo que não hospeda esse projeto. Mandar conferir o NFE_DB_HOST por
+  // espaço colado no fim faz procurar um erro de digitação que não existe.
+  if (/tenant.*not found|tenant or user not found/i.test(m)) {
+    return 'O pooler RESPONDEU e disse que não conhece este projeto. Não é host com espaço '
+      + 'nem senha: ou a região do NFE_DB_HOST não é a do projeto, ou o projeto foi pausado '
+      + 'por inatividade / removido. Confira em qual frota ele vive com '
+      + '/api/diagnostico/pooler?ref=SUA_REF&regiao=us-east-1 (troque a região); se NENHUMA '
+      + 'região o conhecer, o projeto não existe mais — veja o painel do Supabase.';
+  }
   if (/ENOTFOUND|EAI_AGAIN/i.test(m)) {
     return 'O HOST não foi encontrado. Confira NFE_DB_HOST — ele costuma vir com espaço '
       + 'colado no fim, ou com uma palavra traduzida pelo navegador no meio.';
