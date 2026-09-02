@@ -750,6 +750,15 @@ body {
 }
 
 /* --- Rodape ------------------------------------------------------------- */
+.banco-fora {
+  background: var(--perigo-fundo); color: var(--perigo-tinta);
+  border-bottom: 1px solid currentColor;
+  padding: 10px 16px; font-size: 12.5px; line-height: 1.5;
+  position: sticky; top: 0; z-index: 99;
+}
+.banco-fora b { font-weight: 700; }
+.banco-fora .detalhe { opacity: .85; font-size: 11.5px; display: block; margin-top: 2px; }
+
 .rodape-app {
   padding: 20px; text-align: center; font-size: 10.5px;
   color: var(--suave-texto); border-top: 1px solid var(--borda);
@@ -958,6 +967,17 @@ body {
 <div class="sub-tab-bar" id="subTabBar" style="display:none">
 </div>
 </div><!-- /topo-fixo -->
+
+<!-- Faixa de banco fora do ar.
+     Ela existe porque a falha do banco chega em cada tela como AUSENCIA de
+     dado, nao como erro: `fetch` so rejeita em falha de rede, entao um 500
+     vira um JSON de erro que as telas leem como `{}` — total 0, lista vazia,
+     "Nenhum cliente cadastrado". Sao 71 leituras assim no painel, e nenhuma
+     mente por conta propria: todas contam o que receberam.
+     Consertar as 71 uma a uma trocaria um numero errado por 71 mensagens
+     diferentes. Esta faixa resolve o que importa numa linha so: enquanto o
+     banco estiver fora, o painel inteiro para de merecer credito, e diz isso. -->
+<div id="bancoFora" class="banco-fora" style="display:none" role="alert"></div>
 
 <!-- TAB: Emissao -->
 <div class="tab-content active" id="tab-emissao">
@@ -3530,7 +3550,43 @@ function aplicarModoDoPainel(modo) {
   showGroup('clientesapi');
 }
 
+/**
+ * Confere se o banco responde, e avisa na tela quando nao responde.
+ *
+ * A rota de diagnostico e publica de proposito (quem precisa dela e justamente
+ * quem ainda nao configurou), entao da para chamar antes mesmo do login — e e
+ * antes do login que o aviso vale mais: sem isto a primeira coisa que se ve e
+ * um painel cheio de zeros que parecem dados.
+ */
+async function conferirBanco() {
+  var faixa = document.getElementById('bancoFora');
+  if (!faixa) return;
+  try {
+    var r = await fetch('/api/diagnostico/banco');
+    var d = await r.json();
+    if (d.ok) { faixa.style.display = 'none'; return; }
+    // Duas falhas diferentes, e confundi-las custa caro. Sem conexao, a tela
+    // mostra vazio. Em ARQUIVO, ela mostra o que voce acabou de gravar e perde
+    // na proxima requisicao — pior, porque parece que funcionou.
+    faixa.innerHTML = (d.storage === 'file'
+      ? '<b>Este painel está gravando em arquivo, não em banco.</b> '
+        + 'Em serverless cada requisição começa com um disco vazio: o que você '
+        + 'cadastrar agora aparece na tela e some depois. Parece que funcionou.'
+      : '<b>Sem conexão com o banco de dados.</b> '
+        + 'Os números e as listas desta tela não são reais — o painel está '
+        + 'mostrando vazio porque não conseguiu perguntar, não porque não há nada. '
+        + 'Cadastrar, emitir e salvar vão falhar até isto voltar.')
+      + '<span class="detalhe">' + escapeHtml(d.erro || d.alerta || 'sem detalhe')
+      + (d.provavelCausa ? ' — ' + escapeHtml(d.provavelCausa) : '') + '</span>';
+    faixa.style.display = 'block';
+  } catch (e) {
+    // Sem resposta nenhuma e problema de rede do navegador, nao do banco: as
+    // proprias telas ja vao falhar com mensagem propria.
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
+  conferirBanco();
   var res = await fetch('/api/ping');
   var ping = await res.json();
   aplicarModoDoPainel(ping.modo);
@@ -7614,6 +7670,19 @@ async function loadClientesApi() {
     ]);
     var dash = await dashR.json();
     var list = await listR.json();
+    // `fetch` so rejeita em falha de REDE: um 500 chega aqui como resposta
+    // normal, e `list.clients || []` virava lista vazia com "Nenhum cliente
+    // cadastrado" — a tela dizendo que o cadastro esta vazio quando o que
+    // aconteceu foi o banco nao responder. Conferir a resposta e o que separa
+    // "nao tem" de "nao deu para perguntar".
+    if (!dashR.ok || !listR.ok) {
+      conferirBanco();
+      var motivo = (list && list.erro) || (dash && dash.erro) || ('HTTP ' + listR.status);
+      caixaDosClientes().innerHTML = '<div class="hist-empty">Não deu para carregar a lista: '
+        + escapeHtml(motivo) + '<br><br>Isto <b>não</b> quer dizer que você não tem clientes '
+        + 'cadastrados — quer dizer que o painel não conseguiu perguntar.</div>';
+      return;
+    }
     renderClientesDashboard(dash);
     _clientesApiCache = list.clients || [];
     renderClientesLista(_clientesApiCache, list.total);
