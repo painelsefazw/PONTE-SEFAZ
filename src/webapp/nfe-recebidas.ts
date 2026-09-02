@@ -48,6 +48,8 @@ export interface PonteiroDfe {
   /** O maior NSU que a SEFAZ diz existir. Igual ao último = está em dia. */
   maxNsu: number;
   consultadoEm?: string;
+  /** Ate quando a SEFAZ recusa nova consulta (rejeicao 656). */
+  bloqueadoAte?: string;
 }
 
 function paraRecebida(row: any): NfeRecebida {
@@ -118,12 +120,19 @@ export class NfeRecebidaStore {
         PRIMARY KEY (cnpj, ambiente)
       );
     `);
+    // Quando a SEFAZ devolve 656 ela bloqueia por uma hora — e cada nova
+    // tentativa dentro da janela REINICIA o relogio. Sem guardar isso, o botao
+    // "Buscar novas" vira uma armadilha: quem aperta de novo para ver se ja
+    // liberou garante que nao liberou. Guardado, a ponte recusa localmente e
+    // ninguem mais renova o proprio castigo.
+    await this.pool.query(
+      'ALTER TABLE webapp_nfe_dfe_nsu ADD COLUMN IF NOT EXISTS bloqueado_ate TIMESTAMPTZ');
     this.initialized = true;
   }
 
   async ponteiro(empresaCnpj: string, ambiente = '1'): Promise<PonteiroDfe> {
     const r = await this.pool.query(
-      'SELECT ultimo_nsu, max_nsu, consultado_em FROM webapp_nfe_dfe_nsu WHERE cnpj = $1 AND ambiente = $2',
+      'SELECT ultimo_nsu, max_nsu, consultado_em, bloqueado_ate FROM webapp_nfe_dfe_nsu WHERE cnpj = $1 AND ambiente = $2',
       [empresaCnpj, ambiente],
     );
     const row = r.rows[0];
@@ -131,6 +140,7 @@ export class NfeRecebidaStore {
       ultimoNsu: Number(row?.ultimo_nsu ?? 0),
       maxNsu: Number(row?.max_nsu ?? 0),
       consultadoEm: row?.consultado_em ?? undefined,
+      bloqueadoAte: row?.bloqueado_ate ?? undefined,
     };
   }
 
@@ -155,6 +165,23 @@ export class NfeRecebidaStore {
   }
 
   /** Recomeça a varredura do zero, sem apagar o que já foi capturado. */
+  /**
+   * Marca o bloqueio de uma hora que a SEFAZ acabou de aplicar.
+   *
+   * A hora e contada a partir de AGORA porque e assim que a SEFAZ conta: a
+   * janela reinicia a cada tentativa. Guardar o instante do 656 e o que
+   * permite recusar as proximas sem gasta-las.
+   */
+  async marcarBloqueio(empresaCnpj: string, ambiente: string, minutos = 60): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO webapp_nfe_dfe_nsu (cnpj, ambiente, ultimo_nsu, max_nsu, bloqueado_ate)
+       VALUES ($1, $2, 0, 0, NOW() + ($3 || ' minutes')::interval)
+       ON CONFLICT (cnpj, ambiente)
+       DO UPDATE SET bloqueado_ate = NOW() + ($3 || ' minutes')::interval`,
+      [empresaCnpj, ambiente, String(minutos)],
+    );
+  }
+
   async zerarPonteiro(empresaCnpj: string, ambiente = '1'): Promise<void> {
     await this.pool.query(
       `INSERT INTO webapp_nfe_dfe_nsu (cnpj, ambiente, ultimo_nsu, max_nsu, consultado_em)

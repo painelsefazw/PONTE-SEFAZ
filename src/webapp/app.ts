@@ -50,6 +50,7 @@ import { WebhookStore, type WebhookEvent } from './webhooks';
 import { ApiClientStore, type ClientStatus } from './api-clients';
 import { WhiteLabelStore } from './white-label';
 import { gerarPersonalizacaoMd } from './personalizacao-md';
+import { dicaDaRejeicao } from './rejeicoes';
 import { PlatformTemplateStore, type PlatformManifest, type PlatformTemplate } from './platform-templates';
 import {
   baixarModelo, lerModeloDaPasta, montarZip, publicarNoGitHub, verificarAcessoAoRepositorio,
@@ -3441,6 +3442,11 @@ app.post('/api/emitir', async (req, res) => {
         // o que houve. O campo custa nada e evita um suporte por semana.
         erro: xMotivo ? `SEFAZ ${cStat}: ${xMotivo}` : 'A SEFAZ rejeitou a nota.',
         detalhes: xMotivo ? [xMotivo] : [],
+        // A dica ACOMPANHA o xMotivo, nunca o substitui: a SEFAZ e a fonte, e
+        // uma dica desatualizada nao pode esconder o texto oficial. Codigo sem
+        // dica confiavel nao ganha campo nenhum — inventar causa provavel manda
+        // procurar no lugar errado com confianca.
+        ...(dicaDaRejeicao(cStat) ? { comoResolver: dicaDaRejeicao(cStat) } : {}),
       });
     }
   } catch (err: any) {
@@ -4969,7 +4975,26 @@ app.post('/api/nfe/distribuicao', async (req, res) => {
     const b = req.body || {};
 
     if (b.desdeInicio) await store.zerarPonteiro(emp.cnpj, ambiente);
-    let { ultimoNsu, maxNsu } = await store.ponteiro(emp.cnpj, ambiente);
+    const p = await store.ponteiro(emp.cnpj, ambiente);
+    let { ultimoNsu, maxNsu } = p;
+
+    // Bloqueio da SEFAZ ainda de pe: recusa AQUI, sem gastar a tentativa.
+    // Cada chamada dentro da janela reinicia a hora, entao insistir e o que
+    // garante que nunca libera — o botao virava armadilha para o cliente.
+    if (p.bloqueadoAte && new Date(p.bloqueadoAte).getTime() > Date.now()) {
+      const faltam = Math.ceil((new Date(p.bloqueadoAte).getTime() - Date.now()) / 60000);
+      res.json({
+        sucesso: false,
+        cStat: '656',
+        xMotivo: 'Rejeicao: Consumo Indevido (bloqueio da SEFAZ ainda em vigor)',
+        bloqueadoAte: p.bloqueadoAte,
+        minutosRestantes: faltam,
+        erro: `A SEFAZ bloqueou esta consulta por consumo indevido. Faltam ${faltam} min. `
+          + 'Nao tente de novo antes disso: cada tentativa reinicia a contagem.',
+        novas: 0, lidas: 0, ultimoNsu, maxNsu, emDia: false,
+      });
+      return;
+    }
 
     // Ate 20 varreduras por chamada, como na NFS-e. Cada uma traz ate 50
     // documentos; mais que isso estoura o tempo da funcao serverless.
@@ -4984,9 +5009,13 @@ app.post('/api/nfe/distribuicao', async (req, res) => {
       cStat = r.cStat;
       xMotivo = r.xMotivo;
 
-      // 656 = consumo indevido. Parar na hora e devolver o motivo: insistir e o
-      // que transforma um aviso em bloqueio de uma hora.
-      if (cStat === '656') break;
+      // 656 = consumo indevido. Parar na hora, e GUARDAR ate quando: sem o
+      // registro, a proxima tentativa reinicia a janela e o bloqueio nunca
+      // acaba.
+      if (cStat === '656') {
+        await store.marcarBloqueio(emp.cnpj, ambiente);
+        break;
+      }
 
       for (const d of r.documentos) {
         if (!d.chNFe) continue;
@@ -7652,6 +7681,18 @@ app.get('/api/docs', (req, res) => {
             descricao: 'Autocompletar produto pelo que ja foi cadastrado — para o ERP oferecer '
               + 'o item sem obrigar a digitar NCM e CFOP de novo.',
             curl_exemplo: `curl -s -H "x-api-key: SUA_CHAVE" "${BASE}/api/produtos/sugestoes?q=pimenta"`,
+          },
+          {
+            metodo: 'POST', path: '/api/assinar-pdf',
+            descricao: 'Assina um PDF com o certificado A1 DA EMPRESA — o mesmo que assina a nota. '
+              + 'Serve para contrato, recibo e declaracao que precisem de assinatura com validade '
+              + 'juridica sem o cliente instalar nada. Corpo: { pdf_base64, motivo?, local?, contato? }; '
+              + 'o pdf_base64 aceita data URI ou base64 puro. PDF menor que 100 bytes e recusado como '
+              + 'invalido, que e o caso de arquivo que nao chegou inteiro no upload. A assinatura sai '
+              + 'em nome do CNPJ do certificado, nao do usuario logado.',
+            curl_exemplo: `curl -s -X POST -H "x-api-key: SUA_CHAVE" -H "Content-Type: application/json" \
+  -d '{"pdf_base64":"JVBERi0xLjQ...","motivo":"Contrato de prestacao"}' ${BASE}/api/assinar-pdf`,
+            response_sucesso: { ok: true, pdf_base64: 'JVBERi0xLjQ...', assinante: 'ALIANCA ALIMENTOS LTDA', cnpj: '66509026000178', quando: '2026-09-02T18:00:00Z' },
           },
           {
             metodo: 'POST', path: '/api/importar-xlsx',
