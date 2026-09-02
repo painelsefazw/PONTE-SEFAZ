@@ -7874,10 +7874,17 @@ var wzCliente = null;
  *
  * O padrao abaixo so vale enquanto a chamada nao volta.
  */
+/* O plano nao e so um teto de volume: ele decide QUAIS documentos o cliente
+   pode emitir e se pode ter mais de um. Por isso `documentos` e `escolheUm`
+   viajam junto — sem eles a tela deixava marcar NFS-e num plano que cobre so
+   NF-e, e a chave saia prometendo o que a API nao ia liberar. */
 var WZ_PLANOS = [
-  { id: 'pro',     nome: 'PRO',     desc: 'NF-e ou NFS-e - 300 notas/mes' },
-  { id: 'max',     nome: 'MAX',     desc: 'NF-e + NFS-e - 1.500 notas/mes' },
-  { id: 'premium', nome: 'PREMIUM', desc: 'Tudo com NFC-e - sem teto' }
+  { id: 'pro',     nome: 'PRO',     desc: 'NF-e ou NFS-e — 300 notas/mês',
+    documentos: ['nfe', 'nfse'], escolheUm: true },
+  { id: 'max',     nome: 'MAX',     desc: 'NF-e + NFS-e — 1.500 notas/mês',
+    documentos: ['nfe', 'nfse'], escolheUm: false },
+  { id: 'premium', nome: 'PREMIUM', desc: 'NF-e + NFC-e + NFS-e — sem teto',
+    documentos: ['nfe', 'nfce', 'nfse'], escolheUm: false }
 ];
 
 async function carregarPlanos() {
@@ -7893,8 +7900,10 @@ async function carregarPlanos() {
         nome: p.nome,
         cor: p.cor,
         perfil: p.perfil,
-        desc: (p.escolheUm ? docs.join(' ou ') : docs.join(' + ')) + ' - ' +
-              (p.limiteNotas ? p.limiteNotas.toLocaleString('pt-BR') + ' notas/mes' : 'sem teto')
+        documentos: p.documentos || [],
+        escolheUm: !!p.escolheUm,
+        desc: (p.escolheUm ? docs.join(' ou ') : docs.join(' + ')) + ' — ' +
+              (p.limiteNotas ? p.limiteNotas.toLocaleString('pt-BR') + ' notas/mês' : 'sem teto')
       };
     });
   } catch (e) { /* fica o padrao acima */ }
@@ -7904,9 +7913,27 @@ async function carregarPlanos() {
 // ainda nao guarda — fica desabilitada para nao vender o que nao emite.
 var WZ_SERVICOS = [
   { id: 'nfe',  nome: 'NF-e',  desc: 'Nota fiscal de produto' },
-  { id: 'nfce', nome: 'NFC-e', desc: 'Indisponivel — falta cadastro do CSC', indisponivel: true },
-  { id: 'nfse', nome: 'NFS-e', desc: 'Nota fiscal de servico' }
+  { id: 'nfce', nome: 'NFC-e', desc: 'Cupom fiscal do balcão',
+    indisponivel: 'Indisponível — falta cadastro do CSC' },
+  { id: 'nfse', nome: 'NFS-e', desc: 'Nota fiscal de serviço' }
 ];
+
+function wzPlanoAtual() {
+  return WZ_PLANOS.filter(function (p) { return p.id === wzCliente.plano; })[0];
+}
+
+/* Um documento pode estar fora por dois motivos MUITO diferentes, e dizer qual
+   e o que evita a ligacao para o suporte: ou a ponte ainda nao emite aquilo
+   (NFC-e, que depende do CSC), ou o plano contratado nao cobre. Antes os dois
+   casos eram o mesmo silencio — o botao simplesmente aceitava a marcacao. */
+function wzMotivoDeFora(s, plano) {
+  if (s.indisponivel) return s.indisponivel;
+  if (plano && plano.documentos && plano.documentos.length
+      && plano.documentos.indexOf(s.id) < 0) {
+    return 'Não incluso no ' + plano.nome;
+  }
+  return '';
+}
 
 /**
  * Duas modalidades, dois botoes.
@@ -7925,7 +7952,12 @@ function showCadastroClienteApi(modalidade) {
   wzCliente = {
     passo: 1, cnpj: '', razaoSocial: '', fantasia: '', municipio: '', uf: '',
     segmento: '', atividade: '', email: '', responsavel: '',
-    plano: 'business', servicos: ['nfe'],
+    // 'pro', e nao 'business': `business` e um identificador APOSENTADO — o
+    // servidor ainda o traduz para MAX por compatibilidade, mas ele nao existe
+    // no catalogo, entao nenhum cartao de plano nascia marcado e as regras do
+    // plano (quais documentos, quantos) nao valiam para ninguem que nao
+    // clicasse. PRO tambem e o padrao mais seguro: e o mais restrito.
+    plano: 'pro', servicos: ['nfe'],
     certBase64: '', certNome: '', certSenha: '', manual: false,
     ie: '', crt: '3', endereco: null,
     modalidade: comPlataforma ? 'plataforma' : 'api',
@@ -8087,21 +8119,30 @@ function wzPasso2() {
       '" onclick="wzPlano(\'' + p.id + '\')"><div class="pick-t">' + p.nome + '</div>' +
       '<div class="pick-s">' + p.desc + '</div></button>';
   }).join('');
+  var plano = wzPlanoAtual();
   var svcs = WZ_SERVICOS.map(function (s) {
-    if (s.indisponivel) {
-      return '<div class="pick" style="opacity:.5;cursor:not-allowed" title="Ainda não disponível">' +
-        '<div class="pick-t">' + s.nome + '</div><div class="pick-s">' + s.desc + '</div></div>';
+    var fora = wzMotivoDeFora(s, plano);
+    if (fora) {
+      return '<div class="pick" style="opacity:.5;cursor:not-allowed" title="' + fora + '">' +
+        '<div class="pick-t">' + s.nome + '</div><div class="pick-s">' + fora + '</div></div>';
     }
     return '<button type="button" class="pick' + (wzCliente.servicos.indexOf(s.id) >= 0 ? ' on' : '') + '" data-svc="' + s.id +
       '" onclick="wzServico(\'' + s.id + '\')"><div class="pick-t">' + s.nome + '</div>' +
       '<div class="pick-s">' + s.desc + '</div></button>';
   }).join('');
+  // A frase muda com o plano porque a REGRA muda: no PRO se escolhe um
+  // documento, nos outros se marca quantos couberem. Um texto fixo dizendo
+  // "pode marcar mais de uma" contradizia o proprio plano acima dele.
+  var comoEscolher = plano && plano.escolheUm
+    ? 'O ' + plano.nome + ' cobre um documento por cliente — escolha qual. '
+      + 'Só o que estiver marcado aqui é liberado na API.'
+    : 'Pode marcar mais de uma. Só o que estiver marcado aqui é liberado na API.';
   return '<div class="wz-pane on">' +
     '<div class="wz-h">Plano contratado</div>' +
-    '<div class="wz-sub">Define o limite de emissoes por mês e a velocidade liberada na API.</div>' +
+    '<div class="wz-sub">Decide quais documentos ele pode emitir, quantas notas por mês e a velocidade liberada na API.</div>' +
     '<div class="pick-grid">' + planos + '</div>' +
     '<div class="wz-h" style="margin-top:28px">Quais notas ele vai emitir?</div>' +
-    '<div class="wz-sub">Pode marcar mais de uma. So o que estiver marcado aqui e liberado na API.</div>' +
+    '<div class="wz-sub">' + comoEscolher + '</div>' +
     '<div class="pick-grid">' + svcs + '</div>' +
     '<div class="wz-foot">' +
       '<button class="wz-btn wz-btn-g" onclick="wzIr(1)">Voltar</button>' +
@@ -8112,19 +8153,40 @@ function wzPasso2() {
 
 function wzPlano(id) {
   wzCliente.plano = id;
-  var els = document.querySelectorAll('[data-plano]');
-  for (var i = 0; i < els.length; i++) {
-    els[i].classList.toggle('on', els[i].getAttribute('data-plano') === id);
+  var plano = wzPlanoAtual();
+  if (plano && plano.documentos && plano.documentos.length) {
+    // Descer de plano nao pode deixar marcado o que o novo nao cobre: a
+    // marcacao ficava vivendo escondida atras de um botao desabilitado e ia
+    // parar no cadastro do jeito que estava.
+    wzCliente.servicos = wzCliente.servicos.filter(function (sv) {
+      return plano.documentos.indexOf(sv) >= 0;
+    });
+    if (plano.escolheUm && wzCliente.servicos.length > 1) {
+      wzCliente.servicos = [wzCliente.servicos[0]];
+    }
   }
+  wzRedesenhar();
 }
 
 function wzServico(id) {
-  var i = wzCliente.servicos.indexOf(id);
-  if (i >= 0) wzCliente.servicos.splice(i, 1); else wzCliente.servicos.push(id);
-  var el = document.querySelector('[data-svc="' + id + '"]');
-  if (el) el.classList.toggle('on', wzCliente.servicos.indexOf(id) >= 0);
-  var b = document.getElementById('wzNext2');
-  if (b) b.disabled = !wzCliente.servicos.length;
+  var plano = wzPlanoAtual();
+  if (plano && plano.escolheUm) {
+    // Escolha, e nao marcacao: o plano cobre UM documento. Marcar dois aqui
+    // prometia o que a chave nao ia liberar.
+    wzCliente.servicos = wzCliente.servicos.indexOf(id) >= 0 ? [] : [id];
+  } else {
+    var i = wzCliente.servicos.indexOf(id);
+    if (i >= 0) wzCliente.servicos.splice(i, 1); else wzCliente.servicos.push(id);
+  }
+  wzRedesenhar();
+}
+
+/* Redesenha o passo inteiro em vez de mexer em classe a classe: trocar de
+   plano muda o que esta disponivel, muda a frase de instrucao e pode limpar
+   marcacao — tres coisas em lugares diferentes da tela. */
+function wzRedesenhar() {
+  var alvo = document.getElementById('modalClienteApiContent');
+  if (alvo) alvo.innerHTML = wzRender();
 }
 
 // ------------------- Passo 3: contato e certificado -------------------
@@ -8136,7 +8198,7 @@ function wzPasso3() {
     c.servicos.map(function (s) { return s.toUpperCase(); }).join(', ')].filter(Boolean).join('  |  ');
   return '<div class="wz-pane on">' +
     '<div class="wz-h">Contato e certificado</div>' +
-    '<div class="wz-sub">Tudo nesta etapa e opcional — da para completar depois no detalhe do cliente.</div>' +
+    '<div class="wz-sub">Tudo nesta etapa é opcional — dá para completar depois no detalhe do cliente.</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
       '<div><label class="fld-lbl">Responsável</label>' +
         '<input class="fld" id="wzResp" autocomplete="off" placeholder="Nome do contato" value="' + escapeHtml(c.responsavel) + '"></div>' +
