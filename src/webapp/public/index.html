@@ -169,6 +169,10 @@ body.modo-revenda .escondido-na-revenda { display: none !important; }
 
 /* Modo operador: esconde campos avancados */
 body.modo-operador .somente-contador { display: none !important; }
+/* Enquanto o modo nao chega, a casca aparece (navegacao e contexto) e o
+   CONTEUDO nao. Pintar a aba de emissao antes de saber se ela existe e o que
+   fazia a tela mudar sozinha depois de carregada. */
+body.aguardando-modo .tab-content { display: none !important; }
 body.modo-operador .fiscal-avancado { display: none !important; }
 
 /* Modo badge no topbar */
@@ -911,7 +915,15 @@ body {
 
 </style>
 </head>
-<body>
+<!-- Nasce em `modo-revenda`, e nao sem classe.
+     O modo vem do servidor (`/api/ping`), o que leva uma ida e volta — e numa
+     funcao serverless fria, bem mais que um piscar. Sem classe nenhuma no
+     inicio, essa espera inteira era passada mostrando as DEZ abas e o
+     formulario de emissao: telas que a ponte de revenda nao tem. O usuario
+     recarregava, via o sistema completo, e ele encolhia na cara dele.
+     Comecar restrito inverte o erro possivel: no maximo aparece de menos, e
+     entao ABRE quando o servidor confirma que ha mais. -->
+<body class="modo-revenda aguardando-modo">
 
 <!-- Login -->
 <div class="login-overlay" id="loginOverlay">
@@ -932,7 +944,7 @@ body {
 <div class="topo-fixo">
 <div class="tab-bar" id="mainTabBar">
   <button class="somente-contador" onclick="showGroup('painel')">Painel</button>
-  <button class="active escondido-na-revenda" onclick="showGroup('emissao')">Emissão</button>
+  <button class="escondido-na-revenda" onclick="showGroup('emissao')">Emissão</button>
   <button class="escondido-na-revenda" onclick="showGroup('consultas')">Consultas</button>
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('empresas')">Empresas</button>
   <button class="escondido-na-revenda" onclick="showGroup('cadastros')">Cadastros</button>
@@ -980,7 +992,7 @@ body {
 <div id="bancoFora" class="banco-fora" style="display:none" role="alert"></div>
 
 <!-- TAB: Emissao -->
-<div class="tab-content active" id="tab-emissao">
+<div class="tab-content" id="tab-emissao">
 <div class="container">
   <div class="emitente-bar">
     <div><span class="label">Emitente</span> <span class="value" id="emitenteNome">Carregando...</span></div>
@@ -3539,15 +3551,19 @@ async function initApp() {
  * sem emitente proprio, "sem certificado" e o estado CORRETO, e pintar isso de
  * vermelho como se a SEFAZ estivesse fora do ar assusta a toa.
  */
-window.modoDoPainel = 'completo';
+// O padrao acompanha o do `<body>`: restrito ate o servidor dizer o contrario.
+window.modoDoPainel = 'revenda';
 function aplicarModoDoPainel(modo) {
   window.modoDoPainel = modo === 'revenda' ? 'revenda' : 'completo';
   document.body.classList.toggle('modo-revenda', window.modoDoPainel === 'revenda');
-  if (window.modoDoPainel !== 'revenda') return;
-  // A aba inicial nao pode ser uma que acabou de sumir do menu.
+  // Agora sim ha o que mostrar: sabe-se quais abas existem.
+  document.body.classList.remove('aguardando-modo');
+  // A aba de entrada e decidida AQUI, nos dois modos. Deixa-la marcada na
+  // marcacao obrigava o HTML a adivinhar o modo, que e justamente o que ele
+  // nao sabe.
   var inicial = document.querySelector('#mainTabBar button.active');
   if (inicial) inicial.classList.remove('active');
-  showGroup('clientesapi');
+  showGroup(window.modoDoPainel === 'revenda' ? 'clientesapi' : 'emissao');
 }
 
 /**
@@ -3587,8 +3603,16 @@ async function conferirBanco() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   conferirBanco();
-  var res = await fetch('/api/ping');
-  var ping = await res.json();
+  // Sem o `try`, um `/api/ping` que falha derrubava este bloco inteiro — e
+  // com ele o login, que vem logo abaixo. Antes isso dava uma tela parada;
+  // agora daria uma tela VAZIA, porque o conteudo espera o modo. O modo
+  // restrito e a resposta certa para "nao sei": mostra o que toda instalacao
+  // tem, e nada do que so algumas tem.
+  var ping = { modo: 'revenda', autenticacao: true };
+  try {
+    var res = await fetch('/api/ping');
+    ping = await res.json();
+  } catch (e) { /* offline ou servidor fora: segue no modo restrito */ }
   aplicarModoDoPainel(ping.modo);
   // Sem cabecalho, a marca da instalacao vive no titulo da aba — e so.
   if (ping.marca) document.title = ping.marca;
