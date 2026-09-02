@@ -52,6 +52,8 @@ describe('rotas por :cnpj enxergam cliente de API', () => {
     const r = rota('/api/empresas/:cnpj/sincronizar-ie');
     expect(r).toContain('const store = await getEmpresaStore();');
     expect(r).toContain('store.atualizarIe(');
-    expect(r).not.toContain('empresaPorCnpj');
+    // A CHAMADA, e nao a palavra: o comentario da rota cita `empresaPorCnpj`
+    // justamente para explicar por que ela nao e usada ali.
+    expect(r).not.toContain('await empresaPorCnpj(');
   });
 });
