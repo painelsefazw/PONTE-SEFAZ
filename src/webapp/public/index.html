@@ -943,7 +943,7 @@ body {
      branca — que foi lida, com razao, como "um cabecalho que sobrou". -->
 <div class="topo-fixo">
 <div class="tab-bar" id="mainTabBar">
-  <button class="somente-contador" onclick="showGroup('painel')">Painel</button>
+  <button class="somente-contador escondido-na-revenda" onclick="showGroup('painel')">Painel</button>
   <button class="escondido-na-revenda" onclick="showGroup('emissao')">Emissão</button>
   <button class="escondido-na-revenda" onclick="showGroup('consultas')">Consultas</button>
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('empresas')">Empresas</button>
@@ -1523,7 +1523,13 @@ body {
 </div>
 
 <!-- TAB: Dashboard (Painel do Contador) -->
-<div class="tab-content somente-contador" id="tab-dashboard">
+<!-- Painel do contador: le `/api/empresas`, a tabela de EMITENTES.
+     Escondido na revenda porque la ninguem cadastra emitente — cadastra-se
+     CLIENTE, que e outra entidade, outra tabela e outra tela (Clientes). A
+     aba aparecia mesmo assim e mostrava quatro zeros e "Nenhuma empresa
+     cadastrada": uma tela que nao tem como funcionar naquele modo, dizendo
+     que o sistema nao funciona. -->
+<div class="tab-content somente-contador escondido-na-revenda" id="tab-dashboard">
 <div class="container">
   <div class="section">
     <div class="section-title">Painel do Contador</div>

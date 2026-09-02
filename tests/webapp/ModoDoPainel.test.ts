@@ -50,13 +50,27 @@ describe('o painel esconde as telas certas', () => {
     }
   });
 
-  test('Clientes API e Painel FICAM — sao o que a ponte opera', () => {
-    // Se estes sumissem, sobraria uma tela vazia e nenhum jeito de gerar chave.
-    for (const grupo of ['clientesapi', 'painel']) {
-      const linha = menu.split('\n').find(l => l.includes(`showGroup('${grupo}')`));
-      expect(linha).toBeDefined();
-      expect(linha).not.toContain('escondido-na-revenda');
-    }
+  test('Clientes API FICA — e o que a ponte de revenda opera', () => {
+    // Se este sumisse, sobraria uma tela vazia e nenhum jeito de gerar chave.
+    const linha = menu.split('\n').find(l => l.includes("showGroup('clientesapi')"));
+    expect(linha).toBeDefined();
+    expect(linha).not.toContain('escondido-na-revenda');
+  });
+
+  test('Painel SOME — ele le a tabela que a revenda nunca preenche', () => {
+    // Este teste ja afirmou o contrario, e a afirmacao estava errada.
+    //
+    // "Painel fica, e o que a ponte opera" parecia obvio pelo nome da aba. So
+    // que o Painel do contador le `/api/empresas` — a tabela de EMITENTES. Numa
+    // ponte de revenda ninguem cadastra emitente: cadastra-se CLIENTE, que e
+    // outra entidade, outra tabela e outra tela.
+    //
+    // Na pratica ele abria com quatro zeros e "Nenhuma empresa cadastrada", em
+    // toda ponte de revenda, para sempre. O dono da instalacao leu isso como o
+    // sistema nao funcionando — e quase mandou apagar o painel inteiro.
+    const linha = menu.split('\n').find(l => l.includes("showGroup('painel')"));
+    expect(linha).toBeDefined();
+    expect(linha).toContain('escondido-na-revenda');
   });
 
   test('o seletor de empresa e o selo de modo somem tambem', () => {

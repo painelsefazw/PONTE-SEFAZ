@@ -49,6 +49,24 @@ describe('o modo do painel nasce restrito', () => {
     expect(corpo).not.toContain("if (window.modoDoPainel !== 'revenda') return;");
   });
 
+  test('a revenda nao mostra tela que nao tem como funcionar nela', () => {
+    // O Painel do contador le `/api/empresas` — a tabela de EMITENTES. Numa
+    // ponte de revenda ninguem cadastra emitente: cadastra-se CLIENTE, que e
+    // outra entidade, outra tabela e outra tela.
+    //
+    // A aba aparecia mesmo assim, e mostrava quatro zeros com "Nenhuma empresa
+    // cadastrada". Uma tela que nao tem como funcionar naquele modo, dizendo ao
+    // dono que o sistema nao funciona — e ele quase mandou apagar o painel
+    // inteiro por causa disso.
+    expect(painel).toContain(
+      '<button class="somente-contador escondido-na-revenda" onclick="showGroup(\'painel\')">');
+    expect(painel).toContain(
+      '<div class="tab-content somente-contador escondido-na-revenda" id="tab-dashboard">');
+    // Continua existindo para a instalacao que emite em nome proprio: la a
+    // tabela de emitentes e justamente o que se opera.
+    expect(painel).toContain("apiFetch('/api/empresas')");
+  });
+
   test('ping que falha nao deixa a tela vazia', () => {
     // Sem `try`, um `/api/ping` que falha derrubava o bloco inteiro — e com ele
     // o login. Antes isso dava uma tela parada; agora daria uma tela VAZIA,
