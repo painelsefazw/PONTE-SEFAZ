@@ -754,6 +754,16 @@ body {
 }
 
 /* --- Rodape ------------------------------------------------------------- */
+/* O seletor nativo mostra a cor, mas nao o CODIGO — e cor de marca chega por
+   escrito ("o azul da empresa e #0F766E"), nao apontada num quadrado. Os dois
+   campos andam juntos: mexer num atualiza o outro. */
+.cor-par { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; }
+.cor-par input[type="color"] {
+  width: 44px; height: 38px; padding: 3px; cursor: pointer;
+  border: 1px solid var(--borda); border-radius: 8px; background: var(--cartao);
+}
+.cor-par .fld { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
+
 .banco-fora {
   background: var(--perigo-fundo); color: var(--perigo-tinta);
   border-bottom: 1px solid currentColor;
@@ -2575,19 +2585,47 @@ body {
 
     <div class="form-grid">
       <div class="form-group"><label class="fld-lbl">Primária</label>
-        <input type="color" class="fld" id="padCorPri" value="#6366f1" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorPri" value="#6366f1" oninput="corEscolhida('padCorPri')">
+          <input class="fld" id="padCorPriHex" value="#6366f1" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorPri')" placeholder="#6366f1">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Secundária</label>
-        <input type="color" class="fld" id="padCorSec" value="#1a1a2e" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorSec" value="#1a1a2e" oninput="corEscolhida('padCorSec')">
+          <input class="fld" id="padCorSecHex" value="#1a1a2e" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorSec')" placeholder="#1a1a2e">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Destaque</label>
-        <input type="color" class="fld" id="padCorAcc" value="#f59e0b" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorAcc" value="#f59e0b" oninput="corEscolhida('padCorAcc')">
+          <input class="fld" id="padCorAccHex" value="#f59e0b" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorAcc')" placeholder="#f59e0b">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Fundo</label>
-        <input type="color" class="fld" id="padCorBg" value="#f8fafc" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorBg" value="#f8fafc" oninput="corEscolhida('padCorBg')">
+          <input class="fld" id="padCorBgHex" value="#f8fafc" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorBg')" placeholder="#f8fafc">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Superfície</label>
-        <input type="color" class="fld" id="padCorSrf" value="#ffffff" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorSrf" value="#ffffff" oninput="corEscolhida('padCorSrf')">
+          <input class="fld" id="padCorSrfHex" value="#ffffff" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorSrf')" placeholder="#ffffff">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Texto</label>
-        <input type="color" class="fld" id="padCorTxt" value="#0f172a" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorTxt" value="#0f172a" oninput="corEscolhida('padCorTxt')">
+          <input class="fld" id="padCorTxtHex" value="#0f172a" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorTxt')" placeholder="#0f172a">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Texto secundário</label>
-        <input type="color" class="fld" id="padCorMut" value="#64748b" style="height:38px;padding:3px"></div>
+        <div class="cor-par">
+          <input type="color" id="padCorMut" value="#64748b" oninput="corEscolhida('padCorMut')">
+          <input class="fld" id="padCorMutHex" value="#64748b" maxlength="7" spellcheck="false"
+                 autocomplete="off" oninput="corDigitada('padCorMut')" placeholder="#64748b">
+        </div></div>
       <div class="form-group"><label class="fld-lbl">Tema</label>
         <select class="fld" id="padTema">
           <option value="light">Claro</option>
@@ -2776,11 +2814,13 @@ function definirClasses(el, classes) {
  * O CSS le o atributo `data-tema` no `<html>`. Sem atributo, a media query
  * `prefers-color-scheme` decide sozinha.
  */
-var TEMAS = ['sistema', 'claro', 'escuro'];
+// Dois estados, e nao tres. "Acompanha o sistema" era um terceiro clique que
+// devolvia ao lugar de onde se saiu — quem aperta o botao quer trocar de tema,
+// nao delegar a decisao ao sistema operacional.
+var TEMAS = ['claro', 'escuro'];
 var ROTULO_DO_TEMA = {
-  sistema: 'Tema: acompanha o sistema',
-  claro: 'Tema: claro',
-  escuro: 'Tema: escuro',
+  claro: 'Tema: claro (clique para o escuro)',
+  escuro: 'Tema: escuro (clique para o claro)',
 };
 
 /**
@@ -2797,28 +2837,28 @@ var ICONE_DO_TEMA = {
   escuro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
     + 'stroke-linecap="round" stroke-linejoin="round">'
     + '<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>',
-  // Meia-lua: metade clara, metade escura — o desenho de "depende de fora".
-  sistema: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
-    + '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18z" fill="currentColor"/></svg>',
 };
 
 function aplicarTema(tema) {
   var raiz = document.documentElement;
-  if (tema === 'claro' || tema === 'escuro') raiz.setAttribute('data-tema', tema);
-  else raiz.removeAttribute('data-tema');
+  // Sempre com atributo: sem ele o CSS cai na media query do sistema, que e
+  // exatamente o modo que saiu.
+  var escolhido = tema === 'escuro' ? 'escuro' : 'claro';
+  raiz.setAttribute('data-tema', escolhido);
   var b = document.getElementById('btnTema');
   if (b) {
-    b.innerHTML = ICONE_DO_TEMA[tema] || ICONE_DO_TEMA.sistema;
-    b.title = ROTULO_DO_TEMA[tema] || ROTULO_DO_TEMA.sistema;
+    b.innerHTML = ICONE_DO_TEMA[escolhido];
+    b.title = ROTULO_DO_TEMA[escolhido];
   }
-  try { localStorage.setItem('nfe_tema', tema); } catch (e) { /* navegador sem storage */ }
+  try { localStorage.setItem('nfe_tema', escolhido); } catch (e) { /* navegador sem storage */ }
 }
 
 function temaGuardado() {
   try {
     var t = localStorage.getItem('nfe_tema');
-    return TEMAS.indexOf(t) >= 0 ? t : 'sistema';
-  } catch (e) { return 'sistema'; }
+    // Quem tinha 'sistema' guardado cai no claro, e nao num estado que sumiu.
+    return TEMAS.indexOf(t) >= 0 ? t : 'claro';
+  } catch (e) { return 'claro'; }
 }
 
 function alternarTema() {
@@ -7798,6 +7838,29 @@ function caixaDosClientes() {
   return elDaModalidade('clientesApiLista');
 }
 
+/** Mexeu no quadrado: escreve o codigo ao lado. */
+function corEscolhida(id) {
+  var cor = document.getElementById(id);
+  var hex = document.getElementById(id + 'Hex');
+  if (cor && hex) hex.value = String(cor.value || '').toUpperCase();
+}
+
+/**
+ * Digitou o codigo: pinta o quadrado — mas so quando o texto ja e uma cor.
+ *
+ * Enquanto se digita "#0F7", o valor ainda nao e valido, e empurra-lo para o
+ * `input[type=color]` faz o navegador silenciosamente virar preto. O quadrado
+ * so acompanha quando as seis casas estao la; ate entao ele fica no que estava.
+ */
+function corDigitada(id) {
+  var hex = document.getElementById(id + 'Hex');
+  var cor = document.getElementById(id);
+  if (!hex || !cor) return;
+  var v = String(hex.value || '').trim();
+  if (v && v[0] !== '#') { v = '#' + v; hex.value = v; }
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) cor.value = v.toLowerCase();
+}
+
 var PADROES_CAMPOS = [
   ['padEmail', 'suporteEmail'], ['padWhats', 'suporteWhatsapp'],
   ['padFone', 'suporteTelefone'], ['padSite', 'suporteSite'],
@@ -7819,8 +7882,18 @@ async function loadPadroes() {
     }
     var p = (await r.json()).padroes || {};
     for (var i = 0; i < PADROES_CAMPOS.length; i++) {
-      var el = document.getElementById(PADROES_CAMPOS[i][0]);
-      if (el) el.value = p[PADROES_CAMPOS[i][1]] || '';
+      var id = PADROES_CAMPOS[i][0];
+      var el = document.getElementById(id);
+      if (!el) continue;
+      var valor = p[PADROES_CAMPOS[i][1]] || '';
+      // Campo de cor vazio nao pode receber '': o navegador troca por preto, e
+      // o padrao "nao definido" viraria preto gravado no primeiro salvamento.
+      if (el.type === 'color') {
+        if (valor) el.value = valor;
+        corEscolhida(id);
+      } else {
+        el.value = valor;
+      }
     }
     if (msg) { msg.style.color = 'var(--suave-texto)'; msg.textContent = ''; }
   } catch (e) {
@@ -7856,6 +7929,9 @@ async function salvarPadroes() {
 }
 
 async function loadClientesApi() {
+  // Voltar da ficha de um cliente passa por aqui: e o unico caminho de volta
+  // para a lista, entao e onde o cabecalho reaparece.
+  mostrarCabecalhoDaLista(true);
   // O catalogo de planos vem do servidor; sem isto o wizard oferece plano velho.
   await carregarPlanos();
   var campoBusca = elDaModalidade('clienteApiBusca');
@@ -9011,7 +9087,27 @@ async function reprocessarWebhooks(btn) {
   }
 }
 
+/**
+ * O cabecalho da LISTA nao pertence a ficha de UM cliente.
+ *
+ * Os contadores ("2 total, 2 ativos") e o campo de busca continuavam na tela
+ * com a ficha aberta embaixo, respondendo a uma pergunta que ninguem estava
+ * fazendo — e empurrando o conteudo que interessa para baixo da dobra.
+ */
+function mostrarCabecalhoDaLista(mostrar) {
+  for (var i = 0; i < ['api', 'plataforma'].length; i++) {
+    var mod = ['api', 'plataforma'][i];
+    var resumo = document.getElementById('clientesApiResumo-' + mod);
+    var busca = document.getElementById('clienteApiBusca-' + mod);
+    if (resumo) resumo.style.display = mostrar ? '' : 'none';
+    if (busca && busca.parentElement) {
+      busca.parentElement.style.display = mostrar ? '' : 'none';
+    }
+  }
+}
+
 async function abrirDetalheCliente(cnpj) {
+  mostrarCabecalhoDaLista(false);
   caixaDosClientes().innerHTML = '<div class="hist-empty">Carregando detalhes...</div>';
   try {
     var [cR, sR, wR, hR, stR, kR, pR] = await Promise.all([

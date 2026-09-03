@@ -234,3 +234,57 @@ describe('a marca entra no cadastro do cliente', () => {
     expect(salvar).toContain('a marca nao foi salva');
   });
 });
+
+/**
+ * Tres ajustes de tela que vieram de uso real.
+ */
+describe('ajustes da tela', () => {
+  const painel = ler('src', 'webapp', 'public', 'index.html');
+
+  test('o tema do painel tem DOIS estados, nao tres', () => {
+    // "Acompanha o sistema" era um terceiro clique que devolvia ao lugar de
+    // onde se saiu. Quem aperta o botao quer trocar de tema.
+    expect(painel).toContain("var TEMAS = ['claro', 'escuro'];");
+    expect(painel).not.toContain("'sistema', 'claro', 'escuro'");
+    // E o atributo e sempre escrito: sem ele o CSS cai na media query do
+    // sistema, que e justamente o modo que saiu.
+    const fn = painel.slice(painel.indexOf('function aplicarTema('));
+    expect(fn.slice(0, 700)).toContain("raiz.setAttribute('data-tema', escolhido)");
+    expect(fn.slice(0, 700)).not.toContain('removeAttribute');
+  });
+
+  test('quem tinha o tema do sistema guardado cai no claro', () => {
+    // O valor antigo continua no navegador de quem ja usava. Sem tratar, ele
+    // nao casa com nenhum tema e a rotacao comeca do lugar errado.
+    const fn = painel.slice(painel.indexOf('function temaGuardado('));
+    expect(fn.slice(0, 400)).toContain("'claro'");
+  });
+
+  test('cada cor tem o codigo digitavel ao lado', () => {
+    // Cor de marca chega por escrito ("o verde da empresa e #0F766E"), nao
+    // apontada num quadrado.
+    for (const id of ['padCorPri', 'padCorSec', 'padCorAcc', 'padCorBg',
+      'padCorSrf', 'padCorTxt', 'padCorMut']) {
+      expect(painel).toContain(`id="${id}Hex"`);
+    }
+    expect(painel).toContain('function corEscolhida(');
+    expect(painel).toContain('function corDigitada(');
+  });
+
+  test('o quadrado so acompanha quando o codigo esta completo', () => {
+    // Empurrar "#0F7" para um `input[type=color]` faz o navegador virar preto
+    // em silencio — e o meio da digitacao viraria a cor gravada.
+    const fn = painel.slice(painel.indexOf('function corDigitada('));
+    expect(fn.slice(0, 700)).toContain('/^#[0-9a-fA-F]{6}$/');
+  });
+
+  test('o cabecalho da lista some quando uma ficha abre', () => {
+    // Contadores e busca respondiam a uma pergunta que ninguem estava fazendo,
+    // e empurravam a ficha para baixo da dobra.
+    expect(painel).toContain('function mostrarCabecalhoDaLista(');
+    const abrir = painel.slice(painel.indexOf('async function abrirDetalheCliente('));
+    expect(abrir.slice(0, 300)).toContain('mostrarCabecalhoDaLista(false)');
+    const lista = painel.slice(painel.indexOf('async function loadClientesApi('));
+    expect(lista.slice(0, 500)).toContain('mostrarCabecalhoDaLista(true)');
+  });
+});
