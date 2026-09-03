@@ -8887,7 +8887,7 @@ var _logoPendente = {};
  * impresso em papel branco, entao transparencia vira branco de qualquer jeito.
  * De quebra o arquivo encolhe, e a logo viaja junto do XML em toda geracao.
  */
-function achatarParaJpeg(arquivo) {
+function achatarParaJpeg(arquivo, qualidade) {
   return new Promise(function (resolve, reject) {
     var leitor = new FileReader();
     leitor.onerror = function () { reject(new Error('Nao foi possivel ler o arquivo.')); };
@@ -8909,12 +8909,42 @@ function achatarParaJpeg(arquivo) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, c.width, c.height);
         ctx.drawImage(img, 0, 0, c.width, c.height);
-        resolve(c.toDataURL('image/jpeg', 0.92));
+        resolve(c.toDataURL('image/jpeg', qualidade || 0.92));
       };
       img.src = String(leitor.result);
     };
     leitor.readAsDataURL(arquivo);
   });
+}
+
+/** O peso real do que vai para o servidor: o base64 menos o cabecalho. */
+function tamanhoDoDataUri(uri) {
+  var b64 = String(uri || '').split(',')[1] || '';
+  return Math.round((b64.length * 3) / 4);
+}
+
+/**
+ * Converte e vai baixando a qualidade ate caber no limite.
+ *
+ * O limite vale para o que VAI para o servidor — e o que vai e o JPEG achatado,
+ * nao o arquivo original. Conferir o tamanho antes de converter recusava um PNG
+ * de 855 KB que vira menos de 100 KB em JPEG: o painel dizia "grande demais"
+ * sobre uma imagem que ele mesmo ia encolher na linha seguinte.
+ *
+ * A escada de qualidade e o que uma pessoa faria a mao. Para numa logo, que e
+ * desenho chapado: 0.75 num PNG de logo e visualmente identico a 0.92, e o
+ * DANFE ainda por cima e impresso.
+ */
+async function achatarAteCaber(arquivo) {
+  var escada = [0.92, 0.85, 0.75, 0.65, 0.55];
+  var ultimo = '';
+  for (var i = 0; i < escada.length; i++) {
+    ultimo = await achatarParaJpeg(arquivo, escada[i]);
+    if (tamanhoDoDataUri(ultimo) <= LIMITE_DA_LOGO) return ultimo;
+  }
+  throw new Error('Mesmo comprimida a imagem ficou com '
+    + Math.round(tamanhoDoDataUri(ultimo) / 1024) + ' KB, acima dos 400 KB. '
+    + 'Corte as bordas vazias ou reduza as dimensoes antes de enviar.');
 }
 
 async function escolherLogoDanfe(cnpj, input) {
@@ -8928,15 +8958,22 @@ async function escolherLogoDanfe(cnpj, input) {
     msg.textContent = 'Use PNG ou JPG. SVG e WEBP nao sao desenhados no DANFE.';
     return;
   }
-  if (arquivo.size > LIMITE_DA_LOGO) {
+  // O corte aqui e so contra arquivo patologico — um TIFF de 60 MB travaria o
+  // navegador no `drawImage`. O limite de 400 KB e conferido DEPOIS de
+  // converter, porque e o JPEG que viaja.
+  if (arquivo.size > 20 * 1024 * 1024) {
     msg.style.color = 'var(--perigo)';
-    msg.textContent = 'A imagem tem ' + Math.round(arquivo.size / 1024) + ' KB e o limite e 400 KB.';
+    msg.textContent = 'A imagem tem ' + Math.round(arquivo.size / 1024 / 1024)
+      + ' MB. Acima de 20 MB nem da para preparar no navegador.';
     return;
   }
   try {
-    _logoPendente[cnpj] = await achatarParaJpeg(arquivo);
     msg.style.color = 'var(--suave-texto)';
-    msg.textContent = 'Imagem escolhida. Clique em Salvar parametros.';
+    msg.textContent = 'Preparando a imagem...';
+    _logoPendente[cnpj] = await achatarAteCaber(arquivo);
+    msg.style.color = 'var(--suave-texto)';
+    msg.textContent = 'Imagem pronta (' + Math.round(tamanhoDoDataUri(_logoPendente[cnpj]) / 1024)
+      + ' KB em JPEG). Clique em Salvar parametros.';
   } catch (e) {
     msg.style.color = 'var(--perigo)';
     msg.textContent = e.message || 'Nao foi possivel preparar a imagem.';

@@ -255,3 +255,53 @@ describe('o caminho ate o PDF', () => {
     expect(php).toMatch(/CONTENT_TYPE/);
   });
 });
+
+/**
+ * O limite de 400 KB vale para o que VAI para o servidor.
+ *
+ * E o que vai e o JPEG achatado, nao o arquivo que a pessoa escolheu. A tela
+ * conferia o tamanho ANTES de converter, e recusava um PNG de 855 KB que ela
+ * mesma transformaria em menos de 100 KB na linha seguinte — dizendo "grande
+ * demais" sobre uma imagem que ela ia encolher.
+ *
+ * Aconteceu com a logo de um cliente real, e a saida oferecida seria mandar a
+ * pessoa redimensionar a mao um arquivo que o proprio painel ja sabe preparar.
+ */
+describe('a logo do DANFE cabe depois de convertida', () => {
+  const painel = fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'src', 'webapp', 'public', 'index.html'), 'utf8')
+    .replace(/\r\n/g, '\n');
+
+  const escolher = (() => {
+    const i = painel.indexOf('async function escolherLogoDanfe(');
+    return painel.slice(i, painel.indexOf('\n}\n', i));
+  })();
+
+  test('o tamanho e conferido DEPOIS de converter, nao antes', () => {
+    expect(escolher).not.toContain('arquivo.size > LIMITE_DA_LOGO');
+    expect(escolher).toContain('achatarAteCaber(arquivo)');
+    // O corte no arquivo de entrada continua, mas so contra o patologico:
+    // um TIFF de 60 MB trava o navegador no `drawImage`.
+    expect(escolher).toContain('20 * 1024 * 1024');
+  });
+
+  test('a qualidade desce em escada ate caber', () => {
+    const fn = painel.slice(painel.indexOf('async function achatarAteCaber('));
+    const corpo = fn.slice(0, fn.indexOf('\n}'));
+    expect(corpo).toContain('[0.92, 0.85, 0.75, 0.65, 0.55]');
+    expect(corpo).toContain('LIMITE_DA_LOGO');
+    // E quando nem assim couber, diz o tamanho que sobrou — em vez de repetir
+    // "grande demais" sem numero.
+    expect(corpo).toContain('acima dos 400 KB');
+  });
+
+  test('o peso e medido no base64, que e o que trafega', () => {
+    expect(painel).toContain('function tamanhoDoDataUri(');
+    const fn = painel.slice(painel.indexOf('function tamanhoDoDataUri('));
+    expect(fn.slice(0, 200)).toContain('* 3) / 4');
+  });
+
+  test('a tela diz o tamanho final, e nao so "escolhida"', () => {
+    expect(escolher).toContain('KB em JPEG');
+  });
+});
