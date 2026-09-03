@@ -61,11 +61,14 @@ describe('banco fora do ar aparece na tela', () => {
   test('a lista de clientes confere a resposta antes de dizer que esta vazia', () => {
     const fn = painel.slice(painel.indexOf('async function loadClientesApi('));
     const corpo = fn.slice(0, fn.indexOf('\n}\n'));
-    expect(corpo).toContain('if (!dashR.ok || !listR.ok)');
+    // Era `!dashR.ok || !listR.ok`: a tela pedia DUAS rotas porque desenhava
+    // contadores no topo da lista. Os contadores sairam e a chamada extra foi
+    // junto — a guarda continua, agora sobre a unica resposta que existe.
+    expect(corpo).toContain('if (!listR.ok)');
     // E diz a frase que desfaz a leitura errada, em vez de so mostrar o erro.
     expect(corpo).toContain('não</b> quer dizer que você não tem clientes');
-    // A guarda vem ANTES de desenhar qualquer numero.
-    expect(corpo.indexOf('if (!dashR.ok || !listR.ok)'))
-      .toBeLessThan(corpo.indexOf('renderClientesDashboard(dash)'));
+    // A guarda vem ANTES de desenhar a lista.
+    expect(corpo.indexOf('if (!listR.ok)'))
+      .toBeLessThan(corpo.indexOf('renderClientesLista('));
   });
 });

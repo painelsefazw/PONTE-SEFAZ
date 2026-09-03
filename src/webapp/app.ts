@@ -8008,10 +8008,42 @@ app.patch('/api/admin/clients/:cnpj', async (req, res) => {
   try {
     const cnpj = req.params.cnpj.replace(/\D/g, '');
     const store = await getApiClientStore();
+    // O plano entra por aqui como qualquer outro campo, e ate agora entrava
+    // SEM conferencia: gravar 'PRO' com maiuscula, ou um id que nao existe,
+    // era aceito calado — e `planoDe` depois rebaixava esse cliente ao mais
+    // restrito na hora de emitir. Um erro de digitacao virava corte de cota
+    // que ninguem relacionaria com a troca de plano.
+    const planoPedido = req.body?.plano;
+    let planoAntes: string | undefined;
+    if (planoPedido !== undefined) {
+      const id = String(planoPedido).trim().toLowerCase();
+      if (!CATALOGO_PLANOS.some(p => p.id === id)) {
+        res.status(400).json({
+          erro: `Plano desconhecido: "${planoPedido}". Use ${CATALOGO_PLANOS.map(p => p.id).join(', ')}.`,
+        });
+        return;
+      }
+      req.body.plano = id;
+      planoAntes = (await store.obter(cnpj))?.plano;
+    }
+
     await store.atualizar(cnpj, req.body);
-    registrarAudit('admin', 'client.updated', 'api_client', {
-      empresaCnpj: cnpj, after: req.body, requestId: (req as any).requestId,
-    });
+
+    // Trocar de plano muda o TETO de emissao do cliente. Registrado junto com
+    // "dados alterados" ele some no meio de uma mudanca de telefone — e e a
+    // primeira coisa que se procura quando alguem pergunta por que a cota
+    // mudou.
+    if (planoPedido !== undefined) {
+      registrarAudit('admin', 'client.plano_changed', 'api_client', {
+        empresaCnpj: cnpj, before: { plano: planoAntes }, after: { plano: req.body.plano },
+        requestId: (req as any).requestId,
+      });
+    }
+    if (Object.keys(req.body).some(k => k !== 'plano')) {
+      registrarAudit('admin', 'client.updated', 'api_client', {
+        empresaCnpj: cnpj, after: req.body, requestId: (req as any).requestId,
+      });
+    }
     res.json({ sucesso: true });
   } catch (err: any) {
     res.status(500).json({ erro: err.message });
@@ -8336,8 +8368,12 @@ app.get('/api/admin/clients/:cnpj/painel', async (req, res) => {
       planoDetalhe: planoDe(cliente.plano),
       servicos,
       emissoes: resumo,
+      // `porServico` viaja junto porque o teto e POR SERVICO: com so o total,
+      // a tela mostrava "27 emitidas" sem dizer que 24 delas eram NF-e e que o
+      // limite de NF-e e 25.
       consumoDoPlano: uso
-        ? { plano: uso.plano, notasMes: uso.notasMes, referencia: uso.mesReferencia }
+        ? { plano: uso.plano, notasMes: uso.notasMes, referencia: uso.mesReferencia,
+            porServico: uso.porServico }
         : null,
       credenciais: (chaves || []).map((k: any) => ({
         prefixo: k.prefixo, nome: k.nome, ambiente: k.ambientePermitido,

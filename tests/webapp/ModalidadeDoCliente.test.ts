@@ -87,18 +87,22 @@ describe('modalidade do cliente e coluna propria', () => {
     expect(painel).toMatch(/qs = '\?limite=200&modalidade=' \+ _modalidadeAtiva/);
   });
 
-  test('os contadores de cada aba sao DAQUELA modalidade', () => {
-    // Dizer "2 ativos" na aba "Por API" quando um deles é de plataforma é uma
-    // conta errada exibida com confiança. O servidor devolve o recorte por
-    // modalidade justamente para isso.
+  test('cada aba lista somente os clientes DAQUELA modalidade', () => {
+    // Misturar as duas é uma conta errada exibida com confiança: a aba "Por
+    // API" mostrando um cliente de plataforma sugere que ele tem credencial e
+    // mais nada, quando ele tem site, repositório e senha de painel.
+    //
+    // Isto já foi verificado pelos contadores do topo ("2 ativos"), que saíram
+    // da tela. O recorte continua existindo onde importa — no filtro da lista,
+    // e na consulta que o servidor faz por modalidade.
     expect(store).toMatch(/COUNT\(\*\) FILTER \(WHERE modalidade = 'api'\)/);
     expect(store).toMatch(/COUNT\(\*\) FILTER \(WHERE modalidade = 'plataforma'\)/);
     expect(store).toContain('porModalidade');
     expect(store).toMatch(/GROUP BY modalidade/);
-    const render = painel.slice(painel.indexOf('function renderClientesDashboard('));
-    const corpo = render.slice(0, render.indexOf('\n}'));
-    expect(corpo).toContain('d.porModalidade');
-    expect(corpo).toContain('_modalidadeAtiva');
+
+    const load = painel.slice(painel.indexOf('async function loadClientesApi('));
+    const corpo = load.slice(0, load.indexOf('\n}\n'));
+    expect(corpo).toContain("'?limite=200&modalidade=' + _modalidadeAtiva");
   });
 
   test('o cadastro grava a modalidade escolhida no botao', () => {

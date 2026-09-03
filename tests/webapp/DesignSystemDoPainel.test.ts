@@ -130,14 +130,19 @@ describe('o painel tem um sistema visual', () => {
   });
 
   test('os cartoes de numero nao carregam mais cor escrita na mao', () => {
-    // `cardMini` montava o cartão com `style="...color:#10b981"` dentro do
-    // HTML. Trocar a paleta obrigava a caçar cada hexadecimal, e o modo escuro
-    // era impossível — fundo `#fff` fixo não escurece.
-    const fn = painel.slice(painel.indexOf('function cardMini('));
-    const corpo = fn.slice(0, fn.indexOf('\n}'));
+    // Nasceu de `cardMini`, que montava o cartão com `style="...color:#10b981"`
+    // dentro do HTML: trocar a paleta obrigava a caçar cada hexadecimal, e o
+    // modo escuro era impossível — fundo `#fff` fixo não escurece.
+    //
+    // `cardMini` saiu junto com os cinco contadores do topo da lista de
+    // clientes. O que resta usando `.dash-card` é o Painel do Contador, escrito
+    // direto no HTML — e a regra vale igual para ele.
+    expect(painel).not.toContain('function cardMini(');
+    const grade = painel.slice(painel.indexOf('id="dashCards"'));
+    const corpo = grade.slice(0, grade.indexOf('\n    </div>'));
     expect(corpo).toContain('dash-card');
     expect(corpo).not.toMatch(/#[0-9a-f]{6}/i);
-    expect(corpo).not.toContain('background:#fff');
+    expect(corpo).not.toContain('style=');
   });
 
   test('a barra de contexto e a navegacao sao coisas separadas', () => {

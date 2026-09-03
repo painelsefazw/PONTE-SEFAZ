@@ -2550,7 +2550,6 @@ body {
       <button class="btn btn-primary" onclick="showCadastroClienteApi('api')" title="O cliente ja tem sistema e so quer credencial para integrar">+ Novo cliente por API</button>
     </div>
     <div style="font-size:12px;color:var(--suave-texto);margin:-8px 0 16px">Empresas que já têm sistema próprio e usam apenas a credencial de integração. Não recebem site, repositório nem senha de painel.</div>
-    <div id="clientesApiResumo-api" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
     <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <input type="text" id="clienteApiBusca-api" placeholder="Buscar por nome ou CNPJ"
              style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px"
@@ -2569,7 +2568,6 @@ body {
       <button class="btn btn-primary" onclick="showCadastroClienteApi('plataforma')" title="O cliente recebe um site pronto, com a marca dele">+ Novo cliente por plataforma</button>
     </div>
     <div style="font-size:12px;color:var(--suave-texto);margin:-8px 0 16px">Empresas que recebem um site pronto, publicado e mantido por nós — com repositório próprio e senha de painel.</div>
-    <div id="clientesApiResumo-plataforma" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px"></div>
     <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <input type="text" id="clienteApiBusca-plataforma" placeholder="Buscar por nome ou CNPJ"
              style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--borda);border-radius:6px;font-size:13px"
@@ -7874,16 +7872,29 @@ var STATUS_COLORS = {
  * cadastro para o nome atual, do mesmo jeito que o servidor faz.
  */
 var PLANO_SELO = {
-  pro:        { nome: 'PRO',     cor: 'var(--info)' },
-  max:        { nome: 'MAX',     cor: 'var(--marca)' },
-  premium:    { nome: 'PREMIUM', cor: 'var(--roxo)' },
-  free:       { nome: 'PRO',     cor: 'var(--info)' },
-  starter:    { nome: 'PRO',     cor: 'var(--info)' },
-  business:   { nome: 'MAX',     cor: 'var(--marca)' },
-  enterprise: { nome: 'PREMIUM', cor: 'var(--roxo)' }
+  beta: { nome: 'BETA', cor: 'var(--info)' },
+  pro:  { nome: 'PRO',  cor: 'var(--marca)' },
+  max:  { nome: 'MAX',  cor: 'var(--roxo)' }
 };
+
+/**
+ * Os identificadores antigos, com o MESMO destino que o servidor usa.
+ *
+ * A lista tinha uma traducao propria, escrita quando os planos eram outros:
+ * `free` virava PRO na tela enquanto `planoDe` no servidor manda `free` para
+ * BETA. O cliente aparecia como PRO e era cobrado com o teto do BETA — e o
+ * desconhecido caia em PRO, mostrando um plano melhor do que o que valia.
+ * Aqui o desconhecido cai em BETA, que e onde o servidor tambem o poe.
+ */
+var PLANO_ANTIGO = {
+  free: 'beta', gratuito: 'beta', starter: 'beta', basico: 'beta',
+  premium: 'max', enterprise: 'max', ilimitado: 'max',
+  business: 'max', profissional: 'max'
+};
+
 function seloPlano(id) {
-  return PLANO_SELO[String(id || '').toLowerCase()] || PLANO_SELO.pro;
+  var chave = String(id || '').trim().toLowerCase();
+  return PLANO_SELO[chave] || PLANO_SELO[PLANO_ANTIGO[chave]] || PLANO_SELO.beta;
 }
 
 /**
@@ -8011,26 +8022,24 @@ async function loadClientesApi() {
   var qs = '?limite=200&modalidade=' + _modalidadeAtiva;
   if (busca) qs += '&busca=' + encodeURIComponent(busca);
   try {
-    var [dashR, listR] = await Promise.all([
-      apiFetch('/api/admin/dashboard'),
-      apiFetch('/api/admin/clients' + qs)
-    ]);
-    var dash = await dashR.json();
+    // So a lista. O painel pedia TAMBEM `/api/admin/dashboard` para preencher
+    // cinco contadores no topo — e como a busca dispara a cada tecla digitada,
+    // eram duas chamadas por letra para desenhar numeros que ninguem lia.
+    var listR = await apiFetch('/api/admin/clients' + qs);
     var list = await listR.json();
     // `fetch` so rejeita em falha de REDE: um 500 chega aqui como resposta
     // normal, e `list.clients || []` virava lista vazia com "Nenhum cliente
     // cadastrado" — a tela dizendo que o cadastro esta vazio quando o que
     // aconteceu foi o banco nao responder. Conferir a resposta e o que separa
     // "nao tem" de "nao deu para perguntar".
-    if (!dashR.ok || !listR.ok) {
+    if (!listR.ok) {
       conferirBanco();
-      var motivo = (list && list.erro) || (dash && dash.erro) || ('HTTP ' + listR.status);
+      var motivo = (list && list.erro) || ('HTTP ' + listR.status);
       caixaDosClientes().innerHTML = '<div class="hist-empty">Não deu para carregar a lista: '
         + escapeHtml(motivo) + '<br><br>Isto <b>não</b> quer dizer que você não tem clientes '
         + 'cadastrados — quer dizer que o painel não conseguiu perguntar.</div>';
       return;
     }
-    renderClientesDashboard(dash);
     _clientesApiCache = list.clients || [];
     renderClientesLista(_clientesApiCache, list.total);
   } catch (e) {
@@ -8038,41 +8047,6 @@ async function loadClientesApi() {
   }
 }
 
-/**
- * Os numeros DESTA aba.
- *
- * O total global nao serve aqui: dizer "2 ativos" na aba "Por API" quando um
- * deles e de plataforma e uma conta errada exibida com confianca. O servidor
- * devolve o recorte por modalidade justamente para isto.
- */
-function renderClientesDashboard(d) {
-  var el = elDaModalidade('clientesApiResumo');
-  if (!el) return;
-  var m = (d.porModalidade || {})[_modalidadeAtiva] || {
-    // Ponte antiga, sem o recorte: melhor mostrar o total da modalidade que o
-    // proprio servidor ja contava do que exibir numero de outra aba.
-    total: _modalidadeAtiva === 'plataforma' ? (d.comPlataforma || 0) : (d.porApi || 0),
-    ativos: 0, sandbox: 0, suspensos: 0, marcaPropria: 0
-  };
-  el.innerHTML = [
-    cardMini('Total', m.total || 0, ''),
-    cardMini('Ativos', m.ativos || 0, 'success'),
-    // `sandbox` e `white-label` sao os valores internos; na tela eles se leem
-    // em portugues, porque quem opera nao precisa saber o nome do campo.
-    cardMini('Ambiente de testes', m.sandbox || 0, 'warn'),
-    cardMini('Suspensos', m.suspensos || 0, 'danger'),
-    cardMini('Marca própria', m.marcaPropria || 0, '')
-  ].join('');
-}
-
-function cardMini(label, val, tom) {
-  // `tom` e o SENTIDO do numero (bom, atencao, ruim), nao a cor: a cor sai do
-  // token da folha. Antes cada cartao trazia o hexadecimal dentro do HTML, e
-  // trocar a paleta obrigava a achar cada um deles.
-  return '<div class="dash-card' + (tom ? ' ' + tom : '') + '">' +
-    '<div class="dash-num">' + val + '</div>' +
-    '<div class="dash-label">' + label + '</div></div>';
-}
 
 /**
  * O selo da modalidade.
@@ -8290,18 +8264,23 @@ var wzCliente = null;
  *
  * O padrao abaixo so vale enquanto a chamada nao volta.
  */
-/* O plano nao e so um teto de volume: ele decide QUAIS documentos o cliente
-   pode emitir e se pode ter mais de um. Por isso `documentos` e `escolheUm`
-   viajam junto — sem eles a tela deixava marcar NFS-e num plano que cobre so
-   NF-e, e a chave saia prometendo o que a API nao ia liberar. */
+/* O plano e SO volume: quantas emissoes por mes de cada servico contratado.
+   Quais documentos o cliente emite e o que ele contratou, marcado ao lado.
+   Esta lista de reserva vale enquanto a chamada ao servidor nao volta — ela ja
+   ficou para tras uma vez, oferecendo PREMIUM depois que o catalogo virou
+   BETA/PRO/MAX, e o cliente nascia com um plano que nao existe. */
 var WZ_PLANOS = [
-  { id: 'pro',     nome: 'PRO',     desc: 'NF-e ou NFS-e — 300 notas/mês',
-    documentos: ['nfe', 'nfse'], escolheUm: true },
-  { id: 'max',     nome: 'MAX',     desc: 'NF-e + NFS-e — 1.500 notas/mês',
-    documentos: ['nfe', 'nfse'], escolheUm: false },
-  { id: 'premium', nome: 'PREMIUM', desc: 'NF-e + NFC-e + NFS-e — sem teto',
-    documentos: ['nfe', 'nfce', 'nfse'], escolheUm: false }
+  { id: 'beta', nome: 'BETA', limitePorServico: 25, desc: 'Até 25 emissões por mês de cada serviço' },
+  { id: 'pro',  nome: 'PRO',  limitePorServico: 50, desc: 'Até 50 emissões por mês de cada serviço' },
+  { id: 'max',  nome: 'MAX',  limitePorServico: 0,  desc: 'Emissões sem limite' }
 ];
+
+/** A frase do plano, a partir do que o servidor manda. */
+function descricaoDoPlano(p) {
+  return p.limitePorServico > 0
+    ? 'Até ' + p.limitePorServico + ' emissões por mês de cada serviço'
+    : 'Emissões sem limite';
+}
 
 async function carregarPlanos() {
   try {
@@ -8309,17 +8288,15 @@ async function carregarPlanos() {
     if (!r.ok) return;
     var planos = (await r.json()).planos || [];
     if (!planos.length) return;
+    // `documentos`, `escolheUm` e `limiteNotas` sairam do catalogo quando o
+    // plano virou so volume. Continuar lendo-os nao dava erro: `desc` ficava
+    // " — sem teto" nos TRES planos, e a tela de cadastro dizia que o BETA nao
+    // tem limite. O que existe hoje e `limitePorServico`.
     WZ_PLANOS = planos.map(function(p) {
-      var docs = (p.documentos || []).map(function(d) { return d.toUpperCase(); });
       return {
-        id: p.id,
-        nome: p.nome,
-        cor: p.cor,
-        perfil: p.perfil,
-        documentos: p.documentos || [],
-        escolheUm: !!p.escolheUm,
-        desc: (p.escolheUm ? docs.join(' ou ') : docs.join(' + ')) + ' — ' +
-              (p.limiteNotas ? p.limiteNotas.toLocaleString('pt-BR') + ' notas/mês' : 'sem teto')
+        id: p.id, nome: p.nome, cor: p.cor, perfil: p.perfil,
+        limitePorServico: p.limitePorServico || 0,
+        desc: descricaoDoPlano(p)
       };
     });
   } catch (e) { /* fica o padrao acima */ }
@@ -8334,21 +8311,17 @@ var WZ_SERVICOS = [
   { id: 'nfse', nome: 'NFS-e', desc: 'Nota fiscal de serviço' }
 ];
 
-function wzPlanoAtual() {
-  return WZ_PLANOS.filter(function (p) { return p.id === wzCliente.plano; })[0];
-}
-
-/* Um documento pode estar fora por dois motivos MUITO diferentes, e dizer qual
-   e o que evita a ligacao para o suporte: ou a ponte ainda nao emite aquilo
-   (NFC-e, que depende do CSC), ou o plano contratado nao cobre. Antes os dois
+/* Um documento pode estar fora por UM motivo: a ponte ainda nao emite aquilo
+   (NFC-e, que depende do CSC). O segundo motivo — "o plano nao cobre" — caiu
+   com a regra: o plano e volume, e nao lista de documentos. Antes os dois
    casos eram o mesmo silencio — o botao simplesmente aceitava a marcacao. */
-function wzMotivoDeFora(s, plano) {
-  if (s.indisponivel) return s.indisponivel;
-  if (plano && plano.documentos && plano.documentos.length
-      && plano.documentos.indexOf(s.id) < 0) {
-    return 'Não incluso no ' + plano.nome;
-  }
-  return '';
+function wzMotivoDeFora(s) {
+  // Sobrou UM motivo. O outro era "não incluso no plano", e caiu junto com a
+  // regra: o plano passou a ser so volume, e o que o cliente emite e o que ele
+  // contrata aqui. A checagem continuava no codigo lendo `plano.documentos`,
+  // um campo que o catalogo nao manda mais — nunca era verdadeira, e ninguem
+  // percebia porque "nunca bloqueia" se parece com "esta tudo liberado".
+  return s.indisponivel || '';
 }
 
 /**
@@ -8540,9 +8513,8 @@ function wzPasso2() {
       '" onclick="wzPlano(\'' + p.id + '\')"><div class="pick-t">' + p.nome + '</div>' +
       '<div class="pick-s">' + p.desc + '</div></button>';
   }).join('');
-  var plano = wzPlanoAtual();
   var svcs = WZ_SERVICOS.map(function (s) {
-    var fora = wzMotivoDeFora(s, plano);
+    var fora = wzMotivoDeFora(s);
     if (fora) {
       return '<div class="pick" style="opacity:.5;cursor:not-allowed" title="' + fora + '">' +
         '<div class="pick-t">' + s.nome + '</div><div class="pick-s">' + fora + '</div></div>';
@@ -8554,13 +8526,11 @@ function wzPasso2() {
   // A frase muda com o plano porque a REGRA muda: no PRO se escolhe um
   // documento, nos outros se marca quantos couberem. Um texto fixo dizendo
   // "pode marcar mais de uma" contradizia o proprio plano acima dele.
-  var comoEscolher = plano && plano.escolheUm
-    ? 'O ' + plano.nome + ' cobre um documento por cliente — escolha qual. '
-      + 'Só o que estiver marcado aqui é liberado na API.'
-    : 'Pode marcar mais de uma. Só o que estiver marcado aqui é liberado na API.';
+  var comoEscolher = 'Pode marcar mais de uma. Só o que estiver marcado aqui é '
+    + 'liberado na API — o plano não limita quais, só quantas por mês.';
   return '<div class="wz-pane on">' +
     '<div class="wz-h">Plano contratado</div>' +
-    '<div class="wz-sub">Decide quais documentos ele pode emitir, quantas notas por mês e a velocidade liberada na API.</div>' +
+    '<div class="wz-sub">Decide quantas emissões por mês ele faz de cada serviço contratado. Pode ser trocado depois, na ficha do cliente.</div>' +
     '<div class="pick-grid">' + planos + '</div>' +
     '<div class="wz-h" style="margin-top:28px">Quais notas ele vai emitir?</div>' +
     '<div class="wz-sub">' + comoEscolher + '</div>' +
@@ -8573,29 +8543,16 @@ function wzPasso2() {
 }
 
 function wzPlano(id) {
+  // Trocar de plano nao mexe mais no que esta marcado: plano e teto de volume,
+  // e nao lista de documentos. Antes descer de plano desmarcava servico — o
+  // que hoje seria tirar do cliente algo que ele contratou por causa de uma
+  // regra de preco.
   wzCliente.plano = id;
-  var plano = wzPlanoAtual();
-  if (plano && plano.documentos && plano.documentos.length) {
-    // Descer de plano nao pode deixar marcado o que o novo nao cobre: a
-    // marcacao ficava vivendo escondida atras de um botao desabilitado e ia
-    // parar no cadastro do jeito que estava.
-    wzCliente.servicos = wzCliente.servicos.filter(function (sv) {
-      return plano.documentos.indexOf(sv) >= 0;
-    });
-    if (plano.escolheUm && wzCliente.servicos.length > 1) {
-      wzCliente.servicos = [wzCliente.servicos[0]];
-    }
-  }
   wzRedesenhar();
 }
 
 function wzServico(id) {
-  var plano = wzPlanoAtual();
-  if (plano && plano.escolheUm) {
-    // Escolha, e nao marcacao: o plano cobre UM documento. Marcar dois aqui
-    // prometia o que a chave nao ia liberar.
-    wzCliente.servicos = wzCliente.servicos.indexOf(id) >= 0 ? [] : [id];
-  } else {
+  {
     var i = wzCliente.servicos.indexOf(id);
     if (i >= 0) wzCliente.servicos.splice(i, 1); else wzCliente.servicos.push(id);
   }
@@ -8959,15 +8916,29 @@ function painelSuporteHtml(p, cnpj, stats) {
       '</div>';
   };
 
-  var siglas = (plano.documentos || []).map(function(d) { return d.toUpperCase(); });
-  var docs = plano.escolheUm ? siglas.join(' ou ') : siglas.join(' + ');
+  // O que ele contratou, e nao o que o plano promete: o plano nao promete mais
+  // documento nenhum. Ler `plano.documentos` deixava esta linha em branco.
+  var docs = (p.servicos || []).filter(function (sv) { return sv.active !== false; })
+    .map(function (sv) { return String(sv.service || sv).toUpperCase(); }).join(' + ');
 
-  var usadas = (p.consumoDoPlano || {}).notasMes || 0;
-  var cota = plano.limiteNotas > 0 ? num(usadas) + ' de ' + num(plano.limiteNotas) : num(usadas);
-  var pct = plano.limiteNotas > 0 ? Math.min(100, Math.round((usadas / plano.limiteNotas) * 100)) : 0;
+  // A cota e POR SERVICO. Somar tudo num numero so escondia justamente o que a
+  // regra cobra: quem emitiu 24 NF-e e 3 NFS-e esta a uma nota do limite de um
+  // deles, e um total de 27 nao diz isso. Mostramos o servico mais perto do
+  // teto, que e o que vai barrar primeiro.
+  var porServico = (p.consumoDoPlano || {}).porServico || {};
+  var apertado = '', usadas = 0;
+  for (var doc in porServico) {
+    if (Number(porServico[doc]) > usadas) { usadas = Number(porServico[doc]); apertado = doc; }
+  }
+  if (!usadas) usadas = (p.consumoDoPlano || {}).notasMes || 0;
+
+  var teto = plano.limitePorServico || 0;
+  var cota = teto > 0 ? num(usadas) + ' de ' + num(teto) : num(usadas);
+  var pct = teto > 0 ? Math.min(100, Math.round((usadas / teto) * 100)) : 0;
   var corCota = pct >= 90 ? 'var(--perigo)' : pct >= 70 ? 'var(--alerta)' : 'var(--sucesso)';
-  var barra = plano.limiteNotas > 0
-    ? '<span style="display:block;height:4px;border-radius:2px;background:var(--suave);margin-top:6px"><span style="display:block;height:4px;border-radius:2px;width:' + pct + '%;background:' + corCota + '"></span></span>'
+  var barra = teto > 0
+    ? (apertado ? apertado.toUpperCase() + ' ' : '') +
+      '<span style="display:block;height:4px;border-radius:2px;background:var(--suave);margin-top:6px"><span style="display:block;height:4px;border-radius:2px;width:' + pct + '%;background:' + corCota + '"></span></span>'
     : 'sem teto';
 
   var avisar = function(texto) {
@@ -9032,7 +9003,15 @@ function painelSuporteHtml(p, cnpj, stats) {
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">' +
       '<h4 style="font-size:15px;font-weight:700;margin:0">Acompanhamento</h4>' +
       '<div style="display:flex;align-items:center;gap:10px">' +
-        '<span style="background:' + plano.cor + ';color:var(--cartao);padding:5px 14px;border-radius:99px;font-size:12px;font-weight:800;letter-spacing:.08em">' + escapeHtml(plano.nome) + '</span>' +
+        // O selo e o proprio botao de trocar. O plano mudava so no cadastro:
+        // um cliente que crescia ficava preso no teto de quando entrou, e a
+        // unica saida era apagar e cadastrar de novo — perdendo chave,
+        // certificado e historico.
+        '<button type="button" onclick="mudarPlanoDoCliente(\'' + cnpj + '\')" ' +
+          'title="Clique para mudar o plano deste cliente" ' +
+          'style="background:' + plano.cor + ';color:var(--cartao);padding:5px 14px;border:none;' +
+          'border-radius:99px;font-size:12px;font-weight:800;letter-spacing:.08em;cursor:pointer;' +
+          'font-family:inherit">' + escapeHtml(plano.nome) + ' &#9662;</button>' +
         '<span style="font-size:12px;font-weight:600;color:var(--suave-texto)">' + escapeHtml(docs) + '</span>' +
       '</div>' +
     '</div>' +
@@ -9043,7 +9022,7 @@ function painelSuporteHtml(p, cnpj, stats) {
       metrica('Hoje', num(e.hoje), num(e.ultimos30Dias) + ' em 30 dias') +
       metrica('Canceladas', num(e.producao.canceladas), e.producao.canceladas > 0 ? 'conferir' : 'nenhuma', e.producao.canceladas > 0 ? 'var(--perigo)' : null) +
       metrica('Testes', num(e.homologacao.autorizadas), 'sem valor fiscal', 'var(--alerta)') +
-      metrica('Cota do mes', cota, barra) +
+      metrica(teto > 0 ? 'Cota do mes' : 'Emitidas no mes', cota, barra) +
     '</div>' +
     linhaApiHtml(p, stats, quando) +
     '<div style="margin-bottom:14px">' + series + '</div>' +
@@ -9155,22 +9134,16 @@ async function reprocessarWebhooks(btn) {
 }
 
 /**
- * O cabecalho da LISTA nao pertence a ficha de UM cliente.
+ * A busca da LISTA nao pertence a ficha de UM cliente.
  *
- * Os contadores ("2 total, 2 ativos") e o campo de busca continuavam na tela
- * com a ficha aberta embaixo, respondendo a uma pergunta que ninguem estava
- * fazendo — e empurrando o conteudo que interessa para baixo da dobra.
+ * O campo continuava na tela com a ficha aberta embaixo, respondendo a uma
+ * pergunta que ninguem estava fazendo — e empurrando para baixo o conteudo que
+ * interessa.
+ *
+ * Some por CLASSE, e nao por `style.display`: o bloco tem `display:flex` no
+ * proprio atributo `style`, e devolver `''` apagaria esse flex junto.
  */
 function mostrarCabecalhoDaLista(mostrar) {
-  // Uma CLASSE, e nao `style.display`. Os dois blocos tem `display:flex` no
-  // atributo `style`, e devolver `''` apaga esse flex junto — os cinco cartoes
-  // viravam cinco linhas empilhadas, cada uma da largura da tela. Classe some
-  // sem tocar no layout que ja estava escrito ali.
-  var alvos = ['clientesApiResumo-api', 'clientesApiResumo-plataforma'];
-  for (var i = 0; i < alvos.length; i++) {
-    var el = document.getElementById(alvos[i]);
-    if (el) el.classList.toggle('oculto-no-detalhe', !mostrar);
-  }
   var buscas = ['clienteApiBusca-api', 'clienteApiBusca-plataforma'];
   for (var j = 0; j < buscas.length; j++) {
     var campo = document.getElementById(buscas[j]);
@@ -9676,6 +9649,7 @@ function renderDetalheCliente(cnpj) {
         '<div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;' +
           'color:var(--suave-texto);margin:16px 0 8px">Cadastro e entrega</div>' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:8px">' +
+          acaoDoCliente('mudarPlanoDoCliente', cnpj, 'Mudar plano') +
           acaoDoCliente('showCadastroFiscal', cnpj, 'Cadastro fiscal') +
           acaoDoCliente('showEnviarCertificado', cnpj, 'Certificado A1') +
           acaoDoCliente('showWhiteLabelConfig', cnpj, 'Marca própria') +
@@ -9747,6 +9721,79 @@ async function alterarStatusCliente(cnpj, status) {
       alert('O status NAO foi alterado: ' + (e1.erro || ('HTTP ' + r.status)));
       return;
     }
+    abrirDetalheCliente(cnpj);
+  } catch (e) { alert('Erro: ' + e.message); }
+}
+
+/**
+ * Muda o plano de um cliente ja cadastrado.
+ *
+ * O plano so era escolhido no assistente de cadastro. Depois disso nao havia
+ * caminho nenhum: cliente que cresceu continuava com o teto de quando entrou, e
+ * "resolver" significava excluir e cadastrar de novo — o que leva junto a chave
+ * de API, o certificado e o historico de notas.
+ *
+ * O que muda ao trocar e so o TETO por servico. Nem o que o cliente emite (isso
+ * e o que ele contratou, em Servicos), nem o que ja foi emitido no mes: descer
+ * de plano com o mes ja rodado pode deixar o cliente acima do novo limite, e a
+ * tela avisa disso ANTES, porque quem descobre depois e ele, no meio de uma
+ * emissao.
+ */
+async function mudarPlanoDoCliente(cnpj) {
+  await carregarPlanos();
+  var d = _clienteDetalhe || {};
+  var c = d.cliente || {};
+  var atual = String(c.plano || '').trim().toLowerCase();
+  var painel = d.painel || {};
+  var porServico = (painel.consumoDoPlano || {}).porServico || {};
+
+  var maior = 0, apertado = '';
+  for (var doc in porServico) {
+    if (Number(porServico[doc]) > maior) { maior = Number(porServico[doc]); apertado = doc; }
+  }
+
+  var cartoes = WZ_PLANOS.map(function (p) {
+    var e = p.id === atual || (PLANO_ANTIGO[atual] === p.id);
+    var estoura = p.limitePorServico > 0 && maior > p.limitePorServico;
+    return '<button type="button" class="pick' + (e ? ' on' : '') + '" ' +
+      'onclick="confirmarMudancaDePlano(\'' + cnpj + '\',\'' + p.id + '\')">' +
+      '<div class="pick-t">' + escapeHtml(p.nome) + (e ? ' — atual' : '') + '</div>' +
+      '<div class="pick-s">' + escapeHtml(p.desc) + '</div>' +
+      (estoura ? '<div style="font-size:11px;font-weight:600;color:var(--perigo);margin-top:6px">' +
+        'Já emitiu ' + maior + ' ' + escapeHtml(apertado.toUpperCase()) + ' este mês — passa do teto' +
+      '</div>' : '') +
+    '</button>';
+  }).join('');
+
+  document.getElementById('modalClienteTitulo').textContent = 'Plano do cliente';
+  document.getElementById('modalClienteApiContent').innerHTML =
+    '<div style="font-size:13px;color:var(--suave-texto);line-height:1.6;margin-bottom:16px">' +
+      'O plano decide <b>quantas emissões por mês</b> o cliente faz de cada serviço ' +
+      'contratado. Não muda quais documentos ele emite — isso é o que está marcado ' +
+      'em Serviços Contratados.' +
+    '</div>' +
+    '<div class="pick-grid">' + cartoes + '</div>' +
+    '<div style="font-size:12px;color:var(--suave-texto);margin-top:16px">' +
+      'A mudança vale na hora, para a próxima emissão. O que já foi emitido este ' +
+      'mês continua contado.' +
+    '</div>';
+  document.getElementById('modalClienteApi').style.display = 'block';
+}
+
+async function confirmarMudancaDePlano(cnpj, plano) {
+  var novo = WZ_PLANOS.filter(function (p) { return p.id === plano; })[0];
+  if (!novo) return;
+  if (!confirm('Passar este cliente para o ' + novo.nome + '?\n\n' + novo.desc)) return;
+  try {
+    var r = await apiFetch('/api/admin/clients/' + cnpj, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plano: plano })
+    });
+    // `fetch` nao rejeita em 400: sem conferir, a tela fechava o modal e
+    // recarregava mostrando o plano ANTIGO, como se a troca tivesse pegado.
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok) { alert(j.erro || j.error || ('Não foi possível mudar o plano (HTTP ' + r.status + ')')); return; }
+    document.getElementById('modalClienteApi').style.display = 'none';
     abrirDetalheCliente(cnpj);
   } catch (e) { alert('Erro: ' + e.message); }
 }
@@ -11161,6 +11208,8 @@ var ACOES_DA_AUDITORIA = {
   'client.updated':        { g: 'cadastro',   t: 'Dados do cliente alterados', e: 'Mudou algo no cadastro: nome, endereco ou contato.' },
   'client.fiscal_updated': { g: 'cadastro',   t: 'Dados fiscais alterados',   e: 'Mudou regime, CFOP ou imposto padrao. Afeta as proximas notas.' },
   'client.limits_changed': { g: 'cadastro',   t: 'Plano ou limite alterado',  e: 'Mudou quanto este cliente pode emitir por mes.' },
+  // Piso: o texto bom vem de `descreverAcao`, que diz de qual plano para qual.
+  'client.plano_changed':  { g: 'cadastro',   t: 'Plano trocado',             e: 'Mudou o teto de emissoes por mes de cada servico.' },
   'client.deleted':        { g: 'risco',      t: 'Cliente excluido',          e: 'Saiu da ponte. Para de emitir na hora, e as chaves dele morrem junto.' },
   // A situacao tem entrada aqui como PISO. O texto bom vem de `descreverAcao`,
   // que le o antes e o depois; sem esta linha, um registro antigo sem esses
@@ -11237,6 +11286,22 @@ function descreverAcao(l) {
       t: 'Cliente agora esta ' + String(para).toLowerCase(),
       e: (de ? 'Passou de "' + de + '" para "' + para + '". ' : 'Situacao: ' + para + '. ') +
          (parou ? 'Nessa situacao ele NAO emite.' : 'Nessa situacao ele emite normalmente.')
+    };
+  }
+
+  if (acao === 'client.plano_changed' && depois.plano) {
+    var pDe = seloPlano(antes.plano).nome;
+    var pPara = seloPlano(depois.plano).nome;
+    // Descer de plano aperta o teto de quem ja esta emitindo — e a leitura que
+    // interessa numa auditoria e justamente essa direcao.
+    var ordem = { BETA: 1, PRO: 2, MAX: 3 };
+    var desceu = antes.plano && (ordem[pPara] || 0) < (ordem[pDe] || 0);
+    return {
+      g: desceu ? 'risco' : 'cadastro',
+      t: 'Plano trocado para ' + pPara,
+      e: (antes.plano ? 'Era ' + pDe + '. ' : '') +
+         (desceu ? 'Teto MENOR a partir de agora: pode barrar emissao ainda este mes.'
+                 : 'O teto de emissoes por mes de cada servico mudou.')
     };
   }
 
