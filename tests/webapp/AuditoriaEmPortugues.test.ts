@@ -232,3 +232,37 @@ describe('Auditoria desenhada', () => {
     expect(t.legenda()).toBe('');
   });
 });
+
+/**
+ * O cartao nao pode perder linha.
+ *
+ * A lista e uma coluna flex com teto de altura. Filho de coluna flex encolhe
+ * por padrao, e a protecao que impede encolher abaixo do proprio conteudo
+ * (`min-height: auto`) desaparece quando o filho tem `overflow: hidden` — que
+ * esta la so para arredondar os cantos. O navegador entao espreme os cartoes
+ * para caber no teto em vez de criar barra de rolagem, e o `overflow: hidden`
+ * corta o que sobrou.
+ *
+ * Medido: um cartao que precisava de 896px recebia 339px, dizia "11 registros",
+ * mostrava tres e meia — e sem barra de rolagem, porque para o navegador nada
+ * estava transbordando. Nenhum erro, nenhum aviso: a lista so parecia curta.
+ */
+describe('Auditoria nao esconde linha', () => {
+  function regra(seletor: string): string {
+    const i = painel.indexOf(seletor + ' {');
+    expect(i).toBeGreaterThan(0);
+    return painel.slice(i, painel.indexOf('}', i));
+  }
+
+  it('o cartao de empresa nao encolhe', () => {
+    expect(regra('.aud-empresa')).toMatch(/flex-shrink:\s*0/);
+  });
+
+  it('quem tem teto de altura tambem tem rolagem', () => {
+    const rolo = regra('.aud-rolo');
+    expect(rolo).toMatch(/max-height:/);
+    expect(rolo).toMatch(/overflow-y:\s*auto/);
+    expect(rolo).toMatch(/flex-direction:\s*column/);
+  });
+});
+

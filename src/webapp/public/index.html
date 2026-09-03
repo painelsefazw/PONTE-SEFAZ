@@ -152,8 +152,18 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--suave);
 .aud-chip .aud-bolha { width: 9px; height: 9px; border-radius: 50%; background: var(--aud-cor); flex-shrink: 0; }
 .aud-chip .aud-qtd { font-weight: 500; opacity: .7; font-variant-numeric: tabular-nums; }
 
-.aud-rolo { max-height: 640px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.aud-empresa { background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px; overflow: hidden; }
+.aud-rolo { max-height: min(72vh, 760px); overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+/* `flex-shrink: 0` nao e enfeite: sem ele o cartao PERDE conteudo.
+   Filho de coluna flex encolhe por padrao, e a protecao que impede encolher
+   abaixo do conteudo (`min-height: auto`) some justamente quando o filho tem
+   `overflow: hidden` — que esta aqui so para arredondar os cantos. O resultado
+   era um cartao dizendo "3 registros" e mostrando um, cortado no meio, sem
+   barra de rolagem para revelar o resto: o dado simplesmente nao existia na
+   tela. Nao da erro, nao aparece no console, e a lista parece so "curta". */
+.aud-empresa {
+  flex-shrink: 0;
+  background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px; overflow: hidden;
+}
 .aud-empresa-topo {
   padding: 10px 14px; background: var(--suave); border-bottom: 1px solid var(--borda);
   display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
