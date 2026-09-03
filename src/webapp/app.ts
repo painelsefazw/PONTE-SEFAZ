@@ -4986,7 +4986,12 @@ app.post('/api/nfe/distribuicao', async (req, res) => {
       res.json({
         sucesso: false,
         cStat: '656',
-        xMotivo: 'Rejeicao: Consumo Indevido (bloqueio da SEFAZ ainda em vigor)',
+        // O numero de minutos vai no `xMotivo` porque e ELE que a tela do
+        // cliente mostra. Deixa-lo so no `erro` era ter feito a conta e
+        // escondido o resultado: o operador via "bloqueio em vigor" e continuava
+        // sem saber se faltavam dois minutos ou cinquenta.
+        xMotivo: `Consumo indevido: a SEFAZ liberou a consulta em ${faltam} min. `
+          + 'Nao tente antes disso — cada tentativa reinicia a contagem.',
         bloqueadoAte: p.bloqueadoAte,
         minutosRestantes: faltam,
         erro: `A SEFAZ bloqueou esta consulta por consumo indevido. Faltam ${faltam} min. `

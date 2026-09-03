@@ -80,6 +80,10 @@ describe('a ponte para de reiniciar o proprio bloqueio', () => {
     // ate o fim. Antes, apertar de novo garantia que nunca liberava.
     expect(corpo).toContain('p.bloqueadoAte');
     expect(corpo).toContain('minutosRestantes');
+    // Os minutos vao no `xMotivo`, que e o campo que a tela do cliente mostra.
+    // Deixa-los so no `erro` era fazer a conta e esconder o resultado: o
+    // operador lia "bloqueio em vigor" sem saber se faltavam dois ou cinquenta.
+    expect(corpo).toMatch(/xMotivo: `Consumo indevido[\s\S]{0,80}\$\{faltam\} min/);
     // A guarda vem ANTES do laco que varre a SEFAZ.
     expect(corpo.indexOf('p.bloqueadoAte')).toBeLessThan(corpo.indexOf('varrerDistribuicaoDFe'));
   });
