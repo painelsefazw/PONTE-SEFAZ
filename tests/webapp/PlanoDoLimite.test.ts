@@ -90,9 +90,11 @@ describe('o limite segue o plano contratado', () => {
   // Nome antigo não pode virar rebaixamento silencioso: o cliente segue pagando
   // o mesmo e o sistema tem de continuar entregando o mesmo.
   it.each([
-    ['free', 'pro'], ['gratuito', 'pro'], ['starter', 'pro'], ['basico', 'pro'],
+    // Os de entrada agora viram BETA, a faixa de quem esta comecando. Antes
+    // caiam em PRO porque nao havia faixa menor que ela.
+    ['free', 'beta'], ['gratuito', 'beta'], ['starter', 'beta'], ['basico', 'beta'],
     ['business', 'max'], ['profissional', 'max'],
-    ['enterprise', 'premium'], ['ilimitado', 'premium'],
+    ['enterprise', 'max'], ['ilimitado', 'max'],
   ])('o plano antigo %s continua valendo como %s', async (antigo, atual) => {
     expect(planoDe(antigo).id).toBe(atual);
     const esperado = PLAN_LIMITS[atual]!.requestsPerMinute;

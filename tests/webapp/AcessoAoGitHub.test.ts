@@ -173,45 +173,19 @@ describe('qual token usar', () => {
  * balcao — pagando por ele — e ninguem notaria ate o cliente reclamar.
  */
 describe('plano e servicos batem?', () => {
-  it('acusa o documento do plano que ninguem ativou', () => {
-    const d = divergenciaDePlano('premium', ['nfe', 'nfse']);
-    expect(d).not.toBeNull();
-    expect(d!.faltam).toEqual(['nfce']);
-    expect(d!.sobram).toEqual([]);
-  });
-
-  it('acusa o documento ativado que o plano nao cobre', () => {
-    // NFC-e num plano MAX e volume de balcao cobrado como se fosse NF-e.
-    const d = divergenciaDePlano('max', ['nfe', 'nfce', 'nfse']);
-    expect(d!.sobram).toEqual(['nfce']);
-    expect(d!.faltam).toEqual([]);
-  });
-
-  it('cala quando tudo bate', () => {
-    expect(divergenciaDePlano('premium', ['nfe', 'nfce', 'nfse'])).toBeNull();
-    expect(divergenciaDePlano('max', ['nfe', 'nfse'])).toBeNull();
-  });
-
-  it('plano de escolher um nao acusa falta', () => {
-    // PRO contrata UM dos documentos: apontar o outro como falta seria alarme
-    // falso em todo cliente PRO, e alarme que sempre toca deixa de ser lido.
-    expect(divergenciaDePlano('pro', ['nfse'])).toBeNull();
-    expect(divergenciaDePlano('pro', ['nfe'])).toBeNull();
-  });
-
-  it('CT-e e MDF-e nao contam como sobra', () => {
-    // Nenhum plano os lista; compara-los acusaria sobra em todo cliente que os
-    // tivesse, sem que houvesse nada errado.
-    expect(divergenciaDePlano('premium', ['nfe', 'nfce', 'nfse', 'cte', 'mdfe'])).toBeNull();
-  });
-
-  it('plano desconhecido usa o mais restrito, sem quebrar', () => {
-    expect(() => divergenciaDePlano('inexistente', ['nfe'])).not.toThrow();
-    expect(() => divergenciaDePlano(undefined, [])).not.toThrow();
-  });
-
-  it('nao se importa com caixa nem espaco no nome do servico', () => {
-    expect(divergenciaDePlano('premium', [' NFE ', 'NFCE', 'nfse'])).toBeNull();
+  /**
+   * Este bloco ja acusou divergencia entre o plano e os servicos ativados — o
+   * caso real: a LIDERA no PREMIUM, descrito como "tudo com NFC-e", com apenas
+   * NF-e e NFS-e ativados.
+   *
+   * A pergunta deixou de existir junto com o acoplamento. O plano agora e so
+   * VOLUME: ele nao promete documento nenhum, entao nao ha o que divergir. O
+   * que o cliente emite e exatamente o que ele contratou.
+   */
+  it('nao ha mais divergencia possivel: o plano nao promete documento', () => {
+    expect(divergenciaDePlano('premium', ['nfe', 'nfse'])).toBeNull();
+    expect(divergenciaDePlano('max', ['nfe', 'nfce', 'nfse'])).toBeNull();
+    expect(divergenciaDePlano('beta', [])).toBeNull();
   });
 });
 

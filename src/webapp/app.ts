@@ -398,11 +398,66 @@ async function verificarServicoContratado(cnpj: string, service: FiscalService):
  * INCREMENTA: quem chama precisa ter certeza de que é emissão real. Prévia não
  * passa por aqui — consumir cota para conferir uma nota é cobrar pelo ensaio.
  */
-async function verificarBilling(cnpj: string): Promise<{ permitido: boolean; usado: number; limite: number }> {
+async function verificarBilling(
+  cnpj: string, documento: 'nfe' | 'nfce' | 'nfse' = 'nfe',
+): Promise<{ permitido: boolean; usado: number; limite: number; documento: string }> {
   try {
     const [billing, plano] = await Promise.all([getBillingStore(), planoDoCliente(cnpj)]);
-    return await billing.incrementarUso(cnpj, plano);
-  } catch { return { permitido: true, usado: 0, limite: 0 }; }
+    return await billing.incrementarUso(cnpj, plano, documento);
+  } catch { return { permitido: true, usado: 0, limite: 0, documento }; }
+}
+
+const NOME_DO_DOCUMENTO: Record<string, string> = {
+  nfe: 'NF-e', nfce: 'NFC-e', nfse: 'NFS-e',
+};
+
+/**
+ * A resposta de cota esgotada: diz QUAL documento acabou e o que existe acima.
+ *
+ * "Limite de uso atingido" nao diz nada acionavel para quem esta com uma venda
+ * parada no balcao. O cliente precisa de tres coisas na mesma frase: qual
+ * documento acabou (a cota e por servico — a outra continua livre), quantas ele
+ * emitiu, e para onde ir. Os planos vao junto porque a alternativa e ele
+ * perguntar "quais sao as opcoes?" e esperar a resposta.
+ *
+ * PRECO nao entra: negocia-se caso a caso, e um numero cravado aqui vira
+ * promessa que o codigo faz em nome de quem vende.
+ */
+function respostaDeCotaEsgotada(
+  res: express.Response,
+  info: { usado: number; limite: number; documento: string },
+  planoAtual: string,
+): void {
+  const doc = NOME_DO_DOCUMENTO[info.documento] || info.documento.toUpperCase();
+  const atual = planoDe(planoAtual);
+  const acima = CATALOGO_PLANOS
+    .filter((p) => p.limitePorServico === 0 || p.limitePorServico > atual.limitePorServico)
+    .filter((p) => p.id !== atual.id)
+    .map((p) => ({
+      id: p.id,
+      nome: p.nome,
+      perfil: p.perfil,
+      limitePorServico: p.limitePorServico,
+      limiteTexto: p.limitePorServico > 0
+        ? `até ${p.limitePorServico} ${doc} por mês`
+        : `${doc} sem limite`,
+    }));
+
+  res.status(402).json({
+    sucesso: false,
+    erro: `Limite de ${doc} atingido no plano ${atual.nome}: ${info.usado} de `
+      + `${info.limite} neste mês. Fale com o suporte para subir de plano.`,
+    documento: info.documento,
+    documentoNome: doc,
+    usado: info.usado,
+    limite: info.limite,
+    planoAtual: { id: atual.id, nome: atual.nome, limitePorServico: atual.limitePorServico },
+    // A cota e POR SERVICO: dizer isto evita o pior mal-entendido, que e o
+    // cliente achar que o sistema inteiro parou.
+    aviso: `Os outros documentos contratados continuam liberados — só a cota de ${doc} acabou.`,
+    planosDisponiveis: acima,
+    comoResolver: 'Entre em contato com o suporte para contratar um plano com limite maior.',
+  });
 }
 
 /**
@@ -2348,14 +2403,30 @@ app.get('/api/me', async (req, res) => {
       servicos = await store.obterAtivos(emp.cnpj);
     } catch { /* sem cadastro de serviços: a lista fica vazia, não inventa */ }
 
-    let uso: { emitidas: number; limite: number; restante: number | null } | undefined;
+    let uso: {
+      emitidas: number;
+      limitePorServico: number | null;
+      porServico: Record<string, unknown>;
+    } | undefined;
     try {
       const billing = await getBillingStore();
       const b = await billing.obterOuCriar(emp.cnpj);
+      // Por servico, e nao no total: com um numero so, o cliente que emite
+      // NF-e e NFS-e nao consegue saber qual das duas cotas esta perto do fim.
+      const porServico: Record<string, unknown> = {};
+      for (const doc of ['nfe', 'nfce', 'nfse'] as const) {
+        const usado = b.porServico[doc] ?? 0;
+        porServico[doc] = {
+          emitidas: usado,
+          limite: plano.limitePorServico || null,
+          restante: plano.limitePorServico > 0
+            ? Math.max(0, plano.limitePorServico - usado) : null,
+        };
+      }
       uso = {
         emitidas: b.notasMes,
-        limite: plano.limiteNotas,
-        restante: plano.limiteNotas > 0 ? Math.max(0, plano.limiteNotas - b.notasMes) : null,
+        limitePorServico: plano.limitePorServico || null,
+        porServico,
       };
     } catch { /* sem billing: omite em vez de mentir um número */ }
 
@@ -2383,9 +2454,10 @@ app.get('/api/me', async (req, res) => {
       plano: {
         id: plano.id,
         nome: plano.nome,
-        documentos: plano.documentos,
         webhooks: plano.webhooks,
-        limiteNotasMes: plano.limiteNotas || null,
+        // Por servico. O plano nao lista mais documentos: quais o cliente emite
+        // e o que ele contratou, e isso ja vem em `servicosContratados`.
+        limitePorServico: plano.limitePorServico || null,
         requisicoesPorMinuto: plano.requestsPerMinute,
         requisicoesPorDia: plano.requestsPerDay || null,
       },
@@ -2909,9 +2981,9 @@ app.post('/api/emitir', async (req, res) => {
       // — ele pagaria por documento que nunca existiu, e a conta fecharia com um
       // número que o histórico não explica. A prévia não emite nada; não cobra.
       if (ambiente === '1' && !simulando) {
-        const billing = await verificarBilling(emp.cnpj);
+        const billing = await verificarBilling(emp.cnpj, 'nfe');
         if (!billing.permitido) {
-          errorResponse(res, 'BILLING_REQUIRED', { usado: billing.usado, limite: billing.limite }); return;
+          respostaDeCotaEsgotada(res, billing, await planoDoCliente(emp.cnpj)); return;
         }
       }
     }
@@ -3503,9 +3575,9 @@ app.post('/api/emitir-nfce', async (req, res) => {
       // documento que nunca existiu. A NF-e ja fazia certo; NFC-e ficou para
       // tras, e no balcao a previa e usada muito mais.
       if (ambiente === '1' && !simulando) {
-        const billing = await verificarBilling(emp.cnpj);
+        const billing = await verificarBilling(emp.cnpj, 'nfce');
         if (!billing.permitido) {
-          errorResponse(res, 'BILLING_REQUIRED', { usado: billing.usado, limite: billing.limite }); return;
+          respostaDeCotaEsgotada(res, billing, await planoDoCliente(emp.cnpj)); return;
         }
       }
     }
@@ -5274,9 +5346,12 @@ app.get('/api/billing/planos', (_req, res) => {
       id: p.id,
       nome: p.nome,
       descricao: p.perfil,
-      documentos: p.documentos,
-      escolheUm: p.escolheUm,
-      limiteNotas: p.limiteNotas,
+      // Sem `documentos`: o plano e so volume. Quais documentos o cliente
+      // emite e o que ele contratou, e isso vive em Servicos.
+      limitePorServico: p.limitePorServico,
+      limiteTexto: p.limitePorServico > 0
+        ? `ate ${p.limitePorServico} emissoes por mes de CADA servico contratado`
+        : 'emissoes ilimitadas de cada servico contratado',
       empresas: p.empresas,
       webhooks: p.webhooks,
       cor: p.cor,
@@ -5300,10 +5375,24 @@ app.get('/api/billing/uso', async (req, res) => {
     const store = await getBillingStore();
     const billing = await store.obterOuCriar(emp.cnpj);
     res.json({
-      plano: { id: plano.id, nome: plano.nome, descricao: plano.perfil, limiteNotas: plano.limiteNotas },
+      plano: {
+        id: plano.id, nome: plano.nome, descricao: plano.perfil,
+        limitePorServico: plano.limitePorServico,
+      },
       notasMes: billing.notasMes,
       mesReferencia: billing.mesReferencia,
-      percentualUso: plano.limiteNotas > 0 ? Math.round((billing.notasMes / plano.limiteNotas) * 100) : 0,
+      // Uma barra por servico: o percentual do TOTAL nao diz nada quando o
+      // limite e por documento — 90% do total pode ser 100% de um e 0% do outro.
+      porServico: (['nfe', 'nfce', 'nfse'] as const).map((doc) => {
+        const usado = billing.porServico[doc] ?? 0;
+        return {
+          documento: doc,
+          emitidas: usado,
+          limite: plano.limitePorServico || null,
+          percentual: plano.limitePorServico > 0
+            ? Math.round((usado / plano.limitePorServico) * 100) : 0,
+        };
+      }),
     });
   } catch (err: any) {
     res.status(500).json({ erro: err.message });
@@ -5484,9 +5573,9 @@ app.post('/api/nfse/emitir', async (req, res) => {
       }
       // Mesma excecao da NF-e e da NFC-e: previa nao cobra cota.
       if (ambiente === '1' && !simulando) {
-        const billing = await verificarBilling(emp.cnpj);
+        const billing = await verificarBilling(emp.cnpj, 'nfse');
         if (!billing.permitido) {
-          errorResponse(res, 'BILLING_REQUIRED', { usado: billing.usado, limite: billing.limite }); return;
+          respostaDeCotaEsgotada(res, billing, await planoDoCliente(emp.cnpj)); return;
         }
       }
     }

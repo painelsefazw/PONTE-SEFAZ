@@ -21,7 +21,7 @@ export const PLAN_LIMITS: Record<string, RateLimitConfig> = Object.fromEntries(
   PLANOS.map(p => [p.id, {
     requestsPerMinute: p.requestsPerMinute,
     requestsPerDay: p.requestsPerDay,
-    emissionsPerMonth: p.limiteNotas,
+    emissionsPerMonth: p.limitePorServico,
   }]),
 );
 
@@ -53,7 +53,7 @@ export function createRateLimiter(pool?: Pool) {
     const limits: RateLimitConfig = {
       requestsPerMinute: p.requestsPerMinute,
       requestsPerDay: p.requestsPerDay,
-      emissionsPerMonth: p.limiteNotas,
+      emissionsPerMonth: p.limitePorServico,
     };
 
     if (limits.requestsPerMinute > 0) {

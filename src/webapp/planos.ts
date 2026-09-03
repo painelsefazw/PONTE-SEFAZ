@@ -17,17 +17,17 @@ export type Documento = 'nfe' | 'nfce' | 'nfse';
 export interface Plano {
   id: string;
   nome: string;
-  /** Uma frase que diz para quem o plano é. Aparece na tela do admin. */
+  /** Uma frase que diz para quem o plano e. Aparece na tela do admin. */
   perfil: string;
-  /** O que este plano permite emitir. */
-  documentos: Documento[];
   /**
-   * Se `escolheUm`, o cliente contrata UM dos documentos da lista, não todos.
-   * É o que separa "prestador de serviço" de "quem vende produto e serviço".
+   * Emissoes por mes DE CADA servico contratado. `0` = sem limite.
+   *
+   * Por servico, e nao no total: um cliente que emite NF-e e NFS-e tem duas
+   * cotas separadas, e estourar uma nao para a outra. Com um teto unico, quem
+   * vende produto de manha ficava sem emitir a nota de servico da tarde — e a
+   * mensagem falava de "cota do plano", sem dizer qual documento acabou.
    */
-  escolheUm: boolean;
-  /** Notas por mês em produção. `0` = sem limite. */
-  limiteNotas: number;
+  limitePorServico: number;
   requestsPerMinute: number;
   /** `0` = sem limite. */
   requestsPerDay: number;
@@ -38,21 +38,22 @@ export interface Plano {
 }
 
 /**
- * Três faixas, na ordem em que um cliente cresce.
+ * Tres faixas, so por VOLUME.
  *
- * A NFC-e mora só no PREMIUM por VOLUME, não por sofisticação: é o cupom do
- * balcão, e um restaurante emite 200 a 400 por dia. Um plano dimensionado para
- * NF-e — dezenas por dia — não comporta isso, e liberar sem dimensionar
- * transforma um cliente em prejuízo no primeiro mês.
+ * O plano nao decide mais QUAIS documentos o cliente emite — isso e o que ele
+ * contratou, cadastrado em Servicos. Antes as duas coisas viviam no mesmo
+ * lugar: "PRO = NF-e ou NFS-e" misturava um teto de volume com uma escolha de
+ * produto, e mudar a faixa de preco mexia no que o cliente podia emitir.
+ *
+ * Preco nao entra aqui, e nem na tela: negocia-se caso a caso, e um numero
+ * cravado no codigo envelhece na primeira excecao que voce abre.
  */
 export const PLANOS: Plano[] = [
   {
-    id: 'pro',
-    nome: 'PRO',
-    perfil: 'Emite um tipo de documento, volume baixo. Prestador de servico ou comercio pequeno.',
-    documentos: ['nfe', 'nfse'],
-    escolheUm: true,
-    limiteNotas: 300,
+    id: 'beta',
+    nome: 'BETA',
+    perfil: 'Comecando. Volume baixo, para conhecer o sistema emitindo de verdade.',
+    limitePorServico: 25,
     requestsPerMinute: 60,
     requestsPerDay: 5_000,
     empresas: 1,
@@ -60,12 +61,10 @@ export const PLANOS: Plano[] = [
     cor: '#0ea5e9',
   },
   {
-    id: 'max',
-    nome: 'MAX',
-    perfil: 'Vende produto E presta servico. NF-e e NFS-e no mesmo sistema.',
-    documentos: ['nfe', 'nfse'],
-    escolheUm: false,
-    limiteNotas: 1_500,
+    id: 'pro',
+    nome: 'PRO',
+    perfil: 'Operacao rodando. Volume mensal previsivel em cada documento.',
+    limitePorServico: 50,
     requestsPerMinute: 120,
     requestsPerDay: 20_000,
     empresas: 3,
@@ -73,12 +72,10 @@ export const PLANOS: Plano[] = [
     cor: '#6366f1',
   },
   {
-    id: 'premium',
-    nome: 'PREMIUM',
-    perfil: 'Tem balcao (NFC-e), volume alto ou varias empresas. Varejo, restaurante, rede.',
-    documentos: ['nfe', 'nfce', 'nfse'],
-    escolheUm: false,
-    limiteNotas: 0,
+    id: 'max',
+    nome: 'MAX',
+    perfil: 'Sem teto. Balcao, volume alto ou varias empresas.',
+    limitePorServico: 0,
     requestsPerMinute: 300,
     requestsPerDay: 0,
     empresas: 0,
@@ -95,14 +92,19 @@ export const PLANOS: Plano[] = [
  * `business` vira MAX porque é onde a Aliança estava na prática: NF-e e NFS-e.
  */
 const EQUIVALENTES: Record<string, string> = {
-  free: 'pro',
-  gratuito: 'pro',
-  starter: 'pro',
-  basico: 'pro',
+  // Os gratuitos e de entrada viram BETA — a faixa de quem esta comecando.
+  free: 'beta',
+  gratuito: 'beta',
+  starter: 'beta',
+  basico: 'beta',
+  // `premium` era o sem-teto da nomenclatura antiga, e e o unico que os
+  // clientes reais tinham. Vira MAX, que e o mesmo lugar com outro nome —
+  // rebaixa-los seria cortar emissao de quem ja pagou pelo ilimitado.
+  premium: 'max',
+  enterprise: 'max',
+  ilimitado: 'max',
   business: 'max',
   profissional: 'max',
-  enterprise: 'premium',
-  ilimitado: 'premium',
 };
 
 /** Nunca devolve indefinido: plano desconhecido cai no mais restrito. */
@@ -114,9 +116,18 @@ export function planoDe(id: string | undefined | null): Plano {
   return PLANOS.find(p => p.id === equivalente) ?? PLANOS[0]!;
 }
 
-/** O plano permite emitir este documento? */
-export function planoPermite(id: string | undefined | null, doc: Documento): boolean {
-  return planoDe(id).documentos.includes(doc);
+/**
+ * O plano permite emitir este documento?
+ *
+ * SEMPRE. O plano passou a ser so volume — quais documentos o cliente emite e o
+ * que ele CONTRATOU, cadastrado em Servicos, e e la que a permissao e checada.
+ *
+ * A funcao continua existindo, e devolvendo `true`, porque ela e chamada de
+ * varios pontos: troca-la por nada exigiria mexer nos chamadores para provar
+ * uma regra que agora nao existe. Quando o ultimo chamador sair, ela sai junto.
+ */
+export function planoPermite(_id: string | undefined | null, _doc: Documento): boolean {
+  return true;
 }
 
 /**
@@ -144,12 +155,12 @@ export function divergenciaDePlano(
   planoId: string | undefined | null,
   servicosAtivos: readonly string[],
 ): { faltam: Documento[]; sobram: Documento[] } | null {
-  const plano = planoDe(planoId);
-  const conhecidos: Documento[] = ['nfe', 'nfce', 'nfse'];
-  const ativos = new Set(servicosAtivos.map(s => String(s).trim().toLowerCase()));
-
-  const faltam = plano.escolheUm ? [] : plano.documentos.filter(d => !ativos.has(d));
-  const sobram = conhecidos.filter(d => ativos.has(d) && !plano.documentos.includes(d));
-
-  return faltam.length || sobram.length ? { faltam, sobram } : null;
+  // Nao ha mais divergencia possivel: o plano nao promete documento nenhum,
+  // so volume. O que o cliente emite e exatamente o que ele contratou.
+  //
+  // A funcao devolve `null` em vez de sumir porque a tela do cliente ainda a
+  // consulta para desenhar o aviso — e `null` ali significa "esta tudo certo",
+  // que passou a ser sempre verdade.
+  void planoId; void servicosAtivos;
+  return null;
 }

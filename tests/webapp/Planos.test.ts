@@ -1,112 +1,94 @@
-import { PLANOS, planoDe, planoPermite } from '../../src/webapp/planos';
+import { PLANOS, planoDe, divergenciaDePlano } from '../../src/webapp/planos';
 import { PLANOS as PLANOS_BILLING } from '../../src/webapp/billing';
 import { PLAN_LIMITS } from '../../src/webapp/middleware/rate-limiter';
 
 /**
- * Os planos, e a contradição que eles tinham.
+ * Os planos, e o que eles decidem.
  *
- * Havia duas listas: `PLANOS` no billing (free, starter, pro) e `PLAN_LIMITS`
- * no rate limiter (free, starter, business, pro, enterprise). O cliente real
- * estava em `business`, que não existia na primeira: caía no fallback do
- * gratuito e recebia limite de **10 notas por mês**. Emitia até a décima e
- * parava, com "Limite de uso atingido", sem ninguém entender por quê.
+ * Eles decidem VOLUME, e mais nada. Quais documentos o cliente emite e o que
+ * ele contratou, cadastrado em Servicos — antes as duas coisas viviam no mesmo
+ * lugar ("PRO = NF-e ou NFS-e"), e mexer na faixa de preco mexia no que o
+ * cliente podia emitir.
  *
- * O primeiro bloco é o que impede isso de voltar.
+ * O limite e POR SERVICO. Com um teto unico, quem vende produto de manha ficava
+ * sem emitir a nota de servico da tarde, e a mensagem falava de "cota do plano"
+ * sem dizer qual documento acabou.
+ *
+ * A lista tambem precisa continuar dizendo a MESMA coisa nos tres lugares que a
+ * leem — catalogo, billing e limitador. Ja houve duas listas em paralelo, e um
+ * cliente `business` que nao existia numa delas caia no limite do gratuito: dez
+ * notas, e parava sem ninguem entender por que.
  */
 
-describe('uma fonte de verdade', () => {
-  it('billing e rate limiter falam dos MESMOS planos', () => {
-    const doCatalogo = PLANOS.map(p => p.id).sort();
-    expect(PLANOS_BILLING.map(p => p.id).sort()).toEqual(doCatalogo);
-    expect(Object.keys(PLAN_LIMITS).sort()).toEqual(doCatalogo);
+describe('planos', () => {
+  test('as tres faixas existem, na ordem em que o cliente cresce', () => {
+    expect(PLANOS.map(p => p.id)).toEqual(['beta', 'pro', 'max']);
+    expect(PLANOS.map(p => p.limitePorServico)).toEqual([25, 50, 0]);
   });
 
-  it('o limite de notas e o mesmo nos dois lugares', () => {
+  test('as tres listas que leem os planos concordam', () => {
     for (const p of PLANOS) {
-      expect(PLANOS_BILLING.find(b => b.id === p.id)!.limiteNotas).toBe(p.limiteNotas);
-      expect(PLAN_LIMITS[p.id]!.emissionsPerMonth).toBe(p.limiteNotas);
-    }
-  });
-});
-
-describe('nome de plano antigo continua valendo', () => {
-  it.each([
-    ['business', 'MAX'],
-    ['free', 'PRO'],
-    ['starter', 'PRO'],
-    ['enterprise', 'PREMIUM'],
-  ])('%s vira %s', (antigo, esperado) => {
-    expect(planoDe(antigo).nome).toBe(esperado);
-  });
-
-  it('o cliente que estava em business NAO cai mais no limite do gratuito', () => {
-    const p = planoDe('business');
-    // O defeito era exatamente este número: 10.
-    expect(p.limiteNotas).toBeGreaterThan(10);
-    expect(p.limiteNotas).toBe(1_500);
-  });
-
-  it('plano desconhecido cai no mais restrito, nunca em acesso livre', () => {
-    for (const v of ['inventado', '', null, undefined]) {
-      const p = planoDe(v as any);
-      expect(p.id).toBe('pro');
-      expect(p.limiteNotas).toBeGreaterThan(0);
-    }
-  });
-});
-
-describe('o que cada plano permite emitir', () => {
-  it('NFC-e so no PREMIUM — e questao de volume, nao de sofisticacao', () => {
-    expect(planoPermite('pro', 'nfce')).toBe(false);
-    expect(planoPermite('max', 'nfce')).toBe(false);
-    expect(planoPermite('premium', 'nfce')).toBe(true);
-  });
-
-  it('PRO da acesso a NF-e e NFS-e, mas o cliente escolhe UM', () => {
-    const p = planoDe('pro');
-    expect(p.documentos).toEqual(['nfe', 'nfse']);
-    expect(p.escolheUm).toBe(true);
-  });
-
-  it('MAX e o plano de quem vende produto E presta servico', () => {
-    const p = planoDe('max');
-    expect(p.documentos).toEqual(expect.arrayContaining(['nfe', 'nfse']));
-    expect(p.escolheUm).toBe(false);
-  });
-
-  it('PREMIUM nao tem teto de notas nem de empresas', () => {
-    const p = planoDe('premium');
-    expect(p.limiteNotas).toBe(0);
-    expect(p.empresas).toBe(0);
-    expect(p.requestsPerDay).toBe(0);
-  });
-});
-
-describe('os limites crescem junto com a faixa', () => {
-  it('req/min sobe de PRO para MAX para PREMIUM', () => {
-    expect(planoDe('pro').requestsPerMinute).toBeLessThan(planoDe('max').requestsPerMinute);
-    expect(planoDe('max').requestsPerMinute).toBeLessThan(planoDe('premium').requestsPerMinute);
-  });
-
-  it('nenhum plano fica abaixo de 60 req/min — uma tela consome varias por carga', () => {
-    for (const p of PLANOS) expect(p.requestsPerMinute).toBeGreaterThanOrEqual(60);
-  });
-
-  it('preco nao vive no codigo: e negociado caso a caso', () => {
-    // Antes o campo existia zerado, e um campo zerado convida a preenche-lo.
-    // Nao existir e mais forte: nao ha onde escrever, e o TypeScript recusa
-    // quem tentar.
-    for (const p of PLANOS_BILLING) {
-      expect(Object.keys(p)).not.toContain('preco');
-      expect(Object.keys(p)).not.toContain('precoFormatado');
+      expect(PLANOS_BILLING.find(b => b.id === p.id)!.limitePorServico).toBe(p.limitePorServico);
+      expect(PLAN_LIMITS[p.id]!.emissionsPerMonth).toBe(p.limitePorServico);
     }
   });
 
-  it('nenhum plano carrega identificador de cobranca externa', () => {
-    // O checkout automatico saiu: nao ha assinatura para amarrar, e um campo
-    // sobrando aqui e a porta por onde a segunda fonte da verdade volta.
-    for (const p of PLANOS_BILLING) {
-      for (const chave of Object.keys(p)) expect(chave).not.toMatch(/stripe/i);
+  test('o MAX e sem teto, e `0` e o unico jeito de dizer isso', () => {
+    // Um numero grande fingindo infinito acaba um dia, e o cliente descobre
+    // emitindo. `0` e checado antes de comparar.
+    expect(planoDe('max').limitePorServico).toBe(0);
+  });
+
+  test('identificador desconhecido cai no MAIS RESTRITO', () => {
+    // Nunca no mais generoso: errar para cima entrega de graca o que foi
+    // vendido, e ninguem percebe porque nada falha.
+    expect(planoDe('inventado').id).toBe('beta');
+    expect(planoDe(undefined).id).toBe('beta');
+    expect(planoDe('').id).toBe('beta');
+  });
+
+  test('o PREMIUM antigo vira MAX, e nao um plano menor', () => {
+    // Era o sem-teto da nomenclatura anterior, e e o que os clientes reais
+    // tinham. Rebaixa-los cortaria emissao de quem ja pagou pelo ilimitado.
+    expect(planoDe('premium').id).toBe('max');
+    expect(planoDe('enterprise').id).toBe('max');
+    expect(planoDe('ilimitado').id).toBe('max');
+  });
+
+  test('os identificadores de entrada viram BETA', () => {
+    for (const antigo of ['free', 'gratuito', 'starter', 'basico']) {
+      expect(planoDe(antigo).id).toBe('beta');
+    }
+  });
+
+  test('nenhum plano restringe documento', () => {
+    // O plano nao lista mais documentos. Se um campo assim voltar, volta junto
+    // o acoplamento entre faixa de preco e o que o cliente pode emitir.
+    for (const p of PLANOS) {
+      expect(p).not.toHaveProperty('documentos');
+      expect(p).not.toHaveProperty('escolheUm');
+    }
+  });
+
+  test('nao existe mais divergencia entre plano e servicos', () => {
+    // O aviso "o plano inclui NFC-e mas o cliente nao tem" perdeu sentido: o
+    // plano nao inclui documento nenhum.
+    expect(divergenciaDePlano('beta', ['nfe'])).toBeNull();
+    expect(divergenciaDePlano('max', [])).toBeNull();
+  });
+
+  test('preco nao aparece em campo nenhum', () => {
+    // Preco se negocia caso a caso. Um numero cravado aqui vira promessa que o
+    // codigo faz em nome de quem vende.
+    const texto = JSON.stringify(PLANOS).toLowerCase();
+    for (const proibido of ['preco', 'preço', 'valor', 'r$', 'mensalidade', 'price']) {
+      expect(texto).not.toContain(proibido);
+    }
+  });
+
+  test('todo plano diz para QUEM ele e', () => {
+    for (const p of PLANOS) {
+      expect(p.perfil.length).toBeGreaterThan(20);
     }
   });
 });
