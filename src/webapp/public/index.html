@@ -3130,7 +3130,15 @@ async function cancelarNfse(chave) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chaveAcesso: chave, motivo: '1', justificativa: just.trim() }),
   });
-  var j = await r.json();
+  // `r.json()` sem conferir a resposta antes: um 500 com corpo HTML estoura
+  // aqui, sem `catch`, e o clique morre sem dizer nada. O caminho normal ja era
+  // bem tratado — faltava o anormal.
+  if (!r.ok) {
+    var bruto = await r.text().catch(function () { return ''; });
+    alert('A NFS-e NAO foi cancelada (HTTP ' + r.status + '). ' + bruto.slice(0, 200));
+    return;
+  }
+  var j = await r.json().catch(function () { return {}; });
   if (j.sucesso) {
     alert('NFS-e cancelada.');
     carregarHistoricoNfse();
@@ -3439,8 +3447,7 @@ async function salvarServico() {
 
 async function removerServico(id) {
   if (!confirm('Excluir este servico do catalogo?')) return;
-  await apiFetch('/api/nfse/servicos/' + id, { method: 'DELETE' });
-  loadServicos();
+  await removerItem('/api/nfse/servicos', id, 'o servico', loadServicos);
 }
 
 // ---------------------------------------------------------------------------
@@ -5955,9 +5962,31 @@ async function loadProdutos() {
     box.innerHTML = html;
   } catch(e) { box.innerHTML = '<div class="hist-empty">Erro ao carregar</div>'; }
 }
+/**
+ * Remove um item e RECLAMA quando nao removeu.
+ *
+ * Os tres removedores do painel faziam `try { ... } catch(e) {}` — o `catch`
+ * vazio engolia tudo, e um 500 tinha o mesmo aspecto de sucesso: a lista
+ * recarregava, o item continuava la, e nada era dito. Somado ao `fetch`, que so
+ * rejeita em falha de rede, um DELETE recusado pelo servidor passava batido.
+ */
+async function removerItem(rota, id, oQueE, recarregar) {
+  try {
+    var r = await apiFetch(rota + '/' + id, { method: 'DELETE' });
+    if (!r.ok) {
+      var e = await r.json().catch(function () { return {}; });
+      alert('Nao foi possivel remover ' + oQueE + ': ' + (e.erro || ('HTTP ' + r.status)));
+      return;
+    }
+    recarregar();
+  } catch (e) {
+    alert('Nao foi possivel remover ' + oQueE + ': ' + e.message);
+  }
+}
+
 async function removerProduto(id) {
   if (!window.confirm('Remover este produto do catalogo?')) return;
-  try { await apiFetch('/api/produtos/' + id, { method: 'DELETE' }); loadProdutos(); } catch(e) {}
+  await removerItem('/api/produtos', id, 'o produto', loadProdutos);
 }
 
 // --- Seletor de produtos na EMISSAO ---
@@ -6145,7 +6174,7 @@ async function loadRegras() {
 
 async function removerRegra(id) {
   if (!window.confirm('Remover esta regra fiscal?')) return;
-  try { await apiFetch('/api/regras-fiscais/' + id, { method: 'DELETE' }); loadRegras(); } catch(e) {}
+  await removerItem('/api/regras-fiscais', id, 'a regra', loadRegras);
 }
 
 // ---------------------------------------------------------------------------
@@ -9300,10 +9329,19 @@ async function excluirClienteApi(cnpj) {
 async function alterarStatusCliente(cnpj, status) {
   if (!confirm('Alterar status para ' + (STATUS_LABELS[status] || status) + '?')) return;
   try {
-    await apiFetch('/api/admin/clients/' + cnpj + '/status', {
+    // `fetch` so rejeita em falha de REDE: um 400 ou 500 chega aqui como
+    // resposta normal. Sem conferir, a tela reabria a ficha e o operador via o
+    // status ANTIGO — lia como se a troca nao tivesse pegado, e clicava de
+    // novo. Suspender um cliente que continua ativo e o pior caso disso.
+    var r = await apiFetch('/api/admin/clients/' + cnpj + '/status', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: status })
     });
+    if (!r.ok) {
+      var e1 = await r.json().catch(function () { return {}; });
+      alert('O status NAO foi alterado: ' + (e1.erro || ('HTTP ' + r.status)));
+      return;
+    }
     abrirDetalheCliente(cnpj);
   } catch (e) { alert('Erro: ' + e.message); }
 }
@@ -10668,7 +10706,12 @@ async function salvarTemplate() {
 async function publicarTemplate(id) {
   if (!confirm('Publicar este template?')) return;
   try {
-    await apiFetch('/api/admin/templates/' + id + '/publish', { method: 'POST' });
+    var r = await apiFetch('/api/admin/templates/' + id + '/publish', { method: 'POST' });
+    if (!r.ok) {
+      var e1 = await r.json().catch(function () { return {}; });
+      alert('O template NAO foi publicado: ' + (e1.erro || ('HTTP ' + r.status)));
+      return;
+    }
     loadTemplates();
   } catch (e) { alert('Erro: ' + e.message); }
 }
