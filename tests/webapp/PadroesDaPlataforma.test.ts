@@ -184,3 +184,53 @@ describe('padroes cobrem a cara do sistema', () => {
     expect(painel).not.toContain("auditoria: [{ id: 'clientesapi-audit'");
   });
 });
+
+/**
+ * A marca do cliente entra no CADASTRO, nao numa tela separada.
+ *
+ * Sem nome e logo, o template publicado nasce generico — e quem cadastrou so
+ * descobre isso ao abrir o site do cliente, depois de ja ter publicado. Abrir
+ * Marca propria era um passo extra que ninguem lembrava de dar.
+ *
+ * O resto da identidade nao entra aqui de proposito: cores, suporte e rodape
+ * vem dos Padroes, e digita-los por cliente e o trabalho que os Padroes
+ * existem para evitar.
+ */
+describe('a marca entra no cadastro do cliente', () => {
+  const painel = ler('src', 'webapp', 'public', 'index.html');
+  const salvar = (() => {
+    const i = painel.indexOf('async function wzSalvar(');
+    return painel.slice(i, painel.indexOf('\n}\n', i));
+  })();
+
+  test('o assistente pede nome e logo', () => {
+    expect(painel).toContain('id="wzMarcaNome"');
+    expect(painel).toContain('id="wzLogoFile"');
+    expect(painel).toContain('async function wzLerLogo(');
+  });
+
+  test('a logo passa pelo mesmo preparo do DANFE', () => {
+    // O servico que desenha o DANFE nao tem `gd` e recusa PNG calado.
+    // Reaproveitar o preparo garante que a imagem serve nos dois lugares.
+    const fn = painel.slice(painel.indexOf('async function wzLerLogo('));
+    expect(fn.slice(0, 700)).toContain('achatarAteCaber(arquivo)');
+  });
+
+  test('criar o cliente ja grava a marca', () => {
+    expect(salvar).toContain("'/whitelabel'");
+    expect(salvar).toContain('nomePlataforma: nomeMarca');
+    // Sem nome digitado, cai na fantasia e depois na razao social — nunca no
+    // nome do nosso produto.
+    expect(salvar).toContain('c.nomePlataforma || c.fantasia || c.razaoSocial');
+  });
+
+  test('a mesma logo vai para o DANFE', () => {
+    // Sao dois cadastros separados, e cadastrar duas vezes era o passo que todo
+    // mundo esquecia: a nota saia sem logo e o motivo nunca aparecia.
+    expect(salvar).toContain("'/api/danfe/marca'");
+  });
+
+  test('marca que falha AVISA, em vez de sumir', () => {
+    expect(salvar).toContain('a marca nao foi salva');
+  });
+});

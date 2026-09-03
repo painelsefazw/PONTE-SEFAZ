@@ -8233,6 +8233,11 @@ function showCadastroClienteApi(modalidade) {
     plano: 'pro', servicos: ['nfe'],
     certBase64: '', certNome: '', certSenha: '', manual: false,
     ie: '', crt: '3', endereco: null,
+    // A marca entra AQUI e nao numa tela separada: sem nome e logo o template
+    // publicado nasce generico, e quem cadastrou so descobre isso ao abrir o
+    // site do cliente. O resto da identidade — cores, suporte, rodape — vem de
+    // Clientes > Padroes, e nao precisa ser digitado por cliente.
+    nomePlataforma: '', logoBase64: '', logoNome: '',
     modalidade: comPlataforma ? 'plataforma' : 'api',
     whiteLabelAtiva: comPlataforma
   };
@@ -8492,6 +8497,29 @@ function wzPasso3() {
         '<input class="fld" type="password" id="wzCertSenha" autocomplete="new-password" placeholder="Senha do .pfx" value="' + escapeHtml(c.certSenha) + '">' +
       '</div>' +
     '</div>' +
+    '<div style="margin-top:26px;padding-top:18px;border-top:1px solid var(--borda)">' +
+      '<div class="wz-h" style="font-size:14px">Marca da plataforma</div>' +
+      '<div class="wz-sub">Só o que é desta empresa. Cores, suporte e rodapé vêm ' +
+        'de <b>Clientes › Padrões</b> e valem para todos.</div>' +
+      '<div style="margin-top:12px">' +
+        '<label class="fld-lbl">Nome que aparece na plataforma</label>' +
+        '<input class="fld" id="wzMarcaNome" autocomplete="off" placeholder="' +
+          escapeHtml(c.fantasia || c.razaoSocial || 'Nome da empresa') + '" value="' +
+          escapeHtml(c.nomePlataforma) + '">' +
+      '</div>' +
+      '<div style="margin-top:12px">' +
+        '<label class="fld-lbl">Logo <span class="fld-opt">(PNG, JPG ou SVG — vira JPG sozinha)</span></label>' +
+        '<div class="drop" onclick="document.getElementById(\'wzLogoFile\').click()" ' +
+          'ondragover="event.preventDefault();this.classList.add(\'over\')" ' +
+          'ondragleave="this.classList.remove(\'over\')" ondrop="wzDropLogo(event,this)">' +
+          '<div class="drop-t" id="wzLogoT">' +
+            (c.logoNome ? escapeHtml(c.logoNome) : 'Arraste a imagem aqui') + '</div>' +
+          '<div class="drop-s">' + (c.logoBase64 ? 'Clique para trocar' : 'ou clique para escolher') + '</div>' +
+        '</div>' +
+        '<input type="file" id="wzLogoFile" accept="image/*" style="display:none" onchange="wzLerLogo(this.files[0])">' +
+      '</div>' +
+    '</div>' +
+
     '<div style="margin-top:22px;padding:12px 14px;background:var(--suave);border:1px solid var(--suave);border-radius:10px;font-size:12px;color:var(--suave-texto)">' +
       escapeHtml(resumo) +
     '</div>' +
@@ -8500,6 +8528,37 @@ function wzPasso3() {
       '<button class="wz-btn wz-btn-p" id="wzSalvar" onclick="wzSalvar()">Criar cliente</button>' +
     '</div>' +
   '</div>';
+}
+
+/**
+ * A logo do assistente passa pelo MESMO preparo do DANFE.
+ *
+ * Achatar em JPEG sobre branco e reduzir ate caber: o servico que desenha o
+ * DANFE nao tem `gd`, e recusa PNG calado. Reaproveitar `achatarAteCaber`
+ * garante que a imagem escolhida aqui serve nos dois lugares — e nao ha
+ * caminho de upload com regra propria para divergir depois.
+ */
+async function wzLerLogo(arquivo) {
+  if (!arquivo) return;
+  var alvo = document.getElementById('wzLogoT');
+  if (alvo) alvo.textContent = 'Preparando...';
+  try {
+    wzCliente.logoBase64 = await achatarAteCaber(arquivo);
+    wzCliente.logoNome = arquivo.name;
+    if (alvo) alvo.textContent = arquivo.name;
+  } catch (e) {
+    wzCliente.logoBase64 = '';
+    wzCliente.logoNome = '';
+    if (alvo) alvo.textContent = 'Arraste a imagem aqui';
+    alert(e.message || 'Nao foi possivel preparar a imagem.');
+  }
+}
+
+function wzDropLogo(ev, el) {
+  ev.preventDefault();
+  el.classList.remove('over');
+  var f = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
+  if (f) wzLerLogo(f);
 }
 
 function wzDropCert(ev, el) {
@@ -8538,6 +8597,7 @@ function wzCapturar() {
   var senha = v('wzCertSenha'); if (senha !== null) wzCliente.certSenha = senha;
   var ie    = v('wzIe');        if (ie    !== null) wzCliente.ie = ie.trim();
   var crt   = v('wzCrt');       if (crt   !== null) wzCliente.crt = crt;
+  var marca = v('wzMarcaNome');  if (marca !== null) wzCliente.nomePlataforma = marca.trim();
 }
 
 function wzIr(passo) {
@@ -8617,6 +8677,36 @@ async function wzSalvar() {
       if (!cr.ok) {
         var ce = await cr.json();
         aviso = 'Cliente criado, mas o certificado nao foi aceito: ' + (ce.erro || 'erro desconhecido');
+      }
+    }
+
+    // A marca vai junto: sem nome e logo, o template publicado nasce generico,
+    // e quem cadastrou so descobre isso ao abrir o site do cliente. O resto da
+    // identidade (cores, suporte, rodape) vem dos Padroes na hora de gerar.
+    var nomeMarca = c.nomePlataforma || c.fantasia || c.razaoSocial;
+    if (nomeMarca || c.logoBase64) {
+      var mr = await apiFetch('/api/admin/clients/' + c.cnpj + '/whitelabel', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          empresaCnpj: c.cnpj,
+          nomePlataforma: nomeMarca,
+          logoBase64: c.logoBase64 || undefined
+        })
+      });
+      if (!mr.ok) {
+        var me = await mr.json().catch(function () { return {}; });
+        aviso = (aviso ? aviso + ' | ' : '')
+          + 'Cliente criado, mas a marca nao foi salva: ' + (me.erro || ('HTTP ' + mr.status));
+      }
+      // A mesma imagem serve o DANFE: e a logo da empresa, e cadastra-la duas
+      // vezes era o passo que todo mundo esquecia — a nota saia sem logo e o
+      // motivo nunca aparecia em lugar nenhum.
+      if (c.logoBase64) {
+        await apiFetch('/api/danfe/marca', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, cabecalhoDaEmpresa(c.cnpj)),
+          body: JSON.stringify({ logoBase64: c.logoBase64 })
+        }).catch(function () { /* a marca do painel ja foi; o DANFE se ajusta depois */ });
       }
     }
 
