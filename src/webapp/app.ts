@@ -2556,7 +2556,12 @@ app.post('/api/danfe/marca', async (req, res) => {
       posicao: req.body?.posicao,
       textoPadrao: texto,
     });
-    registrarAudit('admin', 'danfe.marca.salva', emp.cnpj, { requestId: (req as any).requestId });
+    // O CNPJ ia no lugar do TIPO de entidade, e `empresaCnpj` ficava vazio: na
+    // auditoria a logo do DANFE aparecia sob "Sistema", solta de qualquer
+    // cliente. Quem procurava o que mudou naquela empresa nao achava.
+    registrarAudit('admin', 'danfe.marca.salva', 'danfe_marca', {
+      empresaCnpj: emp.cnpj, requestId: (req as any).requestId,
+    });
     res.json({ sucesso: true, posicao: normalizarPosicao(req.body?.posicao) });
   } catch (err: any) {
     res.status(400).json({ erro: err.message });
@@ -2568,7 +2573,9 @@ app.delete('/api/danfe/marca', async (req, res) => {
     const emp = { cnpj: await cnpjDosParametros(req) };
     const store = await getMarcaDoDanfeStore();
     if (store) await store.remover(emp.cnpj);
-    registrarAudit('admin', 'danfe.marca.removida', emp.cnpj, { requestId: (req as any).requestId });
+    registrarAudit('admin', 'danfe.marca.removida', 'danfe_marca', {
+      empresaCnpj: emp.cnpj, requestId: (req as any).requestId,
+    });
     res.json({ sucesso: true });
   } catch (err: any) {
     res.status(400).json({ erro: err.message });

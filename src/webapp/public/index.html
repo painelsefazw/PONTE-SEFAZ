@@ -124,6 +124,56 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--suave);
 .hist-table td { padding: 8px 6px; border-bottom: 1px solid var(--suave); }
 .hist-table tr:hover { background: var(--suave); }
 .hist-empty { text-align: center; color: var(--suave-texto); padding: 40px; font-size: 14px; }
+/* --- Log de auditoria ------------------------------------------------------
+   Quem le esta tela nao e quem escreveu o codigo: e quem atende o cliente que
+   ligou dizendo "parei de emitir". Por isso nenhuma linha mostra o nome tecnico
+   da acao, e a cor carrega o assunto antes da leitura — a faixa lateral separa
+   "mexeram na aparencia" de "cortaram o acesso" sem exigir que se leia as duas.
+
+   Cada grupo so define tres tokens; o resto do bloco desenha a partir deles. E
+   por isso que trocar a cor de um assunto e uma linha, e nao sete. */
+.aud-g-cadastro   { --aud-cor: var(--info);    --aud-fundo: var(--info-fundo);    --aud-tinta: var(--info-tinta); }
+.aud-g-servicos   { --aud-cor: var(--roxo);    --aud-fundo: var(--roxo-fundo);    --aud-tinta: var(--roxo-tinta); }
+.aud-g-plataforma { --aud-cor: var(--sucesso); --aud-fundo: var(--sucesso-fundo); --aud-tinta: var(--sucesso-tinta); }
+.aud-g-acesso     { --aud-cor: var(--alerta);  --aud-fundo: var(--alerta-fundo);  --aud-tinta: var(--alerta-tinta); }
+.aud-g-aparencia  { --aud-cor: var(--marca);   --aud-fundo: var(--marca-fundo);   --aud-tinta: var(--marca-tinta); }
+.aud-g-risco      { --aud-cor: var(--perigo);  --aud-fundo: var(--perigo-fundo);  --aud-tinta: var(--perigo-tinta); }
+.aud-g-outro      { --aud-cor: var(--borda);   --aud-fundo: var(--suave);         --aud-tinta: var(--suave-texto); }
+
+.aud-legenda { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 16px; }
+.aud-chip {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-family: inherit;
+  padding: 5px 12px 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--borda); background: var(--cartao); color: var(--texto-medio);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.aud-chip:hover { background: var(--suave); }
+.aud-chip.on { background: var(--aud-fundo); border-color: var(--aud-cor); color: var(--aud-tinta); }
+.aud-chip .aud-bolha { width: 9px; height: 9px; border-radius: 50%; background: var(--aud-cor); flex-shrink: 0; }
+.aud-chip .aud-qtd { font-weight: 500; opacity: .7; font-variant-numeric: tabular-nums; }
+
+.aud-rolo { max-height: 640px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.aud-empresa { background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px; overflow: hidden; }
+.aud-empresa-topo {
+  padding: 10px 14px; background: var(--suave); border-bottom: 1px solid var(--borda);
+  display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.aud-empresa-nome { font-weight: 600; font-size: 13px; }
+.aud-empresa-qtd { color: var(--suave-texto); font-size: 11px; }
+
+.aud-linha { display: grid; grid-template-columns: 4px minmax(0, 1fr) auto; gap: 0 12px; border-top: 1px solid var(--suave); }
+.aud-faixa { background: var(--aud-cor); }
+.aud-corpo { padding: 10px 0; min-width: 0; }
+.aud-titulo { font-size: 13px; font-weight: 600; color: var(--texto); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.aud-marca {
+  padding: 1px 7px; border-radius: 6px; font-size: 9.5px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; background: var(--aud-fundo); color: var(--aud-tinta);
+}
+.aud-explica { font-size: 12px; color: var(--suave-texto); line-height: 1.5; margin-top: 3px; }
+.aud-quem { font-size: 11px; color: var(--suave-texto); margin-top: 4px; }
+.aud-quando { padding: 10px 14px 10px 0; text-align: right; white-space: nowrap; font-size: 11px; color: var(--suave-texto); }
+.aud-quando b { display: block; font-size: 12px; font-weight: 600; color: var(--texto-medio); }
+
 
 /* Loading overlay */
 .loading { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 200; justify-content: center; align-items: center; }
@@ -2759,7 +2809,11 @@ body {
 <div class="container">
   <div class="section">
     <div class="section-title">Log de Auditoria</div>
-    <div style="color:var(--suave-texto);font-size:12px;margin-bottom:12px">O que foi feito em cada cliente, do mais recente para o mais antigo.</div>
+    <div style="color:var(--suave-texto);font-size:12px;margin-bottom:12px">
+      Tudo o que foi feito em cada cliente, do mais recente para o mais antigo.
+      A cor da faixa diz o assunto — clique numa cor abaixo para ver so ela.
+    </div>
+    <div class="aud-legenda" id="auditLegenda"></div>
     <div id="auditLogLista"><div class="hist-empty">Carregando...</div></div>
   </div>
 </div>
@@ -11081,10 +11135,190 @@ async function loadAuditLog() {
   }
 }
 
+/**
+ * O que cada acao quer dizer, em portugues de quem atende o cliente.
+ *
+ * A tela antiga so traduzia treze acoes; as outras quinze caiam na tela com o
+ * nome tecnico cru — "client.updated", "platform.repositorio_publicado". Quem
+ * abre a auditoria e alguem tentando entender por que um cliente parou de
+ * emitir, e nao pode ter que traduzir slug para chegar la.
+ *
+ * `g` e o grupo, e o grupo e a cor. A cor responde antes da leitura: vermelho e
+ * sempre "isso tirou algo de alguem", e nunca so "acao importante".
+ */
+var ACOES_DA_AUDITORIA = {
+  'client.created':        { g: 'cadastro',   t: 'Cliente cadastrado',        e: 'A empresa passou a existir na ponte.' },
+  'client.updated':        { g: 'cadastro',   t: 'Dados do cliente alterados', e: 'Mudou algo no cadastro: nome, endereco ou contato.' },
+  'client.fiscal_updated': { g: 'cadastro',   t: 'Dados fiscais alterados',   e: 'Mudou regime, CFOP ou imposto padrao. Afeta as proximas notas.' },
+  'client.limits_changed': { g: 'cadastro',   t: 'Plano ou limite alterado',  e: 'Mudou quanto este cliente pode emitir por mes.' },
+  'client.deleted':        { g: 'risco',      t: 'Cliente excluido',          e: 'Saiu da ponte. Para de emitir na hora, e as chaves dele morrem junto.' },
+  // A situacao tem entrada aqui como PISO. O texto bom vem de `descreverAcao`,
+  // que le o antes e o depois; sem esta linha, um registro antigo sem esses
+  // dados cairia no cinza de "acao desconhecida".
+  'client.status_changed': { g: 'cadastro',   t: 'Situacao do cliente mudou',  e: 'Mudou entre ativo, em teste, suspenso ou cancelado.' },
+
+  'service.activated':     { g: 'servicos',   t: 'Servico liberado',          e: 'O cliente passou a poder emitir mais um tipo de documento.' },
+  'service.deactivated':   { g: 'risco',      t: 'Servico cortado',           e: 'O cliente parou de poder emitir esse documento.' },
+
+  'apikey.created':        { g: 'acesso',     t: 'Chave de acesso gerada',    e: 'Uma nova chave da API foi criada para o sistema do cliente.' },
+  'apikey.revoked':        { g: 'risco',      t: 'Chave cancelada',           e: 'Quem estava usando essa chave parou de emitir neste instante.' },
+  'certificate.uploaded':  { g: 'acesso',     t: 'Certificado enviado',       e: 'O certificado digital A1 da empresa foi guardado na ponte.' },
+  'plataforma.senha.consultada':  { g: 'acesso', t: 'Senha da plataforma vista', e: 'Alguem abriu a senha de acesso ao site do cliente.' },
+  'plataforma.senha.rotacionada': { g: 'acesso', t: 'Senha da plataforma trocada', e: 'A senha antiga deixou de entrar. Quem usava precisa da nova.' },
+
+  'webhook.created':       { g: 'acesso',     t: 'Aviso automatico criado',   e: 'A ponte passou a avisar um endereco a cada nota emitida.' },
+  'webhook.deleted':       { g: 'acesso',     t: 'Aviso automatico desligado', e: 'O sistema do cliente parou de ser avisado das notas.' },
+  'webhook.reprocessado':  { g: 'acesso',     t: 'Aviso reenviado',           e: 'Um aviso que tinha falhado foi mandado de novo.' },
+
+  'whitelabel.saved':      { g: 'aparencia',  t: 'Marca do cliente salva',    e: 'Nome, logo e cores que aparecem no site dele.' },
+  'padroes.saved':         { g: 'aparencia',  t: 'Padroes da ponte salvos',   e: 'Vale para todo cliente que nao tem marca propria cadastrada.' },
+  'danfe.marca.salva':     { g: 'aparencia',  t: 'Logo do DANFE salva',       e: 'A imagem que sai impressa no papel da nota foi trocada.' },
+  'danfe.marca.removida':  { g: 'aparencia',  t: 'Logo do DANFE removida',    e: 'O papel da nota voltou a sair sem logo.' },
+  'regra_fiscal.salva':    { g: 'aparencia',  t: 'Regra fiscal salva',        e: 'Uma regra de imposto foi criada ou alterada.' },
+  'regra_fiscal.removida': { g: 'aparencia',  t: 'Regra fiscal removida',     e: 'Uma regra de imposto deixou de valer.' },
+
+  'platform.generated':    { g: 'plataforma', t: 'Site do cliente gerado',    e: 'Os arquivos do site foram montados a partir do modelo.' },
+  'platform.published':    { g: 'plataforma', t: 'Site do cliente publicado', e: 'O site foi para o ar.' },
+  'platform.repositorio_publicado': { g: 'plataforma', t: 'Site enviado ao GitHub', e: 'Os arquivos subiram para o repositorio, prontos para publicar.' },
+  'platform.kit_baixado':  { g: 'plataforma', t: 'Pacote do site baixado',    e: 'Alguem baixou os arquivos do site para publicar por fora.' },
+  'template.created':      { g: 'plataforma', t: 'Modelo de site criado',     e: 'Um novo modelo entrou na lista de opcoes.' },
+  'template.published':    { g: 'plataforma', t: 'Modelo de site publicado',  e: 'O modelo ficou disponivel para gerar sites de clientes.' },
+  'instancia.publicada':   { g: 'plataforma', t: 'Nova ponte publicada',      e: 'Uma copia da ponte foi ao ar para revenda.' }
+};
+
+var GRUPOS_DA_AUDITORIA = [
+  ['cadastro',   'Cadastro'],
+  ['servicos',   'Servicos'],
+  ['plataforma', 'Plataforma'],
+  ['acesso',     'Acesso'],
+  ['aparencia',  'Aparencia'],
+  ['risco',      'Corta acesso'],
+  ['outro',      'Outros']
+];
+
+var SITUACAO_DO_CLIENTE = {
+  draft: 'Rascunho', sandbox: 'Em teste', active: 'Ativo',
+  past_due: 'Pagamento atrasado', suspended: 'Suspenso', cancelled: 'Cancelado'
+};
+var SITUACAO_QUE_PARA = { past_due: 1, suspended: 1, cancelled: 1 };
+var NOME_DO_SERVICO = { nfe: 'NF-e', nfce: 'NFC-e', nfse: 'NFS-e', cte: 'CT-e', mdfe: 'MDF-e' };
+var QUEM_FEZ = { admin: 'Pelo painel', empresa: 'Pela propria empresa', sistema: 'Automatico' };
+
+/**
+ * Traduz UM registro: grupo, titulo e a frase que explica.
+ *
+ * Duas acoes nao cabem numa frase fixa, porque o que elas fizeram depende do
+ * valor: mudar situacao pode ter ativado ou suspendido, e liberar servico pode
+ * ter sido NF-e ou NFS-e. Nesses casos o proprio registro carrega o antes e o
+ * depois, e desprezar isso obrigaria a abrir o banco para saber o que houve.
+ */
+function descreverAcao(l) {
+  var acao = l.action || '';
+  var base = ACOES_DA_AUDITORIA[acao];
+  var depois = l.after || l.after_data || {};
+  var antes = l.before || l.before_data || {};
+
+  if (acao === 'client.status_changed' && depois.status) {
+    var de = SITUACAO_DO_CLIENTE[antes.status] || antes.status;
+    var para = SITUACAO_DO_CLIENTE[depois.status] || depois.status;
+    var parou = SITUACAO_QUE_PARA[depois.status];
+    return {
+      g: parou ? 'risco' : 'cadastro',
+      t: 'Cliente agora esta ' + String(para).toLowerCase(),
+      e: (de ? 'Passou de "' + de + '" para "' + para + '". ' : 'Situacao: ' + para + '. ') +
+         (parou ? 'Nessa situacao ele NAO emite.' : 'Nessa situacao ele emite normalmente.')
+    };
+  }
+
+  if (acao === 'service.activated' || acao === 'service.deactivated') {
+    var doc = NOME_DO_SERVICO[depois.service] || depois.service || 'um documento';
+    return {
+      g: base.g,
+      t: base.t + ': ' + doc,
+      e: acao === 'service.activated'
+        ? 'O cliente passou a poder emitir ' + doc + '.'
+        : 'O cliente parou de poder emitir ' + doc + '.'
+    };
+  }
+
+  if (base) return base;
+
+  // Acao que o painel ainda nao conhece: nunca mostrar o slug cru. Vira frase
+  // legivel e cinza — visivelmente "nao classificado", e nao falso normal.
+  var legivel = acao.replace(/[._]/g, ' ').trim();
+  return {
+    g: 'outro',
+    t: legivel ? legivel.charAt(0).toUpperCase() + legivel.slice(1) : 'Acao registrada',
+    e: 'Acao registrada pelo sistema.'
+  };
+}
+
+/** "ha 5 min", "ontem", "ha 3 dias" — a data exata fica logo abaixo. */
+function quandoFoi(iso) {
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return { relativo: '—', exato: '' };
+  var seg = Math.floor((Date.now() - d.getTime()) / 1000);
+  var rel;
+  if (seg < 60) rel = 'agora ha pouco';
+  else if (seg < 3600) rel = 'ha ' + Math.floor(seg / 60) + ' min';
+  else if (seg < 86400) { var h = Math.floor(seg / 3600); rel = 'ha ' + h + (h === 1 ? ' hora' : ' horas'); }
+  else if (seg < 172800) rel = 'ontem';
+  else if (seg < 2592000) rel = 'ha ' + Math.floor(seg / 86400) + ' dias';
+  else rel = d.toLocaleDateString('pt-BR');
+  return { relativo: rel, exato: d.toLocaleString('pt-BR') };
+}
+
+var auditRegistros = [];
+var auditGrupoAtivo = '';
+
+/** Clicar na cor mostra so aquele assunto; clicar de novo devolve tudo. */
+function filtrarAuditoria(g) {
+  auditGrupoAtivo = auditGrupoAtivo === g ? '' : g;
+  desenharAuditoria();
+}
+
 function renderAuditLog(logs) {
+  auditRegistros = logs || [];
+  auditGrupoAtivo = '';
+  desenharAuditoria();
+}
+
+function desenharAuditoria() {
   var el = document.getElementById('auditLogLista');
-  if (!logs.length) {
-    el.innerHTML = '<div class="hist-empty">Nenhum registro de auditoria</div>';
+  var legenda = document.getElementById('auditLegenda');
+  if (!el) return;
+
+  if (!auditRegistros.length) {
+    el.innerHTML = '<div class="hist-empty">Nada foi feito ainda. Assim que alguem mexer num cliente, aparece aqui.</div>';
+    if (legenda) legenda.innerHTML = '';
+    return;
+  }
+
+  // Traduz uma vez so: a legenda conta por grupo e as linhas usam o mesmo
+  // resultado. Traduzir duas vezes deixaria contagem e lista poderem divergir.
+  var lidos = auditRegistros.map(function (l) {
+    var d = descreverAcao(l);
+    return { bruto: l, g: d.g, titulo: d.t, explica: d.e };
+  });
+
+  var quantos = {};
+  lidos.forEach(function (r) { quantos[r.g] = (quantos[r.g] || 0) + 1; });
+
+  if (legenda) {
+    var chips = '';
+    GRUPOS_DA_AUDITORIA.forEach(function (par) {
+      if (!quantos[par[0]]) return;
+      chips += '<button type="button" class="aud-chip aud-g-' + par[0] +
+        (auditGrupoAtivo === par[0] ? ' on' : '') + '" onclick="filtrarAuditoria(\'' + par[0] + '\')">' +
+        '<span class="aud-bolha"></span>' + escapeHtml(par[1]) +
+        '<span class="aud-qtd">' + quantos[par[0]] + '</span></button>';
+    });
+    legenda.innerHTML = chips;
+  }
+
+  var visiveis = auditGrupoAtivo ? lidos.filter(function (r) { return r.g === auditGrupoAtivo; }) : lidos;
+  if (!visiveis.length) {
+    el.innerHTML = '<div class="hist-empty">Nenhum registro desse assunto.</div>';
     return;
   }
 
@@ -11093,53 +11327,49 @@ function renderAuditLog(logs) {
   // exige ler tudo e filtrar com o olho.
   var porEmpresa = {};
   var ordem = [];
-  logs.forEach(function(l) {
-    var cnpj = l.empresaCnpj || l.empresa_cnpj || 'sistema';
+  visiveis.forEach(function (r) {
+    var cnpj = r.bruto.empresaCnpj || r.bruto.empresa_cnpj || 'sistema';
     if (!porEmpresa[cnpj]) { porEmpresa[cnpj] = []; ordem.push(cnpj); }
-    porEmpresa[cnpj].push(l);
+    porEmpresa[cnpj].push(r);
   });
 
-  var ROTULOS = {
-    'client.created': 'Cliente criado',
-    'client.status_changed': 'Status alterado',
-    'service.activated': 'Servico ativado',
-    'service.deactivated': 'Servico desativado',
-    'apikey.created': 'Chave gerada',
-    'apikey.revoked': 'Chave revogada',
-    'webhook.created': 'Webhook criado',
-    'whitelabel.saved': 'Marca salva',
-    'platform.generated': 'Plataforma gerada',
-    'platform.published': 'Plataforma publicada',
-    'danfe.marca.salva': 'Logo do DANFE salva',
-    'danfe.marca.removida': 'Logo do DANFE removida',
-    'instancia.publicada': 'Instancia publicada'
-  };
-  // Acoes que derrubam integracao de quem esta emitindo merecem destaque.
-  var GRAVES = { 'apikey.revoked': 1, 'client.status_changed': 1, 'service.deactivated': 1 };
-
-  var html = '<div style="max-height:640px;overflow-y:auto;display:flex;flex-direction:column;gap:10px">';
-  ordem.forEach(function(cnpj) {
+  var html = '<div class="aud-rolo">';
+  ordem.forEach(function (cnpj) {
     var itens = porEmpresa[cnpj];
-    var nome = itens[0].razaoSocial || itens[0].razao_social || (cnpj === 'sistema' ? 'Sistema' : formatarCnpj(cnpj));
-    html += '<div style="background:var(--cartao);border:1px solid var(--borda);border-radius:10px;overflow:hidden">' +
-      '<div style="padding:10px 14px;background:var(--suave);border-bottom:1px solid var(--borda);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
-        '<span style="font-weight:600;font-size:13px">' + escapeHtml(nome) + '</span>' +
-        '<span style="color:var(--suave-texto);font-size:11px">' + itens.length + ' registro(s)</span>' +
+    var primeiro = itens[0].bruto;
+    var nome = primeiro.razaoSocial || primeiro.razao_social ||
+      (cnpj === 'sistema' ? 'Acoes gerais da ponte' : formatarCnpj(cnpj));
+    html += '<div class="aud-empresa">' +
+      '<div class="aud-empresa-topo">' +
+        '<span class="aud-empresa-nome">' + escapeHtml(nome) + '</span>' +
+        '<span class="aud-empresa-qtd">' + itens.length +
+          (itens.length === 1 ? ' registro' : ' registros') + '</span>' +
       '</div>';
-    itens.forEach(function(l) {
-      var acao = l.action || '';
-      var grave = GRAVES[acao];
-      html += '<div style="padding:9px 14px;border-top:1px solid var(--suave);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:12px">' +
-        '<span style="font-weight:600;color:' + (grave ? 'var(--perigo)' : 'var(--texto-medio)') + ';min-width:150px">' +
-          escapeHtml(ROTULOS[acao] || acao) + '</span>' +
-        '<span style="color:var(--suave-texto);flex:1">' + escapeHtml(l.actor || '—') + '</span>' +
-        '<span style="color:var(--suave-texto)">' + new Date(l.createdAt || l.created_at).toLocaleString('pt-BR') + '</span>' +
+    itens.forEach(function (r) {
+      var q = quandoFoi(r.bruto.createdAt || r.bruto.created_at);
+      var quem = QUEM_FEZ[r.bruto.actor] || r.bruto.actor || '—';
+      html += '<div class="aud-linha aud-g-' + r.g + '">' +
+        '<div class="aud-faixa"></div>' +
+        '<div class="aud-corpo">' +
+          '<div class="aud-titulo">' + escapeHtml(r.titulo) +
+            '<span class="aud-marca">' + escapeHtml(rotuloDoGrupo(r.g)) + '</span></div>' +
+          '<div class="aud-explica">' + escapeHtml(r.explica) + '</div>' +
+          '<div class="aud-quem">' + escapeHtml(quem) + '</div>' +
+        '</div>' +
+        '<div class="aud-quando"><b>' + escapeHtml(q.relativo) + '</b>' + escapeHtml(q.exato) + '</div>' +
       '</div>';
     });
     html += '</div>';
   });
   html += '</div>';
   el.innerHTML = html;
+}
+
+function rotuloDoGrupo(g) {
+  for (var i = 0; i < GRUPOS_DA_AUDITORIA.length; i++) {
+    if (GRUPOS_DA_AUDITORIA[i][0] === g) return GRUPOS_DA_AUDITORIA[i][1];
+  }
+  return 'Outros';
 }
 
 function formatarCnpj(v) {
