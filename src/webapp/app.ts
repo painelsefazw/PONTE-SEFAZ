@@ -51,7 +51,7 @@ import { ApiClientStore, type ClientStatus } from './api-clients';
 import { WhiteLabelStore } from './white-label';
 import { gerarPersonalizacaoMd } from './personalizacao-md';
 import { dicaDaRejeicao } from './rejeicoes';
-import { lerPadroes, gravarPadroes, comPadrao } from './padroes-plataforma';
+import { lerPadroes, gravarPadroes, comPadrao, SEM_PADROES } from './padroes-plataforma';
 import { PlatformTemplateStore, type PlatformManifest, type PlatformTemplate } from './platform-templates';
 import {
   baixarModelo, lerModeloDaPasta, montarZip, publicarNoGitHub, verificarAcessoAoRepositorio,
@@ -9037,10 +9037,9 @@ async function montarManifestDoCliente(
   // cliente, e trocar o padrao depois nao alcancaria mais ninguem.
   const branding = comPadrao(
     await wlStore.obterOuPadrao(cnpj),
-    await lerPadroes(await getConfigStore()).catch(() => ({
-      suporteEmail: '', suporteTelefone: '', suporteWhatsapp: '',
-      suporteSite: '', termosUrl: '', privacidadeUrl: '',
-    })),
+    // Banco fora do ar nao pode impedir a geracao: sem padrao, cada campo cai
+    // no que o cliente tem, que e o comportamento de antes de existir padrao.
+    await lerPadroes(await getConfigStore()).catch(() => SEM_PADROES),
   );
 
   const tplStore = await getPlatformTemplateStore();

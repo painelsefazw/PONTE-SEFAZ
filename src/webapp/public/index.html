@@ -952,7 +952,7 @@ body {
   <button class="somente-contador escondido-na-revenda" onclick="showGroup('config')">Configurações</button>
   <button class="somente-contador" onclick="showGroup('clientesapi')">Clientes</button>
   <button class="somente-contador" onclick="showGroup('instancia')">Nova inst&acirc;ncia</button>
-  <button class="somente-contador" onclick="showGroup('auditoria')">Auditoria</button>
+
 </div>
 <!-- Barra de contexto: em nome de QUEM se opera, em qual ambiente e como
      esta a SEFAZ. Ficava no topo junto da marca; saiu de la quando a navegacao
@@ -2566,6 +2566,40 @@ body {
       </div>
     </div>
 
+    <div class="section-title" style="margin-top:28px">A cara padrão do sistema</div>
+    <div style="font-size:12px;color:var(--suave-texto);line-height:1.6;margin:-8px 0 18px">
+      A maioria dos clientes não tem identidade visual definida — e quando não
+      tem, o que deve aparecer é o <b>seu</b> padrão, não o cinza do modelo.
+      Quem tiver marca própria cadastrada continua com a dele.
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group"><label class="fld-lbl">Primária</label>
+        <input type="color" class="fld" id="padCorPri" value="#6366f1" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Secundária</label>
+        <input type="color" class="fld" id="padCorSec" value="#1a1a2e" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Destaque</label>
+        <input type="color" class="fld" id="padCorAcc" value="#f59e0b" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Fundo</label>
+        <input type="color" class="fld" id="padCorBg" value="#f8fafc" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Superfície</label>
+        <input type="color" class="fld" id="padCorSrf" value="#ffffff" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Texto</label>
+        <input type="color" class="fld" id="padCorTxt" value="#0f172a" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Texto secundário</label>
+        <input type="color" class="fld" id="padCorMut" value="#64748b" style="height:38px;padding:3px"></div>
+      <div class="form-group"><label class="fld-lbl">Tema</label>
+        <select class="fld" id="padTema">
+          <option value="light">Claro</option>
+          <option value="dark">Escuro</option>
+        </select></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label class="fld-lbl">Rodapé <span class="fld-opt">(vazio = o modelo monta com o nome do cliente)</span></label>
+      <input class="fld" id="padRodape" autocomplete="off" placeholder="© 2026 Sua Empresa. Todos os direitos reservados.">
+    </div>
+
     <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
       <button class="btn btn-primary" onclick="salvarPadroes()">Salvar padrões</button>
       <span id="padMsg" style="font-size:12px;color:var(--suave-texto)"></span>
@@ -2815,9 +2849,9 @@ var TAB_GROUPS = {
     { id: 'clientesapi-plataforma', label: 'Por plataforma' },
     { id: 'clientesapi-templates', label: 'Templates', soCompleto: true },
     { id: 'clientesapi-padroes', label: 'Padrões' },
+    { id: 'clientesapi-audit', label: 'Auditoria' },
   ],
   instancia: [{ id: 'clientesapi-instancia', label: 'Nova instância' }],
-  auditoria: [{ id: 'clientesapi-audit', label: 'Auditoria' }],
 };
 
 var currentGroup = 'emissao';
@@ -7767,7 +7801,11 @@ function caixaDosClientes() {
 var PADROES_CAMPOS = [
   ['padEmail', 'suporteEmail'], ['padWhats', 'suporteWhatsapp'],
   ['padFone', 'suporteTelefone'], ['padSite', 'suporteSite'],
-  ['padTermos', 'termosUrl'], ['padPriv', 'privacidadeUrl']
+  ['padTermos', 'termosUrl'], ['padPriv', 'privacidadeUrl'],
+  ['padCorPri', 'corPrimaria'], ['padCorSec', 'corSecundaria'],
+  ['padCorAcc', 'corDestaque'], ['padCorBg', 'corBackground'],
+  ['padCorSrf', 'corSurface'], ['padCorTxt', 'corTexto'],
+  ['padCorMut', 'corMuted'], ['padTema', 'tema'], ['padRodape', 'rodape']
 ];
 
 async function loadPadroes() {

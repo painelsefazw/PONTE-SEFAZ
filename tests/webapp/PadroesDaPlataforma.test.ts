@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { comPadrao, CAMPOS_DO_PADRAO } from '../../src/webapp/padroes-plataforma';
+import { comPadrao, CAMPOS_DO_PADRAO, SEM_PADROES } from '../../src/webapp/padroes-plataforma';
 
 /**
  * Suporte e paginas legais sao quase sempre OS MESMOS em todos os clientes.
@@ -18,6 +18,7 @@ const raiz = path.resolve(__dirname, '..', '..');
 const ler = (...p: string[]) => fs.readFileSync(path.resolve(raiz, ...p), 'utf8').replace(/\r\n/g, '\n');
 
 const padroes = {
+  ...SEM_PADROES,
   suporteEmail: 'suporte@ponte.com', suporteTelefone: '3833334444',
   suporteWhatsapp: '38999998888', suporteSite: 'https://ponte.com',
   termosUrl: 'https://ponte.com/termos', privacidadeUrl: 'https://ponte.com/privacidade',
@@ -87,7 +88,7 @@ describe('padroes da plataforma', () => {
   });
 
   test('a lista de campos e a mesma dos dois lados', () => {
-    expect([...CAMPOS_DO_PADRAO].sort()).toEqual(Object.keys(padroes).sort());
+    expect([...CAMPOS_DO_PADRAO].sort()).toEqual(Object.keys(SEM_PADROES).sort());
   });
 });
 
@@ -132,5 +133,54 @@ describe('a plataforma fala o nome da empresa, e o tema e escolhido', () => {
 
   test('cadastro antigo em `auto` vira claro, em vez de quebrar', () => {
     expect(wl).toMatch(/UPDATE webapp_white_label SET tema = 'light' WHERE tema = 'auto'/);
+  });
+});
+
+/**
+ * O que vale para TODAS as empresas mora em Padroes.
+ *
+ * A maioria dos clientes nao tem identidade visual definida — e quando nao tem,
+ * o que deve aparecer e o padrao de quem vende, nao o cinza do modelo. Cor,
+ * tema e rodape entraram por isso; atendimento e paginas legais ja estavam la.
+ *
+ * O que e de CADA empresa — logo, favicon, nome da plataforma, dominio —
+ * continua no cadastro dela, porque nao ha padrao possivel para eles.
+ */
+describe('padroes cobrem a cara do sistema', () => {
+  const painel = ler('src', 'webapp', 'public', 'index.html');
+
+  test('cor, tema e rodape sao padrao', () => {
+    for (const campo of ['corPrimaria', 'corSecundaria', 'corDestaque', 'corBackground',
+      'corSurface', 'corTexto', 'corMuted', 'tema', 'rodape']) {
+      expect(CAMPOS_DO_PADRAO).toContain(campo);
+    }
+  });
+
+  test('a tela tem um campo para cada um', () => {
+    for (const id of ['padCorPri', 'padCorSec', 'padCorAcc', 'padCorBg',
+      'padCorSrf', 'padCorTxt', 'padCorMut', 'padTema', 'padRodape']) {
+      expect(painel).toContain(`id="${id}"`);
+    }
+  });
+
+  test('o seletor de tema tambem so tem claro e escuro', () => {
+    const i = painel.indexOf('id="padTema"');
+    const bloco = painel.slice(i, i + 240);
+    expect(bloco).toContain('value="light"');
+    expect(bloco).toContain('value="dark"');
+    expect(bloco).not.toContain('value="auto"');
+  });
+
+  test('o cliente continua vencendo o padrao, inclusive nas cores', () => {
+    const r = comPadrao({ corPrimaria: '#0f766e' }, { ...padroes, corPrimaria: '#6366f1' });
+    expect(r.corPrimaria).toBe('#0f766e');
+  });
+
+  test('a auditoria virou sub-aba de Clientes', () => {
+    // Ela so fala de cliente. Como aba de topo, obrigava a SAIR de Clientes
+    // para ver o historico do cliente que estava aberto.
+    expect(painel).toContain("{ id: 'clientesapi-audit', label: 'Auditoria' }");
+    expect(painel).not.toContain("showGroup('auditoria')");
+    expect(painel).not.toContain("auditoria: [{ id: 'clientesapi-audit'");
   });
 });

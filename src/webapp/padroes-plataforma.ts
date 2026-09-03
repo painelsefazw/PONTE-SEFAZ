@@ -16,12 +16,30 @@
  */
 
 export interface PadroesDaPlataforma {
+  // --- Atendimento e paginas legais: sao SEUS, iguais em todo cliente.
   suporteEmail: string;
   suporteTelefone: string;
   suporteWhatsapp: string;
   suporteSite: string;
   termosUrl: string;
   privacidadeUrl: string;
+
+  // --- A cara padrao do sistema que voce vende.
+  //
+  // Cor e tema ficam AQUI, e nao no cadastro de cada cliente, porque a maioria
+  // nao tem identidade visual definida — e quando nao tem, o que deve aparecer
+  // e o seu padrao, nao o cinza do modelo. Quem tem marca propria sobrescreve
+  // no cadastro dele, e continua vencendo.
+  corPrimaria: string;
+  corSecundaria: string;
+  corDestaque: string;
+  corBackground: string;
+  corSurface: string;
+  corTexto: string;
+  corMuted: string;
+  tema: string;
+  /** Rodape da plataforma. Vazio = o modelo monta com o nome do cliente. */
+  rodape: string;
 }
 
 /** Prefixo proprio: `webapp_config` e compartilhada com o SMTP. */
@@ -30,11 +48,22 @@ const PREFIXO = 'padrao_';
 export const CAMPOS_DO_PADRAO: Array<keyof PadroesDaPlataforma> = [
   'suporteEmail', 'suporteTelefone', 'suporteWhatsapp',
   'suporteSite', 'termosUrl', 'privacidadeUrl',
+  'corPrimaria', 'corSecundaria', 'corDestaque', 'corBackground',
+  'corSurface', 'corTexto', 'corMuted', 'tema', 'rodape',
 ];
 
-const VAZIO: PadroesDaPlataforma = {
+/**
+ * Nenhum padrao definido.
+ *
+ * Exportado porque quem chama precisa de um valor de fallback quando o banco
+ * nao responde — e uma copia escrita a mao la envelheceria a cada campo novo,
+ * que e como listas paralelas comecam.
+ */
+export const SEM_PADROES: PadroesDaPlataforma = {
   suporteEmail: '', suporteTelefone: '', suporteWhatsapp: '',
   suporteSite: '', termosUrl: '', privacidadeUrl: '',
+  corPrimaria: '', corSecundaria: '', corDestaque: '', corBackground: '',
+  corSurface: '', corTexto: '', corMuted: '', tema: '', rodape: '',
 };
 
 function chaveDe(campo: string): string {
@@ -46,7 +75,7 @@ export async function lerPadroes(pool: any): Promise<PadroesDaPlataforma> {
     `SELECT chave, valor FROM webapp_config WHERE chave LIKE $1`, [PREFIXO + '%']);
   const achados: Record<string, string> = {};
   for (const linha of r.rows) achados[String(linha.chave)] = String(linha.valor ?? '');
-  const saida = { ...VAZIO };
+  const saida = { ...SEM_PADROES };
   for (const campo of CAMPOS_DO_PADRAO) {
     saida[campo] = achados[chaveDe(campo)] ?? '';
   }
