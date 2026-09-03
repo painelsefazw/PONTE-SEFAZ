@@ -9865,6 +9865,8 @@ async function showWhiteLabelConfig(cnpj) {
     // a marca ja salva reaparecia em branco a cada abertura.
     var wl = (resp && resp.config) || resp || {};
     // Sem marca definida ainda, o nome do cliente ja e um bom ponto de partida.
+    // Vazio ou com o nome do nosso produto (cadastro antigo): sugere o do
+    // cliente. O nome dele e sempre a resposta certa aqui.
     if (!wl || !wl.nomePlataforma || wl.nomePlataforma === 'Emissor Fiscal') {
       try {
         var cr = await apiFetch('/api/admin/clients/' + cnpj);
@@ -9895,7 +9897,11 @@ function buildWhiteLabelForm(cnpj, wl) {
       '</div><div class="pick-t" style="font-size:12px">' + p.nome + '</div></button>';
   }).join('');
 
-  var temas = [['light', 'Claro'], ['dark', 'Escuro'], ['auto', 'Automatico']].map(function (t) {
+  // Sem "automatico": ele seguia a preferencia do SISTEMA de quem visita, e o
+  // resultado era a plataforma do cliente mudando de cara conforme o aparelho
+  // do visitante — uma identidade que ninguem escolheu. Marca se decide, nao se
+  // herda do celular alheio.
+  var temas = [['light', 'Claro'], ['dark', 'Escuro']].map(function (t) {
     var on = (wl.tema || 'light') === t[0];
     return '<button type="button" class="pick' + (on ? ' on' : '') + '" data-tema="' + t[0] +
       '" onclick="wlTema(\'' + t[0] + '\')"><div class="pick-t">' + t[1] + '</div></button>';

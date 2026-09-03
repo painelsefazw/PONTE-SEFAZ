@@ -90,3 +90,47 @@ describe('padroes da plataforma', () => {
     expect([...CAMPOS_DO_PADRAO].sort()).toEqual(Object.keys(padroes).sort());
   });
 });
+
+/**
+ * O nome do NOSSO produto nao pode aparecer na plataforma do cliente.
+ *
+ * O cadastro de marca nascia com `nomePlataforma: 'Emissor Fiscal'`, e esse
+ * valor virava o `brandName` do manifest. Resultado: a barra lateral, o titulo
+ * da aba e a tela de configuracoes do cliente mostravam o nome de um produto
+ * generico no lugar do nome dele — inclusive "Nome fantasia: Emissor Fiscal",
+ * que nao e nome de empresa nenhuma.
+ *
+ * E o tema `auto` saiu junto: ele seguia a preferencia do SISTEMA de quem
+ * visita, e a plataforma do cliente mudava de cara conforme o aparelho do
+ * visitante. Identidade se escolhe; nao se herda do celular alheio.
+ */
+describe('a plataforma fala o nome da empresa, e o tema e escolhido', () => {
+  const wl = ler('src', 'webapp', 'white-label.ts');
+  const painel = ler('src', 'webapp', 'public', 'index.html');
+
+  test('o cadastro de marca nasce SEM nome de produto', () => {
+    expect(wl).toContain("nomePlataforma: ''");
+    expect(wl).toContain("nome_plataforma TEXT NOT NULL DEFAULT ''");
+  });
+
+  test('cadastro antigo com o nome do produto e corrigido no init', () => {
+    // Sem a migracao, quem ja salvou continuaria carregando "Emissor Fiscal"
+    // como se fosse o nome dele — e a correcao so valeria para cliente novo.
+    expect(wl).toMatch(/UPDATE webapp_white_label SET nome_plataforma = ''\s*WHERE nome_plataforma = 'Emissor Fiscal'/);
+  });
+
+  test('o gerador cai na fantasia e depois na razao social', () => {
+    const tpl = ler('src', 'webapp', 'platform-templates.ts');
+    expect(tpl).toContain('data.branding.nomePlataforma || data.empresa.fantasia || data.empresa.razaoSocial');
+  });
+
+  test('so existem dois temas, e `auto` some do seletor', () => {
+    expect(painel).toContain("var temas = [['light', 'Claro'], ['dark', 'Escuro']]");
+    expect(painel).not.toContain("['auto', 'Automatico']");
+    expect(wl).toContain("tema: 'light' | 'dark';");
+  });
+
+  test('cadastro antigo em `auto` vira claro, em vez de quebrar', () => {
+    expect(wl).toMatch(/UPDATE webapp_white_label SET tema = 'light' WHERE tema = 'auto'/);
+  });
+});

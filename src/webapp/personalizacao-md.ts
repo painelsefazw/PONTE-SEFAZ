@@ -94,7 +94,9 @@ ${linhaDeCor('Texto principal', 'text', m.corTexto)}
 ${linhaDeCor('Texto secundário', 'muted', m.corMuted)}
 ${m.corBorda ? linhaDeCor('Borda', 'border', m.corBorda) : '| Borda | `border` | — (não preenchido: derive do texto secundário) |'}
 
-- **Tema**: \`${m.tema}\`${m.tema === 'auto' ? ' (segue o sistema do visitante)' : ''}
+- **Tema**: \`${m.tema}\` — claro ou escuro, fixo. A plataforma NAO segue a
+  preferencia do sistema de quem visita: a identidade e escolhida, nao herdada
+  do aparelho do visitante.
 - **Raio de canto**: ${ou(m.borderRadius, '— (não preenchido: mantenha o do modelo)')}
 
 ## 3. Logo e favicon

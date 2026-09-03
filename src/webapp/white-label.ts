@@ -26,12 +26,21 @@ export interface WhiteLabelConfig {
   mensagemLogin?: string;
   tituloNavegador?: string;
   rodape?: string;
-  tema: 'light' | 'dark' | 'auto';
+  /**
+   * `auto` saiu: ele seguia o sistema de quem visita, e a plataforma do cliente
+   * mudava de cara conforme o aparelho do visitante. Cadastro antigo com `auto`
+   * continua sendo lido — vira `light` na leitura, e nao quebra.
+   */
+  tema: 'light' | 'dark';
   atualizadoEm?: string;
 }
 
 const DEFAULT_CONFIG: Omit<WhiteLabelConfig, 'empresaCnpj'> = {
-  nomePlataforma: 'Emissor Fiscal',
+  // Vazio, e nao "Emissor Fiscal". O nome do NOSSO produto no lugar do nome do
+  // cliente aparecia na barra lateral, no titulo da aba e na tela de
+  // configuracoes da plataforma dele. Vazio aqui faz o gerador cair na fantasia
+  // e depois na razao social — que sao, sempre, o nome certo.
+  nomePlataforma: '',
   corPrimaria: '#6366f1',
   corSecundaria: '#1a1a2e',
   corDestaque: '#f59e0b',
@@ -64,7 +73,7 @@ export class WhiteLabelStore {
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS webapp_white_label (
         empresa_cnpj VARCHAR(14) PRIMARY KEY,
-        nome_plataforma TEXT NOT NULL DEFAULT 'Emissor Fiscal',
+        nome_plataforma TEXT NOT NULL DEFAULT '',
         nome_exibicao TEXT,
         cor_primaria VARCHAR(9) NOT NULL DEFAULT '#6366f1',
         cor_secundaria VARCHAR(9) NOT NULL DEFAULT '#1a1a2e',
@@ -92,6 +101,13 @@ export class WhiteLabelStore {
         atualizado_em TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
+    // Cadastro antigo carrega o nome do NOSSO produto como se fosse do cliente,
+    // e um tema que nao existe mais. As duas linhas so tocam o que esta
+    // literalmente errado — quem escolheu um nome proprio nao e mexido.
+    await this.pool.query(
+      `UPDATE webapp_white_label SET nome_plataforma = '' WHERE nome_plataforma = 'Emissor Fiscal'`);
+    await this.pool.query(
+      `UPDATE webapp_white_label SET tema = 'light' WHERE tema = 'auto'`);
     this.initialized = true;
   }
 
