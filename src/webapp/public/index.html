@@ -9014,6 +9014,11 @@ async function gravarParametrosDanfe(cnpj, corpo, sucesso) {
       return;
     }
     delete _logoPendente[cnpj];
+    // A LISTA de clientes guarda a logo num cache proprio, para nao buscar
+    // trinta imagens a cada render. Sem invalidar aqui, a marca era gravada e a
+    // lista continuava mostrando as iniciais — so um recarregamento completo da
+    // pagina mostrava o resultado, e a leitura natural disso e "nao salvou".
+    delete _logosDeClientes[cnpj];
     await carregarParametrosDanfe(cnpj);
     var novo = document.getElementById('danfeMsg-' + cnpj);
     if (novo) { novo.style.color = 'var(--sucesso)'; novo.textContent = sucesso; }

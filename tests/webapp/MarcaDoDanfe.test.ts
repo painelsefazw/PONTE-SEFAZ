@@ -305,3 +305,35 @@ describe('a logo do DANFE cabe depois de convertida', () => {
     expect(escolher).toContain('KB em JPEG');
   });
 });
+
+/**
+ * Gravar a logo tem que APARECER na lista.
+ *
+ * A lista de clientes guarda as logos num cache proprio — sem ele, abrir a
+ * aba dispararia trinta buscas de imagem. So que salvar a marca de um cliente
+ * nao invalidava a entrada dele: a logo ia para o banco, a lista continuava
+ * mostrando as iniciais, e a unica leitura possivel disso e "nao salvou".
+ */
+describe('a logo gravada aparece na lista', () => {
+  const painel = fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'src', 'webapp', 'public', 'index.html'), 'utf8')
+    .replace(/\r\n/g, '\n');
+
+  test('salvar invalida o cache da lista', () => {
+    const i = painel.indexOf('async function gravarParametrosDanfe(');
+    const corpo = painel.slice(i, painel.indexOf('\n}\n', i));
+    expect(corpo).toContain('delete _logosDeClientes[cnpj]');
+    // Depois de limpar o cache, e nao antes: limpar e falhar deixaria a lista
+    // buscando de novo uma logo que continua a mesma.
+    expect(corpo.indexOf('delete _logosDeClientes[cnpj]'))
+      .toBeGreaterThan(corpo.indexOf('if (!res.ok || r.erro)'));
+  });
+
+  test('remover a logo passa pelo mesmo caminho', () => {
+    // `limparLogoDanfe` grava `logoBase64: ''` pela mesma funcao, entao herda a
+    // invalidacao — sem isso a logo apagada continuaria na lista.
+    const i = painel.indexOf('async function limparLogoDanfe(');
+    const corpo = painel.slice(i, painel.indexOf('\n}\n', i));
+    expect(corpo).toContain('gravarParametrosDanfe(cnpj, { logoBase64:');
+  });
+});
