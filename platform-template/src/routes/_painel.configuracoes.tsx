@@ -18,7 +18,8 @@ export const Route = createFileRoute("/_painel/configuracoes")({
 function Configuracoes() {
   const dados: Array<[string, string]> = [
     ["Razao social", manifest.company.name],
-    ["Nome fantasia", manifest.company.brandName],
+    ["Nome fantasia", manifest.company.tradeName?.trim() || "—"],
+    ["Marca da plataforma", manifest.company.brandName],
     ["CNPJ", formatCnpj(manifest.company.cnpj)],
     ["Codigo do cliente", manifest.company.id],
     ["Template", `${manifest.project.template} v${manifest.project.templateVersion}`],

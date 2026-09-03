@@ -2,7 +2,7 @@ import { Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type ReactNode } from "react";
 import { BarChart3, BookOpen, FileText, LayoutDashboard, LifeBuoy, LogOut, Menu, Package, ReceiptText, Satellite, Settings, ShoppingCart, Stamp, Truck, Users, X } from "lucide-react";
-import { manifest, formatCnpj, logoEscura, marca, moduloAtivo, rodape } from "@/lib/manifest";
+import { manifest, formatCnpj, logoEscura, marca, moduloAtivo, rodape, nomeDaEmpresa, creditoDoDesenvolvedor } from "@/lib/manifest";
 import { sair } from "@/lib/auth.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,11 @@ export function PainelLayout({
                 {manifest.company.brandName}
               </p>
             )}
-            <p className="text-xs text-sidebar-foreground/60">Plataforma Fiscal</p>
+            {/* O nome da EMPRESA. Quando ha logo, o nome nao aparece em
+                lugar nenhum acima — esta linha e a unica que diz de quem e a
+                plataforma. "Plataforma Fiscal" ali era o nome de um produto
+                generico no lugar do nome do cliente. */}
+            <p className="truncate text-xs text-sidebar-foreground/60">{nomeDaEmpresa}</p>
           </div>
           <button className="lg:hidden" aria-label="Fechar" onClick={() => setOpen(false)}>
             <X className="size-5" />
@@ -158,7 +162,11 @@ export function PainelLayout({
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
         <footer className="border-t border-border bg-card px-4 py-4 text-center text-xs text-muted-foreground sm:px-6">
-          {rodape}
+          <p>{rodape}</p>
+          {/* Linha propria, e nao emendada no rodape: aquele o cliente edita
+              pelo cadastro de marca, e um credito que some quando alguem troca
+              o texto do rodape nao e um credito. */}
+          <p className="mt-1 opacity-70">{creditoDoDesenvolvedor}</p>
         </footer>
       </div>
     </div>

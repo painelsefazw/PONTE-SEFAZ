@@ -13,7 +13,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SCRIPT_ANTI_FLASH } from "@/lib/tema";
-import { cssDaMarca, faviconDaMarca, marca, tituloDaPagina } from "@/lib/manifest";
+import { cssDaMarca, faviconDaMarca, marca, tituloDaPagina, nomeDaEmpresa } from "@/lib/manifest";
 
 function NotFoundComponent() {
   return (
@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           `Plataforma fiscal da ${marca} para emissao e gestao de NF-e e NFS-e.`,
       },
       { name: "author", content: `${marca}` },
-      { property: "og:title", content: `${marca} | Plataforma Fiscal` },
+      { property: "og:title", content: `${marca} | ${nomeDaEmpresa}` },
       {
         property: "og:description",
         content: `Emissao e gestao de NF-e e NFS-e da ${marca}.`,

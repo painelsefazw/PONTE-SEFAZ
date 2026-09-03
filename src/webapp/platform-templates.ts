@@ -43,6 +43,8 @@ export interface PlatformManifest {
     id: string;
     name: string;
     brandName: string;
+    /** A fantasia da EMPRESA, separada da marca da plataforma. */
+    tradeName?: string;
     cnpj: string;
     /** UF do emitente: decide operacao interna (CFOP 5xxx) ou interestadual (6xxx). */
     uf: string;
@@ -286,6 +288,12 @@ export class PlatformTemplateStore {
         id: data.clientId,
         name: data.empresa.razaoSocial,
         brandName: data.branding.nomePlataforma || data.empresa.fantasia || data.empresa.razaoSocial,
+        // A fantasia da EMPRESA, separada da marca da plataforma. `brandName`
+        // recebe `nomePlataforma` quando ele existe — e ele quase sempre existe,
+        // porque o cadastro de marca ja nasce com "Emissor Fiscal". Resultado: a
+        // tela de configuracoes do cliente mostrava "Nome fantasia: Emissor
+        // Fiscal", que nao e nome de empresa nenhuma.
+        tradeName: data.empresa.fantasia || '',
         cnpj: data.empresa.cnpj,
         uf: (data.empresa.uf || '').toUpperCase(),
       },

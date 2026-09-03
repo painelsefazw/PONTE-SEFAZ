@@ -21,7 +21,10 @@ export interface PlatformManifest {
   company: {
     id: string;
     name: string;
+    /** Como o PRODUTO se chama. Pode ser o nome do modelo, nao o da empresa. */
     brandName: string;
+    /** A fantasia da EMPRESA. Vazia quando o cadastro nao tem. */
+    tradeName?: string;
     cnpj: string;
     /** UF do emitente: define operacao interna (CFOP 5xxx) ou interestadual (6xxx). */
     uf: string;
@@ -95,6 +98,17 @@ export const manifest = dados as PlatformManifest;
 export const marca = manifest.ui?.browserTitle || manifest.company.brandName;
 
 /**
+ * A EMPRESA, e nao a plataforma.
+ *
+ * `marca` e como o produto se chama (pode ser "Emissor Fiscal", o padrao do
+ * modelo). `nomeDaEmpresa` e de quem a plataforma e. Onde antes estava escrito
+ * "Plataforma Fiscal" — titulo da aba, barra lateral, login — o cliente lia o
+ * nome de um produto generico no lugar do proprio nome.
+ */
+export const nomeDaEmpresa =
+  manifest.company.tradeName?.trim() || manifest.company.name;
+
+/**
  * Prefixo dos dados guardados no navegador e do cookie de sessao.
  *
  * Era um nome fixo, o que so funcionava enquanto existia UMA instalacao. Em
@@ -111,7 +125,7 @@ export const escopo = manifest.company.id.toLowerCase().replace(/[^a-z0-9]+/g, "
  * nome do cliente anterior sobrava numa aba quando alguem copiava o projeto.
  */
 export function tituloDaPagina(secao?: string): string {
-  return secao ? `${secao} | ${marca}` : `${marca} | Plataforma Fiscal`;
+  return secao ? `${secao} | ${marca}` : `${marca} | ${nomeDaEmpresa}`;
 }
 
 export function formatCnpj(cnpj: string) {
@@ -156,6 +170,16 @@ export const mensagemDeLogin = manifest.ui?.loginMessage?.trim() || "Bem-vindo";
 export const rodape =
   manifest.ui?.footer?.trim() ||
   `© ${new Date().getFullYear()} ${marca}. Todos os direitos reservados.`;
+
+/**
+ * Credito de quem desenvolveu, separado do rodape do cliente.
+ *
+ * Fica FORA do `rodape` de proposito: aquele o cliente edita pelo cadastro de
+ * marca, e um credito que some quando alguem troca o texto do rodape nao e um
+ * credito. O ano acompanha a data, pelo mesmo motivo do outro.
+ */
+export const creditoDoDesenvolvedor =
+  `Desenvolvido por Wemerson © ${new Date().getFullYear()}`;
 
 /**
  * Numero de WhatsApp pronto para o link `wa.me`, ou nada.

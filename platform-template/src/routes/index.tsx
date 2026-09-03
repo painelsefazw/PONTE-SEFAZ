@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { entrar, sessaoAtual } from "@/lib/auth.functions";
-import { formatCnpj, logoDaMarca, manifest, marca, mensagemDeLogin, rodape, tituloDaPagina } from "@/lib/manifest";
+import { formatCnpj, logoDaMarca, manifest, marca, mensagemDeLogin, rodape, tituloDaPagina, nomeDaEmpresa, creditoDoDesenvolvedor } from "@/lib/manifest";
 import { VARIAVEIS_OBRIGATORIAS, VARIAVEIS_OPCIONAIS } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: `Login | ${marca} - Plataforma Fiscal` },
+      { title: `Login | ${marca} - ${nomeDaEmpresa}` },
       {
         name: "description",
         content:
@@ -158,7 +158,7 @@ function Login() {
               {mensagemDeLogin}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {manifest.company.brandName} &middot; Plataforma Fiscal
+              {nomeDaEmpresa}
             </p>
           </div>
 
@@ -207,7 +207,8 @@ function Login() {
         </div>
       </div>
       <footer className="px-4 py-6 text-center text-xs text-muted-foreground">
-        {rodape}
+        <p>{rodape}</p>
+        <p className="mt-1 opacity-70">{creditoDoDesenvolvedor}</p>
       </footer>
     </div>
   );

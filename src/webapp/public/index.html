@@ -2522,6 +2522,58 @@ body {
 </div>
 </div>
 
+<!-- Padroes da plataforma: o que cada template herda quando o cadastro do
+     cliente nao diz. Suporte e paginas legais sao quase sempre os mesmos em
+     todos — o atendimento e o seu, o site e o seu, os termos sao os seus.
+     Sem isto, cada cliente novo exigia redigitar seis campos, e quem esquecia
+     um entregava a aba de Suporte pela metade. -->
+<div class="tab-content somente-contador" id="tab-clientesapi-padroes">
+<div class="container">
+  <div class="section">
+    <div class="section-title">Padrões dos templates</div>
+    <div style="font-size:12px;color:var(--suave-texto);line-height:1.6;margin:-8px 0 18px">
+      Estes valores entram na plataforma de <b>todo cliente</b> que não tiver os
+      próprios. Quem tem valor cadastrado em Marca própria continua com o dele —
+      o padrão nunca sobrescreve, só preenche o que ficou vazio.<br>
+      Vale a partir da <b>próxima geração</b> de cada template: quem já foi
+      publicado precisa ser gerado de novo para herdar.
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="fld-lbl">E-mail de suporte</label>
+        <input class="fld" id="padEmail" autocomplete="off" placeholder="suporte@suaempresa.com.br">
+      </div>
+      <div class="form-group">
+        <label class="fld-lbl">WhatsApp</label>
+        <input class="fld" id="padWhats" autocomplete="off" placeholder="38999998888">
+      </div>
+      <div class="form-group">
+        <label class="fld-lbl">Telefone</label>
+        <input class="fld" id="padFone" autocomplete="off" placeholder="(38) 3333-4444">
+      </div>
+      <div class="form-group">
+        <label class="fld-lbl">Site</label>
+        <input class="fld" id="padSite" autocomplete="off" placeholder="https://suaempresa.com.br">
+      </div>
+      <div class="form-group">
+        <label class="fld-lbl">URL dos termos de uso</label>
+        <input class="fld" id="padTermos" autocomplete="off" placeholder="https://suaempresa.com.br/termos">
+      </div>
+      <div class="form-group">
+        <label class="fld-lbl">URL da política de privacidade</label>
+        <input class="fld" id="padPriv" autocomplete="off" placeholder="https://suaempresa.com.br/privacidade">
+      </div>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="salvarPadroes()">Salvar padrões</button>
+      <span id="padMsg" style="font-size:12px;color:var(--suave-texto)"></span>
+    </div>
+  </div>
+</div>
+</div>
+
 <div class="tab-content somente-contador" id="tab-clientesapi-templates">
 <div class="container">
   <div class="section">
@@ -2762,6 +2814,7 @@ var TAB_GROUPS = {
     { id: 'clientesapi-api', label: 'Por API' },
     { id: 'clientesapi-plataforma', label: 'Por plataforma' },
     { id: 'clientesapi-templates', label: 'Templates', soCompleto: true },
+    { id: 'clientesapi-padroes', label: 'Padrões' },
   ],
   instancia: [{ id: 'clientesapi-instancia', label: 'Nova instância' }],
   auditoria: [{ id: 'clientesapi-audit', label: 'Auditoria' }],
@@ -2834,6 +2887,7 @@ function showTab(name) {
   if (name === 'clientesapi-api') { _modalidadeAtiva = 'api'; loadClientesApi(); }
   if (name === 'clientesapi-plataforma') { _modalidadeAtiva = 'plataforma'; loadClientesApi(); }
   if (name === 'clientesapi-templates') loadTemplates();
+  if (name === 'clientesapi-padroes') loadPadroes();
   if (name === 'clientesapi-audit') loadAuditLog();
 }
 
@@ -7708,6 +7762,59 @@ function elDaModalidade(base) {
 /** Onde a lista (ou o detalhe de um cliente) e desenhada. */
 function caixaDosClientes() {
   return elDaModalidade('clientesApiLista');
+}
+
+var PADROES_CAMPOS = [
+  ['padEmail', 'suporteEmail'], ['padWhats', 'suporteWhatsapp'],
+  ['padFone', 'suporteTelefone'], ['padSite', 'suporteSite'],
+  ['padTermos', 'termosUrl'], ['padPriv', 'privacidadeUrl']
+];
+
+async function loadPadroes() {
+  var msg = document.getElementById('padMsg');
+  try {
+    var r = await apiFetch('/api/admin/padroes-plataforma');
+    if (!r.ok) {
+      var e = await r.json().catch(function () { return {}; });
+      if (msg) { msg.style.color = 'var(--perigo)'; msg.textContent = 'Nao deu para carregar: ' + (e.erro || r.status); }
+      return;
+    }
+    var p = (await r.json()).padroes || {};
+    for (var i = 0; i < PADROES_CAMPOS.length; i++) {
+      var el = document.getElementById(PADROES_CAMPOS[i][0]);
+      if (el) el.value = p[PADROES_CAMPOS[i][1]] || '';
+    }
+    if (msg) { msg.style.color = 'var(--suave-texto)'; msg.textContent = ''; }
+  } catch (e) {
+    if (msg) { msg.style.color = 'var(--perigo)'; msg.textContent = e.message; }
+  }
+}
+
+async function salvarPadroes() {
+  var msg = document.getElementById('padMsg');
+  var corpo = {};
+  for (var i = 0; i < PADROES_CAMPOS.length; i++) {
+    var el = document.getElementById(PADROES_CAMPOS[i][0]);
+    corpo[PADROES_CAMPOS[i][1]] = el ? el.value : '';
+  }
+  if (msg) { msg.style.color = 'var(--suave-texto)'; msg.textContent = 'Salvando...'; }
+  try {
+    var r = await apiFetch('/api/admin/padroes-plataforma', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo)
+    });
+    if (!r.ok) {
+      var e = await r.json().catch(function () { return {}; });
+      msg.style.color = 'var(--perigo)';
+      msg.textContent = 'NAO foi salvo: ' + (e.erro || ('HTTP ' + r.status));
+      return;
+    }
+    msg.style.color = 'var(--sucesso-tinta)';
+    msg.textContent = 'Salvo. Vale para os templates gerados a partir de agora.';
+  } catch (e) {
+    msg.style.color = 'var(--perigo)';
+    msg.textContent = e.message;
+  }
 }
 
 async function loadClientesApi() {

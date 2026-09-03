@@ -51,6 +51,7 @@ import { ApiClientStore, type ClientStatus } from './api-clients';
 import { WhiteLabelStore } from './white-label';
 import { gerarPersonalizacaoMd } from './personalizacao-md';
 import { dicaDaRejeicao } from './rejeicoes';
+import { lerPadroes, gravarPadroes, comPadrao } from './padroes-plataforma';
 import { PlatformTemplateStore, type PlatformManifest, type PlatformTemplate } from './platform-templates';
 import {
   baixarModelo, lerModeloDaPasta, montarZip, publicarNoGitHub, verificarAcessoAoRepositorio,
@@ -8422,6 +8423,34 @@ app.post('/api/admin/clients/:cnpj/whitelabel', async (req, res) => {
 });
 
 /**
+ * Padroes da plataforma — o que todo cliente herda quando nao tem o proprio.
+ *
+ * Suporte e paginas legais sao quase sempre os mesmos em todos: o atendimento e
+ * o seu, o site e o seu, os termos sao os seus. Sem isto, cada cliente novo
+ * exigia redigitar seis campos, e quem esquecia um entregava a aba de Suporte
+ * pela metade.
+ */
+app.get('/api/admin/padroes-plataforma', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    res.json({ padroes: await lerPadroes(await getConfigStore()) });
+  } catch (err: any) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+app.post('/api/admin/padroes-plataforma', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    await gravarPadroes(await getConfigStore(), req.body || {});
+    registrarAudit('admin', 'padroes.saved', 'config', { requestId: (req as any).requestId });
+    res.json({ sucesso: true, padroes: await lerPadroes(await getConfigStore()) });
+  } catch (err: any) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+/**
  * GET /api/admin/clients/:cnpj/whitelabel/personalizacao.md
  *
  * A marca cadastrada aqui chegava ao repositório dentro do manifest e parava
@@ -8914,7 +8943,16 @@ async function montarManifestDoCliente(
   }
 
   const wlStore = await getWhiteLabelStore();
-  const branding = await wlStore.obterOuPadrao(cnpj);
+  // O padrao entra AQUI, no unico caminho por onde o manifest nasce — nao na
+  // tela. Aplicar na tela deixaria o valor herdado gravado no cadastro do
+  // cliente, e trocar o padrao depois nao alcancaria mais ninguem.
+  const branding = comPadrao(
+    await wlStore.obterOuPadrao(cnpj),
+    await lerPadroes(await getConfigStore()).catch(() => ({
+      suporteEmail: '', suporteTelefone: '', suporteWhatsapp: '',
+      suporteSite: '', termosUrl: '', privacidadeUrl: '',
+    })),
+  );
 
   const tplStore = await getPlatformTemplateStore();
   const template = opts.templateId

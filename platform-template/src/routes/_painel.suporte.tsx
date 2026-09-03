@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Mail, MessageCircle } from "lucide-react";
+import { Mail, MessageCircle, Phone, Globe, FileText, ShieldCheck } from "lucide-react";
 import { PainelLayout } from "@/components/app/PainelLayout";
 import { manifest, tituloDaPagina, whatsappDoSuporte } from "@/lib/manifest";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,15 @@ function Suporte() {
   // WhatsApp em lugar nenhum. O DDI entra aqui: o cadastro guarda o que a
   // pessoa digitou, e digitar sem o 55 e o normal.
   const whatsapp = whatsappDoSuporte() ?? "";
+  // Tudo o que o cadastro de marca oferece aparece aqui. Antes so WhatsApp e
+  // e-mail chegavam na tela: telefone, site e as duas paginas legais eram
+  // cadastradas no painel, viajavam dentro do manifest e morriam sem nunca
+  // serem mostradas a ninguem.
+  const telefone = String(manifest.support?.phone ?? "").trim();
+  const site = String(manifest.support?.site ?? "").trim();
+  const termos = String(manifest.legal?.termsUrl ?? "").trim();
+  const privacidade = String(manifest.legal?.privacyUrl ?? "").trim();
+  const temLegal = Boolean(termos || privacidade);
 
   return (
     <PainelLayout title="Suporte" description="Estamos aqui para ajudar">
@@ -82,6 +91,64 @@ function Suporte() {
             </div>
           </div>
         </section>
+
+        {/* Telefone e site sao um cartao so: cada um sozinho ocuparia a mesma
+            altura de um canal de atendimento, e nenhum dos dois e. */}
+        {(telefone || site) && (
+          <section className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold">Outros contatos</h2>
+            <ul className="mt-3 space-y-3">
+              {telefone && (
+                <li className="flex items-center gap-3 text-sm">
+                  <Phone className="size-4 shrink-0 text-muted-foreground" />
+                  <a className="font-medium hover:underline" href={`tel:${telefone.replace(/\D/g, "")}`}>
+                    {telefone}
+                  </a>
+                </li>
+              )}
+              {site && (
+                <li className="flex items-center gap-3 text-sm">
+                  <Globe className="size-4 shrink-0 text-muted-foreground" />
+                  <a
+                    className="break-all font-medium hover:underline"
+                    href={site.startsWith("http") ? site : `https://${site}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {site}
+                  </a>
+                </li>
+              )}
+            </ul>
+          </section>
+        )}
+
+        {/* Sem termos nem privacidade cadastrados o bloco nao aparece — link
+            para pagina inexistente e pior que link nenhum, porque promete um
+            documento que o cliente nunca escreveu. */}
+        {temLegal && (
+          <section className="rounded-xl border border-border bg-card p-6">
+            <h2 className="text-sm font-semibold">Documentos</h2>
+            <ul className="mt-3 space-y-3">
+              {termos && (
+                <li className="flex items-center gap-3 text-sm">
+                  <FileText className="size-4 shrink-0 text-muted-foreground" />
+                  <a className="font-medium hover:underline" href={termos} target="_blank" rel="noopener noreferrer">
+                    Termos de uso
+                  </a>
+                </li>
+              )}
+              {privacidade && (
+                <li className="flex items-center gap-3 text-sm">
+                  <ShieldCheck className="size-4 shrink-0 text-muted-foreground" />
+                  <a className="font-medium hover:underline" href={privacidade} target="_blank" rel="noopener noreferrer">
+                    Politica de privacidade
+                  </a>
+                </li>
+              )}
+            </ul>
+          </section>
+        )}
 
         <section className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
           <h2 className="mb-2 text-sm font-semibold text-foreground">Ao abrir um chamado</h2>
