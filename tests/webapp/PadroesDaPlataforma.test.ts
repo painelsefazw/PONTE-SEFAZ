@@ -17,6 +17,15 @@ import { comPadrao, CAMPOS_DO_PADRAO, SEM_PADROES } from '../../src/webapp/padro
 const raiz = path.resolve(__dirname, '..', '..');
 const ler = (...p: string[]) => fs.readFileSync(path.resolve(raiz, ...p), 'utf8').replace(/\r\n/g, '\n');
 
+/**
+ * Sem os comentarios do codigo.
+ *
+ * Um teste que procura a AUSENCIA de um trecho acusa a propria documentacao do
+ * conserto: o comentario cita o que saiu justamente para explicar por que saiu.
+ * Aconteceu tres vezes hoje.
+ */
+const semComentarios = (t: string) => t.replace(/\/\/[^\n]*/g, '');
+
 const padroes = {
   ...SEM_PADROES,
   suporteEmail: 'suporte@ponte.com', suporteTelefone: '3833334444',
@@ -282,6 +291,15 @@ describe('ajustes da tela', () => {
     // Contadores e busca respondiam a uma pergunta que ninguem estava fazendo,
     // e empurravam a ficha para baixo da dobra.
     expect(painel).toContain('function mostrarCabecalhoDaLista(');
+    // Por CLASSE, e nao por `style.display`: os blocos tem `display:flex` no
+    // atributo `style`, e devolver '' apagava esse flex — os cinco cartoes
+    // viravam cinco linhas empilhadas da largura da tela.
+    const fn = painel.slice(painel.indexOf('function mostrarCabecalhoDaLista('));
+    expect(fn.slice(0, 900)).toContain("classList.toggle('oculto-no-detalhe'");
+    // Sem os comentarios: o comentario da funcao CITA `style.display` para
+    // explicar por que ele saiu, e o teste acusaria a propria documentacao.
+    expect(semComentarios(fn.slice(0, 900))).not.toContain('style.display');
+    expect(painel).toContain('.oculto-no-detalhe { display: none !important; }');
     const abrir = painel.slice(painel.indexOf('async function abrirDetalheCliente('));
     expect(abrir.slice(0, 300)).toContain('mostrarCabecalhoDaLista(false)');
     const lista = painel.slice(painel.indexOf('async function loadClientesApi('));

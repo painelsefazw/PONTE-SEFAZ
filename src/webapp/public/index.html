@@ -757,6 +757,9 @@ body {
 /* O seletor nativo mostra a cor, mas nao o CODIGO — e cor de marca chega por
    escrito ("o azul da empresa e #0F766E"), nao apontada num quadrado. Os dois
    campos andam juntos: mexer num atualiza o outro. */
+/* Esconde sem mexer no `display` que o elemento ja tem no atributo `style`. */
+.oculto-no-detalhe { display: none !important; }
+
 .cor-par { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: center; }
 .cor-par input[type="color"] {
   width: 44px; height: 38px; padding: 3px; cursor: pointer;
@@ -9095,13 +9098,20 @@ async function reprocessarWebhooks(btn) {
  * fazendo — e empurrando o conteudo que interessa para baixo da dobra.
  */
 function mostrarCabecalhoDaLista(mostrar) {
-  for (var i = 0; i < ['api', 'plataforma'].length; i++) {
-    var mod = ['api', 'plataforma'][i];
-    var resumo = document.getElementById('clientesApiResumo-' + mod);
-    var busca = document.getElementById('clienteApiBusca-' + mod);
-    if (resumo) resumo.style.display = mostrar ? '' : 'none';
-    if (busca && busca.parentElement) {
-      busca.parentElement.style.display = mostrar ? '' : 'none';
+  // Uma CLASSE, e nao `style.display`. Os dois blocos tem `display:flex` no
+  // atributo `style`, e devolver `''` apaga esse flex junto — os cinco cartoes
+  // viravam cinco linhas empilhadas, cada uma da largura da tela. Classe some
+  // sem tocar no layout que ja estava escrito ali.
+  var alvos = ['clientesApiResumo-api', 'clientesApiResumo-plataforma'];
+  for (var i = 0; i < alvos.length; i++) {
+    var el = document.getElementById(alvos[i]);
+    if (el) el.classList.toggle('oculto-no-detalhe', !mostrar);
+  }
+  var buscas = ['clienteApiBusca-api', 'clienteApiBusca-plataforma'];
+  for (var j = 0; j < buscas.length; j++) {
+    var campo = document.getElementById(buscas[j]);
+    if (campo && campo.parentElement) {
+      campo.parentElement.classList.toggle('oculto-no-detalhe', !mostrar);
     }
   }
 }
